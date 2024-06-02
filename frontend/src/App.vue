@@ -1,14 +1,25 @@
-
 <template>
   <div>
     <RouterView />
   </div>
 </template>
 
-<script setup>
+<script>
+export default {
+  name: 'App',
+  components: {
+
+  }
+}
 
 </script>
 
-<style lang="scss" scoped>
+<style>
+#app {
+  font-family: Avenir, Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-smoothing: grayscale;
+  text-align: center;
+}
 
 </style>
