@@ -1,8 +1,7 @@
-
 <template>
-  <div>
-    <RouterView />
-  </div>
+    <div>
+        This is my profile
+    </div>
 </template>
 
 <script setup>
@@ -11,4 +10,4 @@
 
 <style lang="scss" scoped>
 
-</style>
+</style>=
