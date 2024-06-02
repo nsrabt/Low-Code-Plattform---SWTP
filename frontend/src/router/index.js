@@ -4,6 +4,8 @@ import dashboard from "../Pages/master/dashboard.vue";
 
 import home from "../Pages/home.vue"
 import profile from "../Pages/profile.vue"
+import login from "../Pages/login.vue"
+
 
 const routes = [
     {
@@ -20,6 +22,11 @@ const routes = [
         name: 'Profile',
         path: '/profile',
         component:profile
+    },
+     {
+        name: 'Login',
+        path: '/login',
+        component:login
     }
 ];
 const router = Router();
