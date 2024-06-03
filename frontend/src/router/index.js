@@ -5,6 +5,8 @@ import dashboard from "../Pages/master/dashboard.vue";
 import home from "../Pages/home.vue"
 import profile from "../Pages/profile.vue"
 import login from "../Pages/login.vue"
+import workflow from "../Pages/Workflow.vue"
+
 
 
 const routes = [
@@ -23,10 +25,15 @@ const routes = [
         path: '/profile',
         component:profile
     },
-     {
+    {
         name: 'Login',
         path: '/login',
         component:login
+    },
+    {
+        name: 'Workflow',
+        path: '/workflow',
+        component:workflow
     }
 ];
 const router = Router();
