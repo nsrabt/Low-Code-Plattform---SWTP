@@ -96,7 +96,6 @@
                 />
               </svg>
             </button>
-            Dropdown menu
             <div
               id="dropdownNavbar"
               class="z-10 hidden font-normal bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600"
@@ -140,6 +139,7 @@
       </div>
     </div>
   </nav>
+
   <div class="categories-container">
     <div
       v-for="category in categories"
@@ -149,17 +149,40 @@
       @dragover.prevent
       @dragenter.prevent
     >
-      <h4>{{ category.title }}</h4>
       <div
         v-for="item in items.filter((x) => x.categoryId === category.id)"
+        :key="item.id"
         @dragstart="onDragStart($event, item)"
-        class="draggable"
+        class="draggable rounded-xl"
         draggable="true"
       >
-        <h5>{{ item.title }}</h5>
+        <input
+          v-model="item.title"
+          @blur="updateItem(item)"
+          class="item-title-input"
+        />
+        <button class="edit-button" @click="openEditModal(item)">Edit</button>
       </div>
     </div>
   </div>
+
+  <div v-if="isEditModalOpen" class="modal">
+    <div class="modal-content">
+      <h3>Edit Item</h3>
+      <label for="item-title">Title:</label>
+      <input id="item-title" v-model="currentItem.title" />
+      <!-- Add more fields as needed -->
+      <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full" @click="saveItem">Save</button>
+      <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full" @click="closeEditModal">Cancel</button>
+    </div>
+  </div>
+    <div class="controls rounded-xl bg-white border-gray-200 dark:bg-white dark:border-gray-500">
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full" @click="createCategory"> + Create Category</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full" @click="createItem">+ Create Item</button>
+    
+    
+  </div>
+  
 </template>
 
 <script lang="ts">
@@ -193,16 +216,35 @@ export default {
       {
         id: 1,
         title: 'Test'
-      },
-      {
-        id: 2,
-        title: 'Test'
-      },
-      {
-        id: 3,
-        title: 'Test'
       }
     ])
+
+    const isEditModalOpen = ref(false)
+    const currentItem = ref(null)
+
+    function createCategory() {
+      const newId = categories.value.length
+      categories.value.push({
+        id: newId,
+        title: `Category ${newId + 1}`
+      })
+    }
+
+    function createItem() {
+      const newId = items.value.length
+      items.value.push({
+        id: newId,
+        title: `Item ${newId + 1}`,
+        categoryId: 0
+      })
+    }
+
+    function updateItem(updatedItem) {
+      const index = items.value.findIndex(item => item.id === updatedItem.id)
+      if (index !== -1) {
+        items.value[index] = { ...updatedItem }
+      }
+    }
 
     function onDragStart(e: DragEvent, item) {
       e.dataTransfer.dropEffect = 'move'
@@ -218,17 +260,48 @@ export default {
       })
     }
 
+    function openEditModal(item) {
+      currentItem.value = { ...item }
+      isEditModalOpen.value = true
+    }
+
+    function closeEditModal() {
+      isEditModalOpen.value = false
+      currentItem.value = null
+    }
+
+    function saveItem() {
+      if (currentItem.value) {
+        updateItem(currentItem.value)
+        closeEditModal()
+      }
+    }
+
     return {
       items,
       categories,
+      isEditModalOpen,
+      currentItem,
       onDragStart,
-      onDrop
+      onDrop,
+      createCategory,
+      createItem,
+      updateItem,
+      openEditModal,
+      closeEditModal,
+      saveItem
     }
   }
 }
 </script>
 
 <style scoped>
+.controls {
+  margin: 20px;
+  display: flex;
+  gap: 10px;
+}
+
 .categories-container {
   display: flex;
   flex-direction: row;
@@ -243,19 +316,72 @@ export default {
 }
 
 .droppable h4 {
-  color: white;
+  display: none; /* Hide category titles */
 }
 
 .draggable {
   background: white;
   padding: 5px;
   margin-bottom: 5px;
+  display: flex;
+  align-items: center;
 }
 
-.draggable h5 {
-  margin: 0;
+.draggable input.item-title-input {
+  border: none;
+  background: transparent;
+  width: 100%;
+  padding: 5px;
+  margin-bottom: 5px;
+}
+
+.draggable input.item-title-input:focus {
+  outline: none;
+  border-bottom: 1px solid #000;
+}
+
+.edit-button {
+  margin-left: 10px;
+  background: #3490dc;
+  color: white;
+  border: none;
+  padding: 5px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.edit-button:hover {
+  background: #2779bd;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  width: 300px;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+}
+
+.modal-content button {
+  margin-right: 10px;
 }
 </style>
+
 
 
 <!-- <template>
