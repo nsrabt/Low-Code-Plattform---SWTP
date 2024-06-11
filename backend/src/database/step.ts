@@ -1,16 +1,13 @@
 import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 
 @Entity()
-export class process{
+export class step{
     @PrimaryGeneratedColumn()
-    process_id: number;
+    step_id: number;
+
+    @Column()
+    process_id:number;
 
     @Column()
     title: string;
-
-    @Column()
-    description: string;
-
-    @Column()
-    platform_id: number;
 }

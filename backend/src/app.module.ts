@@ -4,7 +4,22 @@ import { AppService } from './app.service';
 import { WorkflowController } from './workflow/workflow.controller';
 import { WorkflowService } from './workflow/workflow.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import {filling_data} from "./database/filling_data";
+import {filling_data} from'./database/filling_data';
+import {platform} from'./database/platform';
+import {process} from'./database/process';
+import {roles} from'./database/roles';
+import {step} from'./database/step';
+import {step_fields} from'./database/step_fields';
+import {user} from'./database/user';
+import {user_filling_data} from'./database/user-filling-data';
+import {user_platform} from './database/user-platform';
+import {user_platform_roles} from'./database/user-platform-roles';
+import {user_process} from'./database/user_process';
+import {user_process_step} from'./database/user_process_step';
+
+
+
+
 
 @Module({
   imports: [
@@ -15,7 +30,7 @@ import {filling_data} from "./database/filling_data";
       username: 'postgres',
       password: 'passwort',
       database: 'LowCode',
-      entities: [filling_data],
+      entities: [filling_data,platform,process,roles,step,step_fields,user,user_filling_data,user_platform,user_platform_roles, user_process,user_process_step],
       synchronize: true,
     }),
   ],
