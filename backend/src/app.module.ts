@@ -16,6 +16,8 @@ import {user_platform} from './database/user-platform';
 import {user_platform_roles} from'./database/user-platform-roles';
 import {user_process} from'./database/user_process';
 import {user_process_step} from'./database/user_process_step';
+import {UserController} from "./user/user.controller";
+import {UserService} from "./user/user.service";
 
 
 
@@ -34,7 +36,7 @@ import {user_process_step} from'./database/user_process_step';
       synchronize: true,
     }),
   ],
-  controllers: [AppController, WorkflowController],
-  providers: [AppService, WorkflowService],
+  controllers: [AppController, WorkflowController, UserController],
+  providers: [AppService, WorkflowService, UserService],
 })
 export class AppModule {}

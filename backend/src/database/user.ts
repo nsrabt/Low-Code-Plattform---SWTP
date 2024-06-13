@@ -6,10 +6,7 @@ export class user{
     id:number;
 
     @Column()
-    firstName: string;
-
-    @Column()
-    lastName: string;
+    username: string;
 
     @Column()
     profilePicture: string;

@@ -13,5 +13,7 @@ export class roles{
 
     @Column("boolean", { array: true })
     permissions: boolean[];
-    
+
+    @Column()
+    isDefault: boolean;
 }
