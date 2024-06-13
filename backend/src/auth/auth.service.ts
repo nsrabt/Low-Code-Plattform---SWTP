@@ -5,7 +5,7 @@ export class AuthService {
 
     async authenticateUser(username: string, password: string): Promise<boolean> {
         const client = ldap.createClient({
-            url: 'ldaps://ldap.fh-giessen.de:636', // Beachten Sie das ldaps und den Port 636
+            url: 'ldaps://ldap.fh-giessen.de:636',
         });
 
         client.on('connect', () => {
