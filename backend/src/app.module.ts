@@ -18,6 +18,7 @@ import {user_process} from'./database/user_process';
 import {user_process_step} from'./database/user_process_step';
 import {UserController} from "./user/user.controller";
 import {UserService} from "./user/user.service";
+import {AuthModule} from "./auth/auth.module";
 
 
 
@@ -25,16 +26,18 @@ import {UserService} from "./user/user.service";
 
 @Module({
   imports: [
+      AuthModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'passwort',
+      password: 'linux',
       database: 'LowCode',
       entities: [filling_data,platform,process,roles,step,step_fields,user,user_filling_data,user_platform,user_platform_roles, user_process,user_process_step],
       synchronize: true,
     }),
+    TypeOrmModule.forFeature([user,user_platform,user_platform_roles,roles]),
   ],
   controllers: [AppController, WorkflowController, UserController],
   providers: [AppService, WorkflowService, UserService],
