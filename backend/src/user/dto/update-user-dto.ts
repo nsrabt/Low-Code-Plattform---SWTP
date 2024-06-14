@@ -1,7 +1,8 @@
 // create-user.dto.ts
 import {IsString, IsEmail, isNumber, IsNumber} from 'class-validator';
 
-export class CreateUserDto {
+export class UpdateUserDto {
+
     @IsString()
     username: string;
 
@@ -10,5 +11,4 @@ export class CreateUserDto {
 
     @IsString()
     profilePicture: string;
-
 }

@@ -1,7 +1,7 @@
 // create-user.dto.ts
 import {IsString, IsEmail, isNumber, IsNumber} from 'class-validator';
 
-export class CreateUserDto {
+export class AddUserDto {
     @IsString()
     username: string;
 

@@ -30,7 +30,7 @@ describe('UserService', () => {
           entities: [filling_data,platform,process,roles,step,step_fields,user,user_filling_data,user_platform,user_platform_roles, user_process,user_process_step],
           synchronize: true,
         }),
-        TypeOrmModule.forFeature([user,user_platform,user_platform_roles]),
+        TypeOrmModule.forFeature([user,user_platform,user_platform_roles,roles]),
       ],
       providers: [UserService],
     }).compile();
