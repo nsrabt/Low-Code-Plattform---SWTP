@@ -9,9 +9,9 @@ export class AuthController {
     async login(@Body() loginDto: LoginDto) {
         console.log(`Received login request for username: ${loginDto.username}`);
 
-        const isAuthenticated = await this.authService.authenticateUser(loginDto.username, loginDto.password);
-        if (isAuthenticated) {
-            return { message: 'Authentication successful' };
+        const user = await this.authService.login(loginDto.username, loginDto.password);
+        if (user) {
+            return user;
         } else {
             return { message: 'Authentication failed' };
         }
