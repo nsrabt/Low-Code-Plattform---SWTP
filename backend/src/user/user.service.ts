@@ -112,7 +112,7 @@ export class UserService {
             eMail: email,
             profilePicture: profilePicture,
         })
-        return Promise.resolve(updatedUser);
+        return updatedUser;
     }
 
     async deleteUser(id: number) {

@@ -1,6 +1,6 @@
 import { PDFDocument } from 'pdf-lib';
-import {Field} from "./Field";
-import {Role} from "../Role";
+import {Field} from "../workflow/Field";
+import {roles} from "../database/roles";
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
@@ -12,7 +12,7 @@ class WorkflowElement {
     @Column()
     private _fields: Field[];
     @Column()
-    private _access: Role[];
+    private _access: roles[];
     @Column()
     private _stepNumber: number;
 

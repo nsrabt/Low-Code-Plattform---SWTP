@@ -23,7 +23,7 @@ export class UserController {
     If returned User is null it failed.
     if returned User is not null it was a success.
      */
-    @Put('addUser')
+    @Put('add')
     async addUser(@Body() addUserDto: AddUserDto) {
         return await this.userService.addUser(addUserDto);
     }
@@ -38,7 +38,7 @@ export class UserController {
         return await this.userService.updateUser(id, updateUserDto);
     }
 
-    @Put('deleteUser/:id')
+    @Put('delete/:id')
     async deleteUser(@Param('id',ParseIntPipe) id:number){
         return await this.userService.deleteUser(id);
     }

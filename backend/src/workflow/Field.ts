@@ -1,5 +1,5 @@
 import {PDFField} from 'pdf-lib'
-import { Role } from "../Role";
+import { roles } from "../database/roles";
 export class Field{
     get fieldType(): string {
         return this._fieldType;
@@ -11,10 +11,10 @@ export class Field{
     private _field: PDFField;
     private _fieldName: string;
     private _attributeID: number;
-    private _access: Role[];
+    private _access: roles[];
     private _fieldType: string;
 
-    constructor(field: PDFField, fieldName: string, attributeID: number, access: Role[], fieldType: string) {
+    constructor(field: PDFField, fieldName: string, attributeID: number, access: roles[], fieldType: string) {
         this._field = field;
         this._fieldName = fieldName;
         this._attributeID = attributeID;
@@ -49,11 +49,11 @@ export class Field{
     }
 
     // Getter und Setter für access
-    public get access(): Role[] {
+    public get access(): roles[] {
         return this._access;
     }
 
-    public set access(value: Role[]) {
+    public set access(value: roles[]) {
         this._access = value;
     }
 
