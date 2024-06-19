@@ -12,7 +12,8 @@ import {roles} from "../database/roles";
 import {CreateUserDto} from "./dto/create-user-dto";
 import {AddUserDto} from "./dto/add-user-dto";
 import {UpdateUserDto} from "./dto/update-user-dto";
-
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 @Injectable()
 export class UserService {
     constructor(
@@ -52,7 +53,7 @@ export class UserService {
 
             if (profilePicture == "") {
                 //no profile-picture selected => default profile-picture
-                const imagePath = path.join(__dirname, '..', 'media', 'pictures', 'testavatar.jpg');
+                const imagePath = path.join(__dirname, '..', '..', 'src', 'media', 'pictures', 'testavatar.jpg');
                 const imageBuffer = await fs.readFile(imagePath);
                 newUser.profilePicture = imageBuffer.toString("base64");
             } else {
@@ -65,6 +66,7 @@ export class UserService {
 
         } catch (error) {
             console.error("failed to add User to database");
+            throw error;
         }
         return null;
     }

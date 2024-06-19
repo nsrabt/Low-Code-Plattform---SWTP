@@ -1,11 +1,12 @@
 import {Injectable} from '@nestjs/common';
 import * as ldap from 'ldapjs';
 import {exec} from 'child_process';
-import {User} from "./User";
+import {UserService} from "../user/user.service";
+import {AddUserDto} from "../user/dto/add-user-dto";
 
 @Injectable()
 export class AuthService {
-
+    constructor(private readonly userService: UserService) {}
     private authenticateUser(username: string, password: string): Promise<boolean> {
         const client = ldap.createClient({
             url: 'ldaps://ldap.fh-giessen.de:636',
@@ -43,7 +44,7 @@ export class AuthService {
         });
     }
 
-    private parseLdapSearchResult(output: string): User | null {
+    private parseLdapSearchResult(output: string): any {
         // Einfaches Parsen der LDAP-Suchergebnisse
         const lines = output.split('\n');
         const user: any = {};
@@ -56,14 +57,14 @@ export class AuthService {
             }
         }
         if (user.email && user.firstName && user.lastName) {
-            return user as User;
+            return user;
         }
         return null;
     }
 
-    private ldapSearch(username: string): Promise<User | null> {
+    private ldapSearch(username: string): Promise<AddUserDto | null> {
         return new Promise((resolve, reject) => {
-            const command = `ldapsearch -H ldaps://ldap.fh-giessen.de:636 -x -b "ou=People,ou=MNI,ou=Giessen,dc=fh-giessen-friedberg,dc=de" "(uid=${username})"`;
+            const command = `ldapsearch -H ldaps://ldap.fh-giessen.de:636 -x -b ou=Giessen,dc=fh-giessen-friedberg,dc=de "(uid=${username})"`;
             exec(command, (error, stdout, stderr) => {
                 if (error) {
                     reject(`Error executing ldapsearch: ${error.message}`);
@@ -73,13 +74,27 @@ export class AuthService {
                     reject(`ldapsearch stderr: ${stderr}`);
                     return;
                 }
-                resolve(this.parseLdapSearchResult(stdout));
+                const user = this.parseLdapSearchResult(stdout);
+                if (user) {
+                    const addUserDto: AddUserDto = {
+                        username: user.firstName +" "+ user.lastName,
+                        eMail: user.email,
+                        profilePicture: '',
+                    };
+                    resolve(addUserDto);
+                } else {
+                    resolve(null);
+                }
             });
         });
     }
-    async login(username: string, password: string): Promise<User | null> {
+    async login(username: string, password: string): Promise<any | null> {
         if(await this.authenticateUser(username, password)) {
-            return await this.ldapSearch(username); // return user
+            const addUser = await this.ldapSearch(username);
+            if(addUser) {
+                await this.userService.addUser(addUser);
+                return addUser;
+            }
         } else {
             return null;
         }
