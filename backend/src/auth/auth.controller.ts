@@ -8,14 +8,13 @@ export class AuthController {
     @Post()
     async login(@Body() loginDto: LoginDto) {
         console.log(`Received login request for username: ${loginDto.username}`);
-
         const user = await this.authService.login(loginDto.username, loginDto.password);
 
         if (user) {
             console.log("user auth token", user);
             return user;
         } else {
-            return { message: 'Authentication failed' };
+            return null;
         }
     }
 }
