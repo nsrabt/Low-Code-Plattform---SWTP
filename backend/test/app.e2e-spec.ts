@@ -4,7 +4,7 @@ import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
 import {AppService} from "../src/app.service";
 import {Repository} from "typeorm";
-import {user} from "../src/database/user";
+import {user} from "../src/database/users";
 import {getRepositoryToken} from "@nestjs/typeorm";
 
 describe('AppController (e2e)', () => {

@@ -17,9 +17,9 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-    "esModuleInterop": true,
-    "include": [
-      "src/**/*.ts" // Pfade zu Ihren TypeScript-Dateien hier angeben
-    ]
-  }
+    "esModuleInterop": true
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
 }

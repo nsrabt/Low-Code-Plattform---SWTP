@@ -8,7 +8,4 @@ export class AddUserDto {
     @IsEmail()
     eMail: string;
 
-    @IsString()
-    profilePicture: string;
-
 }

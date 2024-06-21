@@ -13,4 +13,7 @@ export class process{
 
     @Column()
     platform_id: number;
+
+    @Column()
+    isOpen: boolean;
 }

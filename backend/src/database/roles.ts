@@ -11,8 +11,6 @@ export class roles{
     @Column()
     platformID: number;
 
-    @Column("boolean", { array: true })
-    permissions: boolean[];
 
     @Column()
     isDefault: boolean;

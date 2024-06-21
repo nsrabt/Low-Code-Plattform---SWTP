@@ -5,7 +5,7 @@ import {LoginDto} from "./dto/login-dto";
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
-    @Post()
+    @Post('login')
     async login(@Body() loginDto: LoginDto) {
         console.log(`Received login request for username: ${loginDto.username}`);
         const user = await this.authService.login(loginDto.username, loginDto.password);

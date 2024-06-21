@@ -10,4 +10,6 @@ export class user_process{
     processID: number;
     @Column()
     done:boolean;
+    @Column()
+    state:string;
 }

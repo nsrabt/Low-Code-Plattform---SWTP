@@ -79,7 +79,6 @@ export class AuthService {
                     const addUserDto: AddUserDto = {
                         username: user.firstName +" "+ user.lastName,
                         eMail: user.email,
-                        profilePicture: '',
                     };
                     resolve(addUserDto);
                 } else {
@@ -88,6 +87,7 @@ export class AuthService {
             });
         });
     }
+
     async login(username: string, password: string): Promise<any | null> {
         if(await this.authenticateUser(username, password)) {
             const addUser = await this.ldapSearch(username);
@@ -99,6 +99,5 @@ export class AuthService {
             return null;
         }
     }
-
 
 }

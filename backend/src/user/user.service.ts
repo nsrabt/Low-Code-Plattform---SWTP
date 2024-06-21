@@ -1,6 +1,6 @@
 import {Injectable, NotFoundException} from '@nestjs/common';
 import {InjectRepository} from "@nestjs/typeorm";
-import {user} from '../database/user'
+import {users} from '../database/users'
 
 import {Repository} from "typeorm";
 import { promises as fs } from 'fs';
@@ -9,7 +9,6 @@ import {user_platform} from "../database/user-platform";
 import {user_platform_roles} from "../database/user-platform-roles";
 import {timestamp} from "rxjs";
 import {roles} from "../database/roles";
-import {CreateUserDto} from "./dto/create-user-dto";
 import {AddUserDto} from "./dto/add-user-dto";
 import {UpdateUserDto} from "./dto/update-user-dto";
 import { fileURLToPath } from 'url';
@@ -17,8 +16,8 @@ import { dirname } from 'path';
 @Injectable()
 export class UserService {
     constructor(
-        @InjectRepository(user)
-        private userRepository: Repository<user>,
+        @InjectRepository(users)
+        private userRepository: Repository<users>,
         @InjectRepository(user_platform)
         private userPlatformRepository: Repository<user_platform>,
         @InjectRepository(user_platform_roles)
@@ -27,7 +26,20 @@ export class UserService {
         private rolesRepository: Repository<roles>,
     ) {}
 
-    async findAll(): Promise<user[]> {
+    /*
+        1 stands for the THM Platform
+        If time allows we'll add more Platforms and change the code that you can
+        add users to different platforms to.
+        But for now platFormID will be 1
+     */
+
+    platformID = 1;
+
+
+
+
+
+    async findAll(): Promise<users[]> {
         return this.userRepository.find();
     }
 
@@ -41,29 +53,26 @@ export class UserService {
     }
 
 
-    async addUser(addUserDto: AddUserDto): Promise<user> {
+    async addUser(addUserDto: AddUserDto): Promise<users> {
         const username = addUserDto.username;
         const Email = addUserDto.eMail;
-        const profilePicture = addUserDto.profilePicture;
 
         try {
-            const newUser = new user();
+            const newUser = new users();
             newUser.username = username;
             newUser.eMail = Email;
 
-            if (profilePicture == "") {
                 //no profile-picture selected => default profile-picture
                 const imagePath = path.join(__dirname, '..', '..', 'src', 'media', 'pictures', 'testavatar.jpg');
                 const imageBuffer = await fs.readFile(imagePath);
                 newUser.profilePicture = imageBuffer.toString("base64");
-            } else {
-                //profile-picture selected => set as profile-picture
-                newUser.profilePicture = profilePicture;
-            }
+
             //finally save user in database
-            return await this.userRepository.save(newUser) //Save user in user-table
 
-
+            const savedUser= await this.userRepository.save(newUser) //Save user in user-table
+            const savedUserID = await this.userRepository.getId(savedUser);
+            await this.assignDefaultRole(savedUserID, this.platformID);
+            await this.addUserToPlatform(savedUserID,this.platformID);
         } catch (error) {
             console.error("failed to add User to database");
             throw error;
@@ -104,6 +113,9 @@ export class UserService {
         }
     }
 
+    /*
+        Updates all the user attributes
+    */
     async updateUser(id:number, updateUserDto: UpdateUserDto) {
         const username = updateUserDto.username;
         const email = updateUserDto.eMail;
@@ -116,11 +128,10 @@ export class UserService {
         })
         return updatedUser;
     }
-
+    /*
+        deletes user from database
+    */
     async deleteUser(id: number) {
         return await this.userRepository.delete(id);
     }
-
-
-
 }
