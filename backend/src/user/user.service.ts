@@ -1,4 +1,4 @@
-import {Injectable, NotFoundException} from '@nestjs/common';
+import {Injectable, NotAcceptableException, NotFoundException} from '@nestjs/common';
 import {InjectRepository} from "@nestjs/typeorm";
 import {users} from '../database/users'
 
@@ -13,6 +13,7 @@ import {AddUserDto} from "./dto/add-user-dto";
 import {UpdateUserDto} from "./dto/update-user-dto";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import {ChangeRoleDto} from "./dto/change-role-dto";
 @Injectable()
 export class UserService {
     constructor(
@@ -39,8 +40,8 @@ export class UserService {
 
 
 
-    async findAll(): Promise<users[]> {
-        return this.userRepository.find();
+    async getAll(): Promise<users[]> {
+        return await this.userRepository.find();
     }
 
 
@@ -52,31 +53,46 @@ export class UserService {
         return searchedUser;
     }
 
-
+/*
+    this function checks if the username and email are free.
+    If so it adds the user to the database. if not, the function returns null!
+ */
     async addUser(addUserDto: AddUserDto): Promise<users> {
         const username = addUserDto.username;
-        const Email = addUserDto.eMail;
+        const email = addUserDto.eMail;
 
-        try {
-            const newUser = new users();
-            newUser.username = username;
-            newUser.eMail = Email;
+        //check if user or email is already defined!
+        const checkUser = await this.userRepository.exists({ where: { username: username } });
+        const checkEmail = await this.userRepository.exists({ where: { eMail: email } });
+
+        if (checkUser) {
+            throw new NotAcceptableException('Username already taken');
+        }
+
+        if (checkEmail) {
+            throw new NotAcceptableException('Email already taken');
+        }
+
+            try {
+                const newUser = new users();
+                newUser.username = username;
+                newUser.eMail = email;
 
                 //no profile-picture selected => default profile-picture
                 const imagePath = path.join(__dirname, '..', '..', 'src', 'media', 'pictures', 'testavatar.jpg');
                 const imageBuffer = await fs.readFile(imagePath);
                 newUser.profilePicture = imageBuffer.toString("base64");
 
-            //finally save user in database
+                //finally save user in database
 
-            const savedUser= await this.userRepository.save(newUser) //Save user in user-table
-            const savedUserID = await this.userRepository.getId(savedUser);
-            await this.assignDefaultRole(savedUserID, this.platformID);
-            await this.addUserToPlatform(savedUserID,this.platformID);
-        } catch (error) {
-            console.error("failed to add User to database");
-            throw error;
-        }
+                const savedUser = await this.userRepository.save(newUser) //Save user in user-table
+                const savedUserID = await this.userRepository.getId(savedUser);
+                await this.assignDefaultRole(savedUserID, this.platformID);
+                await this.addUserToPlatform(savedUserID, this.platformID);
+            } catch (error) {
+                console.error("failed to add User to database");
+                throw error;
+            }
         return null;
     }
 
@@ -128,10 +144,26 @@ export class UserService {
         })
         return updatedUser;
     }
+
+
+
     /*
         deletes user from database
     */
     async deleteUser(id: number) {
         return await this.userRepository.delete(id);
+    }
+
+    async updateProfilePic(id:number, pic: string){
+        return await this.userRepository.update(id,{
+            profilePicture:pic,
+        })
+    }
+
+    async changeRole(changeRoleDto: ChangeRoleDto) {
+        const curRole = await this.userPlatformRolesRepository.findOne({where:{userID:changeRoleDto.userID}});
+        return await this.userPlatformRolesRepository.update(curRole,{
+            roleID: changeRoleDto.roleID
+        });
     }
 }

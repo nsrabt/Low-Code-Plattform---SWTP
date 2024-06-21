@@ -2,6 +2,7 @@ import {Body, Controller, Get, Param, ParseIntPipe, Put} from '@nestjs/common';
 import {UpdateUserDto} from "./dto/update-user-dto";
 import {UserService} from "./user.service";
 import {AddUserDto} from "./dto/add-user-dto";
+import {ChangeRoleDto} from "./dto/change-role-dto";
 
 @Controller('user')
 export class UserController {
@@ -42,6 +43,15 @@ export class UserController {
         return await this.userService.deleteUser(id);
     }
 
+    @Get()
+    async getAllUsers(){
+        return await this.userService.getAll();
+    }
+
+    @Put('changeRole')
+    async changeRole(@Body()changeRoleDto: ChangeRoleDto){
+        return await this.userService.changeRole(changeRoleDto)
+    }
 
 
 

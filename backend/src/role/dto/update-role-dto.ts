@@ -12,9 +12,6 @@ export class UpdateRoleDto {
     @IsBoolean({each: true})
     permissions: boolean[];
 
-    @IsString()
-    profilePicture: string;
-
     @IsBoolean()
     isDefault: boolean
 }

@@ -27,4 +27,10 @@ export class RoleController {
         return await this.roleService.updateRole(id, updateRoleDto)
     }
 
+    @Put('delete/:id')
+    async deleteRole(@Param('id', ParseIntPipe) id: number){
+        return await this.roleService.deleteRole(id)
+    }
+
+
 }

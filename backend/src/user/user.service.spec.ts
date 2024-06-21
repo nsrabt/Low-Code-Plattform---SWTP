@@ -41,21 +41,18 @@ describe('UserService', () => {
   });
 
   it('should insert a new user into the database', async () => {
-/*
-    let addUserDto = new AddUserDto();
-    addUserDto.eMail= 'usernew@example.com';
-    addUserDto.username = 'usernew';
-    const isInserted = await service.addUser(addUserDto);
-    expect(isInserted).toBe(true);
 
-    const users = await service.findAll();
+    let addUserDto = new AddUserDto();
+    addUserDto.eMail= 'usernew4@example.com';
+    addUserDto.username = 'usernew4';
+    const isInserted = await service.addUser(addUserDto);
+
+
     //expect(users).toHaveLength(1);
     expect(users[0].username).toBe('hans alda');
 
     expect(users[0].eMail).toBe('hans@example.com');
 
-*/
-    await service.deleteUser(4);
 
   });
 })

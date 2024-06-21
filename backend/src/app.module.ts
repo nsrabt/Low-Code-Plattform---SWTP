@@ -23,6 +23,8 @@ import { RoleService } from './role/role.service';
 import {AuthModule} from "./auth/auth.module";
 import {ServeStaticModule} from "@nestjs/serve-static";
 import { join } from 'path'; // New
+import { FillingDataController } from './filling_data/filling_data.controller';
+import { FillingDataService } from './filling_data/filling_data.service';
 
 
 
@@ -46,9 +48,9 @@ import { join } from 'path'; // New
     ServeStaticModule.forRoot({ // New
       rootPath: join(__dirname, '..', 'frontend/dist'), // New
     }), // New
-    TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles]),
+    TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles,filling_data]),
   ],
-  controllers: [AppController, WorkflowController, UserController, RoleController],
-  providers: [AppService, WorkflowService, UserService, RoleService],
+  controllers: [AppController, WorkflowController, UserController, RoleController, FillingDataController],
+  providers: [AppService, WorkflowService, UserService, RoleService, FillingDataService],
 })
 export class AppModule {}

@@ -24,9 +24,8 @@ export class RoleService {
         newRole.roleName = addRoleDto.roleName;
         newRole.isDefault = addRoleDto.isDefault;
         newRole.platformID = addRoleDto.platformID;
+        newRole.permissions = addRoleDto.permissions;
         return await this.rolesRepository.save(newRole);
-
-
     }
 
     async updateRole(id: number, updateRoleDto: UpdateRoleDto) {
@@ -38,6 +37,12 @@ export class RoleService {
             roleName: updateRoleDto.roleName,
             platformID: updateRoleDto.platformID,
             isDefault: updateRoleDto.isDefault,
+            permissions: updateRoleDto.permissions
         })
     }
+
+    async deleteRole(id: number) {
+        return await this.rolesRepository.delete(id);
+    }
+
 }
