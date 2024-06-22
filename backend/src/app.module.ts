@@ -42,15 +42,15 @@ import { FillingDataService } from './filling_data/filling_data.service';
       username: 'postgres',
       password: 'passwort',
       database: 'LowCode',
-      entities: [filling_data,platform,process,roles,step,step_fields,users,user_fillingdata,user_platform,user_platform_roles, user_process,user_process_step],
+      entities: [filling_data,platform,process,roles,step,step_fields,users,user_fillingdata,user_platform,user_platform_roles, user_process,user_process_step, process],
       synchronize: false,
     }),
     ServeStaticModule.forRoot({ // New
       rootPath: join(__dirname, '..', 'frontend/dist'), // New
     }), // New
-    TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles,filling_data]),
+    TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles,filling_data, process]),
   ],
-  controllers: [AppController, WorkflowController, UserController, RoleController, FillingDataController],
-  providers: [AppService, WorkflowService, UserService, RoleService, FillingDataService],
+  controllers: [AppController, WorkflowController, UserController, RoleController, FillingDataController, WorkflowController],
+  providers: [AppService, WorkflowService, UserService, RoleService, FillingDataService, WorkflowService],
 })
 export class AppModule {}

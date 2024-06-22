@@ -53,6 +53,5 @@ describe('UserService', () => {
 
     expect(users[0].eMail).toBe('hans@example.com');
 
-
   });
 })

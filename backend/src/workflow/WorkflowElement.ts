@@ -9,12 +9,10 @@ class WorkflowElement{
     access: roles[]
     stepNumber: number;
 
-
     constructor(id: number, stepNumber: number) {
         this.id = id;
         this.stepNumber = stepNumber;
         //get all the data from
-
 
     }
 
