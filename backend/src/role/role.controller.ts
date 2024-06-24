@@ -19,6 +19,17 @@ export class RoleController {
     async addRole(@Body() addRoleDto: AddRoleDto){
         return await this.roleService.addRole(addRoleDto);
     }
+
+
+    /*
+    Permissions:
+    0 => apply for processes
+    1 => check process overview
+    2 => use monitoring dashboard
+    3 => edit workflows
+    4 => create workflows
+    5 => edit platform-info
+     */
     @Put("update/:id")
     async updateRole(
         @Param('id', ParseIntPipe) id: number,
@@ -31,6 +42,5 @@ export class RoleController {
     async deleteRole(@Param('id', ParseIntPipe) id: number){
         return await this.roleService.deleteRole(id)
     }
-
 
 }

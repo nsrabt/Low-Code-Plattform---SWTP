@@ -10,5 +10,5 @@ export class user_fillingdata{
     @Column()
     pi_id: number;
     @Column()
-    value: number;
+    value: string;
 }

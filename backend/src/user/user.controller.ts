@@ -53,6 +53,8 @@ export class UserController {
         return await this.userService.changeRole(changeRoleDto)
     }
 
-
-
+    @Get('role/:id')
+    async getRole(@Param('id',ParseIntPipe) id:number){
+        return await this.userService.getRoleOfUser(id);
+    }
 }

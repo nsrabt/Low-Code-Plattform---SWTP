@@ -166,4 +166,11 @@ export class UserService {
             roleID: changeRoleDto.roleID
         });
     }
+
+
+    //getRole
+    async getRoleOfUser(id: number){
+        return await this.userPlatformRolesRepository.findOne({where:{userID: id}});
+    }
+
 }

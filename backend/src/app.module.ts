@@ -25,6 +25,8 @@ import {ServeStaticModule} from "@nestjs/serve-static";
 import { join } from 'path'; // New
 import { FillingDataController } from './filling_data/filling_data.controller';
 import { FillingDataService } from './filling_data/filling_data.service';
+import { UserFillingDataController } from './user_filling_data/user_filling_data.controller';
+import { UserFillingDataService } from './user_filling_data/user_filling_data.service';
 
 
 
@@ -50,7 +52,7 @@ import { FillingDataService } from './filling_data/filling_data.service';
     }), // New
     TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles,filling_data, process]),
   ],
-  controllers: [AppController, WorkflowController, UserController, RoleController, FillingDataController, WorkflowController],
-  providers: [AppService, WorkflowService, UserService, RoleService, FillingDataService, WorkflowService],
+  controllers: [AppController, WorkflowController, UserController, RoleController, FillingDataController, WorkflowController, UserFillingDataController],
+  providers: [AppService, WorkflowService, UserService, RoleService, FillingDataService, WorkflowService, UserFillingDataService],
 })
 export class AppModule {}

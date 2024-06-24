@@ -13,6 +13,8 @@ export class FillingDataService {
         private fillingDataRepo: Repository<filling_data>,
     ){}
 
+
+    //Filling Data Configuration
     async addFillingData(addFillingDataDto: AddFillingDataDto) {
 
         let fillingData = new filling_data();
@@ -52,4 +54,17 @@ export class FillingDataService {
             datatype: updateDataDto.datatype,
         });
     }
+
+
+
+
+
+    //User-Filling-Data Configuration
+
+
+
+
+
+
+
 }
