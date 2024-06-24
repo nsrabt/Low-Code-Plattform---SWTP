@@ -6,6 +6,7 @@ import home from "../Pages/home.vue"
 import profile from "../Pages/profile.vue"
 import login from "../Pages/login.vue"
 import workflow from "../Pages/Workflow.vue"
+import settings from "../Pages/settings.vue"
 
 
 
@@ -19,6 +20,11 @@ const routes = [
         name: 'Home',
         path: '/home',
         component:home
+    },
+    {
+        name: 'Settings',
+        path: '/settings',
+        component:settings
     },
     {
         name: 'Profile',
