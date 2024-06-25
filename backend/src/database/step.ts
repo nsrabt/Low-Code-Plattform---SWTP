@@ -11,4 +11,6 @@ export class step{
     @Column()
     title: string;
 
+    @Column({ type: 'bytea' })
+    data:Buffer;
 }

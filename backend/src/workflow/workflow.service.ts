@@ -2,13 +2,13 @@ import {Injectable, NotFoundException} from '@nestjs/common';
 import {process} from "../database/process";
 import {Repository} from "typeorm";
 import {InjectRepository} from "@nestjs/typeorm";
-import {UpdateRoleDto} from "../role/dto/update-role-dto";
-import { WorkflowElement } from './WorkflowElement';
+
 import {step} from "../database/step";
-import {UpdateDataDto} from "../filling_data/dto/UpdateDataDto";
+import {PDFDocument} from "pdf-lib";
+
 @Injectable()
 export class WorkflowService {
-    private elements: WorkflowElement[] = [];
+
 
 
     constructor(
@@ -18,22 +18,13 @@ export class WorkflowService {
         private stepRepository: Repository<step>,
     ) {}
 
-    async createWorkflow(title: string, roles: number[], description: string, platform_id: number, isOPen: boolean, steps: {title: string}[]): Promise<process> {
+    async createWorkflow(title: string, roles: number[], description: string, platform_id: number, isOPen: boolean): Promise<process> {
         const newWorkflow = new process();
         newWorkflow.title = title;
         newWorkflow.description = description;
         newWorkflow.platform_id = platform_id;
         newWorkflow.isOpen = isOPen;
-        const savedWorkflow = await this.processRepository.save(newWorkflow);
-
-        // Create and save the steps
-        for (const stepData of steps) {
-            const newStep = new step();
-            newStep.process_id = savedWorkflow.process_id;
-            newStep.title = stepData.title;
-            await this.stepRepository.save(newStep);
-        }
-        return savedWorkflow;
+        return await this.processRepository.save(newWorkflow);
     }
 
     async getWorkflows():Promise<process[]> {
@@ -62,10 +53,13 @@ export class WorkflowService {
     async getStepsByProcessId(process_id: number): Promise<step[]> {
         return await this.stepRepository.find({ where: { process_id } });
     }
-    async addStep(process_id: number, title: string): Promise<step> {
+
+    async addStep(process_id: number, title: string, document: PDFDocument): Promise<step> {
+        const pdfBytes = await document.save();
         const newStep = new step();
         newStep.process_id = process_id;
         newStep.title = title;
+        newStep.data = pdfBytes; //buffer.from(pdfBytes) has an Error
         return await this.stepRepository.save(newStep);
     }
     async deleteStep(id: number): Promise<void> {
@@ -78,9 +72,15 @@ export class WorkflowService {
         }
         return searchedStep;
     }
-    async updateSteps(step_id: number, title: string): Promise<step> {
+    async updateSteps(step_id: number, title: string, document: PDFDocument): Promise<step> {
         const stepToUpdate = await this.stepRepository.findOneBy({ step_id });
+        if (!stepToUpdate) {
+            throw new Error(`Step with id ${step_id} not found`);
+        }
+
+        const pdfBytes = await document.save();
         stepToUpdate.title = title;
+        stepToUpdate.data = pdfBytes;
         return await this.stepRepository.save(stepToUpdate);
     }
     async sortSteps(process_id: number, sortBy: keyof step): Promise<step[]> {
@@ -110,10 +110,5 @@ export class WorkflowService {
         const steps = await this.stepRepository.find({ where: { process_id } });
         return steps[steps.length - 1];
     }
-
-
-
-
-
 
 }
