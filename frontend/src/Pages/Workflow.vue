@@ -85,14 +85,14 @@
       Create Category</button>
     <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full" @click="createItem">+
       Create Item</button>
-
-
   </div>
+
 
 </template>
 
 <script lang="ts">
 import { ref } from 'vue'
+import axios from "axios";
 
 export default {
 
@@ -195,6 +195,38 @@ export default {
       if (currentItem.value) {
         updateItem(currentItem.value)
         closeEditModal()
+      }
+    }
+
+
+
+    async function createWorkflow(title, roles, description, platform_id, isOpen) {
+      try {
+        const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
+          title,
+          roles,
+          description,
+          platform_id,
+          isOpen
+        });
+        console.log('Workflow created:', response.data);
+      } catch (error) {
+        console.error('Error creating workflow:', error);
+      }
+    }
+
+    async function addStep(process_id, title, document, step_number, role_ids, pdfBytes) {
+      try {
+        const response = await axios.post('http://localhost:3000/workflow/addStep', {
+          process_id,
+          title,
+          document: pdfBytes,
+          step_number,
+          role_ids
+        });
+        console.log('Step added:', response.data);
+      } catch (error) {
+        console.error('Error adding step:', error);
       }
     }
 
