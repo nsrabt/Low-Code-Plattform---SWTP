@@ -50,7 +50,7 @@ import { UserFillingDataService } from './user_filling_data/user_filling_data.se
     ServeStaticModule.forRoot({ // New
       rootPath: join(__dirname, '..', 'frontend/dist'), // New
     }), // New
-    TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles,filling_data, process]),
+    TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles,filling_data, process,step]),
   ],
   controllers: [AppController, WorkflowController, UserController, RoleController, FillingDataController, WorkflowController, UserFillingDataController],
   providers: [AppService, WorkflowService, UserService, RoleService, FillingDataService, WorkflowService, UserFillingDataService],
