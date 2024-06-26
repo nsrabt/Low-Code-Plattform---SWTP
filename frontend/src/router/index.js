@@ -7,6 +7,7 @@ import profile from "../Pages/profile.vue"
 import login from "../Pages/login.vue"
 import workflow from "../Pages/Workflow.vue"
 import settings from "../Pages/settings.vue"
+import pdfworkflow from "../Pages/pdfworkflow.vue"
 
 
 
@@ -20,6 +21,11 @@ const routes = [
         name: 'Home',
         path: '/home',
         component:home
+    },
+    {
+        name: 'Pdfworkflow',
+        path: '/pdfworkflow',
+        component:pdfworkflow
     },
     {
         name: 'Settings',

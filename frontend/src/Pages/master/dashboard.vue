@@ -1,4 +1,5 @@
 <template>
+  
   <div class="w-screen h-screen flex">
     <!-- Side bar -->
     <div class="w-[400px] h-full bg-gray-200 text-white" v-show="showSide">
