@@ -92,8 +92,8 @@ export class AuthService {
         if(await this.authenticateUser(username, password)) {
             const addUser = await this.ldapSearch(username);
             if(addUser) {
-                await this.userService.addUser(addUser);
-                return addUser;
+                const user = await this.userService.addUser(addUser);
+                return user;
             }
         } else {
             return null;
