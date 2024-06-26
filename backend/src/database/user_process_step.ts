@@ -9,8 +9,6 @@ export class user_process_step{
     @Column()
     stepID:number;
     @Column()
-    stepNumber: number;
-    @Column()
     data:string;
     @Column()
     done: boolean;

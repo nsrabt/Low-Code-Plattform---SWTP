@@ -26,8 +26,8 @@ export class FillingDataService {
         return await this.fillingDataRepo.save(fillingData);
     }
 
-    async getAllFillingData() {
-        const allData =await this.fillingDataRepo.find();
+    async getAllFillingData(platformID:number) {
+        const allData =await this.fillingDataRepo.find({where:{platformid:platformID}});
         if(allData == null){
             throw new NotFoundException();
         }

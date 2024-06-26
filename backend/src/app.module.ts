@@ -27,6 +27,9 @@ import { FillingDataController } from './filling_data/filling_data.controller';
 import { FillingDataService } from './filling_data/filling_data.service';
 import { UserFillingDataController } from './user_filling_data/user_filling_data.controller';
 import { UserFillingDataService } from './user_filling_data/user_filling_data.service';
+import { ProcessService } from './process/process.service';
+import { ProcessController } from './process/process.controller';
+import {step_roles} from "./database/step-roles";
 
 
 
@@ -50,9 +53,9 @@ import { UserFillingDataService } from './user_filling_data/user_filling_data.se
     ServeStaticModule.forRoot({ // New
       rootPath: join(__dirname, '..', 'frontend/dist'), // New
     }), // New
-    TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles,filling_data, process,step]),
+    TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles,filling_data, process,step,process,platform,step_roles,step_fields, user_fillingdata, user_process, user_process_step]),
   ],
-  controllers: [AppController, WorkflowController, UserController, RoleController, FillingDataController, WorkflowController, UserFillingDataController],
-  providers: [AppService, WorkflowService, UserService, RoleService, FillingDataService, WorkflowService, UserFillingDataService],
+  controllers: [AppController, WorkflowController, UserController, RoleController, FillingDataController, WorkflowController, UserFillingDataController, ProcessController],
+  providers: [AppService, WorkflowService, UserService, RoleService, FillingDataService, WorkflowService, UserFillingDataService, ProcessService],
 })
 export class AppModule {}

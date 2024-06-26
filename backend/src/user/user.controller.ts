@@ -11,17 +11,17 @@ export class UserController {
     constructor(private userService: UserService) {
     }
     /*
-    The following function returns you the user Object by it's ID
+        The following function returns you the user Object by it's ID
      */
     @Get(':id')
     async getUserByID(@Param("id",ParseIntPipe)id:number){
         return await this.userService.getUserById(id);
     }
     /*
-    The following function only adds the user to the user table!
-    It will not be in any platform nor have any role
-    If returned User is null it failed.
-    if returned User is not null it was a success.
+        The following function only adds the user to the user table!
+        It will not be in any platform nor have any role
+        If returned User is null it failed.
+        if returned User is not null it was a success.
      */
     @Put('add')
     async addUser(@Body() addUserDto: AddUserDto) {
