@@ -11,6 +11,9 @@ export class step{
     @Column()
     title: string;
 
-    @Column({ type: 'bytea' })
-    data:Buffer;
+    @Column()
+    stepNumber: number;
+
+    @Column()
+    data:string;
 }

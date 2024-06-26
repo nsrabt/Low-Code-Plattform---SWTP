@@ -4,6 +4,7 @@ import {SetDataDto} from "./dto/SetDataDto";
 import {UpdateDataDto} from "../filling_data/dto/UpdateDataDto";
 import {UpdateUserDataDto} from "./dto/UpdateUserDataDto";
 import {GetSpecificDataDto} from "./dto/GetSpecificDataDto";
+import {GetAllFromUserDto} from "./dto/getAllFromUserDto";
 
 @Controller('user-filling-data')
 export class UserFillingDataController {
@@ -19,9 +20,9 @@ export class UserFillingDataController {
     async updateData(@Body() updateUserDataDto: UpdateUserDataDto){
         return await this.service.updateData(updateUserDataDto);
     }
-    @Get('getAll/:id')
-    async getAllData(@Param('id',ParseIntPipe) userID:number){
-        return await this.service.getAllFromUser(userID)
+    @Get('getAll')
+    async getAllData(@Body() getAll: GetAllFromUserDto){
+        return await this.service.getAllFromUser(getAll.userID, getAll.platformID);
     }
 
     @Get('getSpecificData')

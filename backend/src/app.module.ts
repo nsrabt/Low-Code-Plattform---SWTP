@@ -27,6 +27,8 @@ import { FillingDataController } from './filling_data/filling_data.controller';
 import { FillingDataService } from './filling_data/filling_data.service';
 import { UserFillingDataController } from './user_filling_data/user_filling_data.controller';
 import { UserFillingDataService } from './user_filling_data/user_filling_data.service';
+import { ProcessService } from './process/process.service';
+import { ProcessController } from './process/process.controller';
 
 
 
@@ -52,7 +54,7 @@ import { UserFillingDataService } from './user_filling_data/user_filling_data.se
     }), // New
     TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles,filling_data, process]),
   ],
-  controllers: [AppController, WorkflowController, UserController, RoleController, FillingDataController, WorkflowController, UserFillingDataController],
-  providers: [AppService, WorkflowService, UserService, RoleService, FillingDataService, WorkflowService, UserFillingDataService],
+  controllers: [AppController, WorkflowController, UserController, RoleController, FillingDataController, WorkflowController, UserFillingDataController, ProcessController],
+  providers: [AppService, WorkflowService, UserService, RoleService, FillingDataService, WorkflowService, UserFillingDataService, ProcessService],
 })
 export class AppModule {}

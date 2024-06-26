@@ -54,12 +54,13 @@ export class WorkflowService {
         return await this.stepRepository.find({ where: { process_id } });
     }
 
-    async addStep(process_id: number, title: string, document: PDFDocument): Promise<step> {
-        const pdfBytes = await document.save();
+    async addStep(process_id: number, title: string, document: string): Promise<step> {
+        //auch hier reicht string
+        //const pdfBytes = await document.save();
         const newStep = new step();
         newStep.process_id = process_id;
         newStep.title = title;
-        newStep.data = pdfBytes; //buffer.from(pdfBytes) has an Error
+        newStep.data = document; //buffer.from(pdfBytes) has an Error
         return await this.stepRepository.save(newStep);
     }
     async deleteStep(id: number): Promise<void> {
@@ -72,15 +73,16 @@ export class WorkflowService {
         }
         return searchedStep;
     }
-    async updateSteps(step_id: number, title: string, document: PDFDocument): Promise<step> {
+
+    async updateSteps(step_id: number, title: string, document: string): Promise<step> {
         const stepToUpdate = await this.stepRepository.findOneBy({ step_id });
         if (!stepToUpdate) {
             throw new Error(`Step with id ${step_id} not found`);
         }
-
-        const pdfBytes = await document.save();
+        //es ist hier nicht notwendig das document als pdf zu behandeln. es wird dann umgewandelt wenn gebraucht
+        //const pdfBytes = await document.save();
         stepToUpdate.title = title;
-        stepToUpdate.data = pdfBytes;
+        stepToUpdate.data = document;
         return await this.stepRepository.save(stepToUpdate);
     }
     async sortSteps(process_id: number, sortBy: keyof step): Promise<step[]> {

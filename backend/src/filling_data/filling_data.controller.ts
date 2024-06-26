@@ -14,9 +14,9 @@ export class FillingDataController {
     async addFillingData(@Body() addFillingDataDto:AddFillingDataDto){
         return await this.fillingDataService.addFillingData(addFillingDataDto);
     }
-    @Get()
-    async getAllFillingData(){
-        return await this.fillingDataService.getAllFillingData()
+    @Get('all/:id')
+    async getAllFillingData(@Param('id',ParseIntPipe) id:number){
+        return await this.fillingDataService.getAllFillingData(id);
     }
     @Get(':id')
     async getDataById(@Param('id',ParseIntPipe) id:number){

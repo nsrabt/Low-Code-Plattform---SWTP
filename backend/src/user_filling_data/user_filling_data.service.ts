@@ -11,8 +11,10 @@ import {GetSpecificDataDto} from "./dto/GetSpecificDataDto";
 export class UserFillingDataService {
 
     constructor(
-        @InjectRepository(filling_data)
+        @InjectRepository(user_fillingdata)
         private userFillingDataRepo: Repository<user_fillingdata>,
+        @InjectRepository(filling_data)
+        private fillingDataRepo: Repository<filling_data>,
     ) {
     }
 
@@ -47,12 +49,15 @@ export class UserFillingDataService {
         return await this.userFillingDataRepo.save(existingEntry);
     }
 
-    async getAllFromUser(userID: number) {
-        return await this.userFillingDataRepo.find({
-            where:{
-                userID: userID
-            }
-        });
+    async getAllFromUser(userID: number, platformID: number) {
+        const allPlatformData = await this.fillingDataRepo.find({where:{platformid:platformID}});
+
+        let allUserPlatformData: user_fillingdata[];
+
+        for(const data of allPlatformData) {
+            allUserPlatformData.push(await this.userFillingDataRepo.findOne({where:{pi_id : data.data_id, userID: userID}}));
+        }
+        return allUserPlatformData;
     }
 
     async getSpecificData(getSpecificDataDto: GetSpecificDataDto) {
