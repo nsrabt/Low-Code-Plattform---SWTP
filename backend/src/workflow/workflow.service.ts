@@ -4,6 +4,8 @@ import {Repository} from "typeorm";
 import {InjectRepository} from "@nestjs/typeorm";
 
 import {step} from "../database/step";
+import {step_roles} from "../database/step-roles";
+
 
 
 @Injectable()
@@ -16,9 +18,11 @@ export class WorkflowService {
         private processRepository: Repository<process>,
         @InjectRepository(step)
         private stepRepository: Repository<step>,
+        @InjectRepository(step_roles)
+        private stepRolesRepository: Repository<step_roles>,
     ) {}
 
-    async createWorkflow(title: string, roles: number[], description: string, platform_id: number, isOPen: boolean): Promise<process> {
+    async createWorkflow(title: string, description: string, platform_id: number, isOPen: boolean): Promise<process> {
         const newWorkflow = new process();
         newWorkflow.title = title;
         newWorkflow.description = description;
@@ -54,18 +58,30 @@ export class WorkflowService {
         return await this.stepRepository.find({ where: { process_id } });
     }
 
-    async addStep(process_id: number, title: string, document: string): Promise<step> {
+    async addStep(process_id: number, title: string, document: string, step_number: number, role_ids: number[]): Promise<step> {
         //auch hier reicht string
         //const pdfBytes = await document.save();
         const newStep = new step();
         newStep.process_id = process_id;
         newStep.title = title;
         newStep.data = document;
-        return await this.stepRepository.save(newStep);
+        newStep.stepNumber = step_number;
+
+        const savedStep = await this.stepRepository.save(newStep);
+
+        for (const role_id of role_ids) {
+            const stepRole = new step_roles();
+            stepRole.step_id = savedStep.step_id;
+            stepRole.role_id = role_id;
+            await this.stepRolesRepository.save(stepRole);
+        }
+        return savedStep;
     }
+
     async deleteStep(id: number): Promise<void> {
         await this.stepRepository.delete({ step_id: id});
     }
+
     async getStepById(id: number): Promise<step | null> {
         const searchedStep = await this.stepRepository.findOne({where: {step_id: id}});
         if(searchedStep == null) {
@@ -85,32 +101,10 @@ export class WorkflowService {
         stepToUpdate.data = document;
         return await this.stepRepository.save(stepToUpdate);
     }
-    async sortSteps(process_id: number, sortBy: keyof step): Promise<step[]> {
-        return await this.stepRepository.find({
-            where: { process_id },
-            order: { [sortBy]: 'ASC' },
-        });
-    }
+
     async getSteps(process_id: number): Promise<step[]> {
         return await this.stepRepository.find({ where: { process_id } });
     }
-    async getNextStep(process_id: number, currentStepNumber: number): Promise<step> {
-        const steps = await this.stepRepository.find({ where: { process_id } });
-        const currentIndex = steps.findIndex(step => step.step_id === currentStepNumber);
-        return steps[currentIndex + 1];
-    }
-    async getPreviousStep(process_id: number, currentStepNumber: number): Promise<step> {
-        const steps = await this.stepRepository.find({ where: { process_id } });
-        const currentIndex = steps.findIndex(step => step.step_id === currentStepNumber);
-        return steps[currentIndex - 1];
-    }
-    async getFirstStep(process_id: number): Promise<step> {
-        const steps = await this.stepRepository.find({ where: { process_id } });
-        return steps[0];
-    }
-    async getLastStep(process_id: number): Promise<step> {
-        const steps = await this.stepRepository.find({ where: { process_id } });
-        return steps[steps.length - 1];
-    }
+
 
 }

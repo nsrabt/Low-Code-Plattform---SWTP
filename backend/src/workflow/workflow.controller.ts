@@ -8,11 +8,13 @@ export class WorkflowController {
     constructor(private readonly workflowService: WorkflowService) {}
     @Post('createWorkflow')
     async createWorkflow(@Body() workflowDto: WorkflowDto) {
-        //return this.workflowService.createWorkflow(workflowDto.title);
+        return this.workflowService.createWorkflow(workflowDto.title, workflowDto.description,
+            workflowDto.platform_id, workflowDto.isOPen);
     }
 
-    @Post('createStep')
-    async createStep(@Body() stepDto: StepDto) {
-        //return this.workflowService.addStep(stepDto);
+    @Post('addStep')
+    async addStep(@Body() stepDto: StepDto) {
+        return this.workflowService.addStep(stepDto.process_id, stepDto.title,
+            stepDto.document, stepDto.step_number, stepDto.role_ids);
     }
 }

@@ -1,12 +1,17 @@
-import {IsArray, IsDefined, IsNumber, IsString} from "class-validator";
+import {IsArray, IsBoolean, IsDefined, IsNumber, IsString} from "class-validator";
 
 export class WorkflowDto {
     @IsNumber()
-    process_id: number;
+    platform_id: number;
+
     @IsString()
     title: string;
 
-    @IsArray()
-    @IsDefined()
-    document: Uint8Array;
+    @IsString()
+    description: string;
+
+    @IsBoolean()
+    isOPen: boolean;
+
+
 }
