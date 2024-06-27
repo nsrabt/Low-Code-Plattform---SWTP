@@ -347,6 +347,7 @@
 </template>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+ /*
     fetch('https://restcountries.com/v3.1/all')
         .then(response => response.json())
         .then(data => {
@@ -358,7 +359,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 select.appendChild(option);
             });
         })
-        .catch(error => console.error('Error fetching countries:', error));
+        .catch(error => console.error('Error fetching countries:', error))
+
+
+
+  */
 });
     export default {
         data() {
@@ -366,6 +371,8 @@ document.addEventListener('DOMContentLoaded', function () {
         showDropDown: false,
     showSide: true
     }
+
+
   },
     methods: {
         // hide show side bar

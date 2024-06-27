@@ -7,13 +7,13 @@ export class StepDto {
     @IsString()
     title: string;
 
-    @IsString
+    @IsString()
     document: string;
 
-    @IsNumber
+    @IsNumber()
     step_number: number;
 
-    @IsArray
+    @IsArray()
     role_ids: number[];
 
 }

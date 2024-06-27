@@ -172,7 +172,8 @@ export default {
 
         // Hier kannst du die Antwort des Servers verarbeiten
         const user = response.data;
-        console.log('Received user from frontend:', user);
+
+
         // Hier könntest du die Weiterleitung zum Dashboard implementieren
         if (user) {
           // Beispiel: Weiterleitung zur Dashboard-Seite
