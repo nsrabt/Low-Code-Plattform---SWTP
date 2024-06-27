@@ -56,38 +56,60 @@
       </div>
     </div>
   </nav>
+  <div>
+    <div v-for="(workflow, workflowIndex) in workflows" :key="workflowIndex" class="workflow-container">
+      <h2>Workflow {{ workflowIndex + 1 }}</h2>
+      <div class="categories-container">
+        <div v-for="category in workflow.categories" :key="category.id"
+          @drop="onDrop($event, category.id, workflowIndex)" class="droppable category" @dragover.prevent
+          @dragenter.prevent>
+          <div v-for="item in workflow.items.filter((x) => x.categoryId === category.id)" :key="item.id"
+            @dragstart="onDragStart($event, item, workflowIndex)" class="draggable rounded-xl" draggable="true">
+            <input v-model="item.title" @blur="updateItem(item, workflowIndex)" class="item-title-input" />
+            <button class="edit-button" @click="openEditModal(item, workflowIndex)">Bearbeiten</button>
+          </div>
+        </div>
+      </div>
+      <div class="controls rounded-xl bg-white border-gray-200 dark:bg-white dark:border-gray-500">
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          @click="createItem(workflowIndex)">Schritt hinzufügen</button>
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          @click="createCategory(workflowIndex)"> Feld hinzufügen </button>
 
-  <div class="categories-container">
-    <div v-for="category in categories" :key="category.id" @drop="onDrop($event, category.id)"
-      class="droppable category" @dragover.prevent @dragenter.prevent>
-      <div v-for="item in items.filter((x) => x.categoryId === category.id)" :key="item.id"
-        @dragstart="onDragStart($event, item)" class="draggable rounded-xl" draggable="true">
-        <input v-model="item.title" @blur="updateItem(item)" class="item-title-input" />
-        <button class="edit-button" @click="openEditModal(item)">Edit</button>
       </div>
     </div>
-  </div>
 
-  <div v-if="isEditModalOpen" class="modal">
-    <div class="modal-content">
-      <h3>Edit Item</h3>
-      <label for="item-title">Title:</label>
-      <input id="item-title" v-model="currentItem.title" />
-      <!-- Add more fields as needed -->
+    <div v-if="isEditModalOpen" class="modal">
+      <div class="modal-content">
+        <h3>Schritt bearbeiten</h3>
+        <label for="item-title">Name: </label>
+        <input id="item-title" v-model="currentItem.title" />
+
+        <label for="item-category">Feld ID: </label>
+        <input id="item-category" v-model="currentItem.categoryId" />
+
+        <label for="item-pdf">PDF Link:</label>
+        <input id="item-pdf" type="file" @change="handleFileUpload" />
+
+        <label for="item-role">Editable By:</label>
+        <select id="item-role" v-model="currentItem.editableBy">
+          <option value="student">Student</option>
+          <option value="professor">Professor</option>
+          <option value="admin">Admin</option>
+        </select>
+
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          @click="saveItem">Save</button>
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          @click="closeEditModal">Cancel</button>
+      </div>
+    </div>
+
+    <div class="controls rounded-xl bg-white border-gray-200 dark:bg-white dark:border-gray-500">
       <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-        @click="saveItem">Save</button>
-      <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-        @click="closeEditModal">Cancel</button>
+        @click="createWorkflow">Workflow hinzufügen</button>
     </div>
   </div>
-  <div class="controls rounded-xl bg-white border-gray-200 dark:bg-white dark:border-gray-500">
-    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full" @click="createCategory"> +
-      Create Category</button>
-    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full" @click="createItem">+
-      Create Item</button>
-  </div>
-
-
 </template>
 
 <script lang="ts">
@@ -95,112 +117,129 @@ import { ref } from 'vue'
 import axios from "axios";
 
 export default {
-
   name: 'App',
   setup() {
-    const items = ref([
+    const workflows = ref([
       {
         id: 0,
-        title: 'Audi',
-        categoryId: 0
-      },
-      {
-        id: 1,
-        title: 'BMW',
-        categoryId: 0
-      },
-      {
-        id: 2,
-        title: 'Cat',
-        categoryId: 1
+        categories: [
+          { id: 0, title: 'Category 1' },
+          { id: 1, title: 'Category 2' }
+        ],
+        items: [
+          { id: 0, title: 'Schritt 1', categoryId: 0, pdfLink: '', editableBy: 'student', workflowId: 0 },
+          { id: 1, title: 'Schritt 2', categoryId: 1, pdfLink: '', editableBy: 'admin', workflowId: 0 }
+        ]
       }
-    ])
-    const categories = ref([
-      {
-        id: 0,
-        title: 'Test'
-      },
-      {
-        id: 1,
-        title: 'Test'
-      }
-    ])
+    ]);
 
-    const isEditModalOpen = ref(false)
-    const currentItem = ref(null)
+    const isEditModalOpen = ref(false);
+    const currentItem = ref(null);
+    const currentWorkflowIndex = ref(null);
 
-    // Adding state management for sidebar and dropdown visibility
-    const showDropDown = ref(false)
-    const showSide = ref(true)
+    const showDropDown = ref(false);
+    const showSide = ref(true);
 
-    // Function to toggle the sidebar visibility
     function toggleSideBar() {
-      showSide.value = !showSide.value
+      showSide.value = !showSide.value;
     }
 
-    // Function to toggle the dropdown visibility
     function toggleDrop() {
-      showDropDown.value = !showDropDown.value
+      showDropDown.value = !showDropDown.value;
     }
 
-    function createCategory() {
-      const newId = categories.value.length
-      categories.value.push({
+    function createWorkflow() {
+      const newWorkflowId = workflows.value.length;
+      workflows.value.push({
+        id: newWorkflowId,
+        categories: [
+          { id: 0, title: `Category 1` },
+          { id: 1, title: `Category 2` }
+        ],
+        items: []
+      });
+    }
+
+    function createCategory(workflowIndex) {
+      const newId = workflows.value[workflowIndex].categories.length;
+      workflows.value[workflowIndex].categories.push({
         id: newId,
         title: `Category ${newId + 1}`
-      })
+      });
     }
 
-    function createItem() {
-      const newId = items.value.length
-      items.value.push({
+    function createItem(workflowIndex) {
+      const newId = workflows.value[workflowIndex].items.length > 0
+        ? Math.max(...workflows.value[workflowIndex].items.map(item => item.id)) + 1
+        : 0;
+      workflows.value[workflowIndex].items.push({
         id: newId,
-        title: `Item ${newId + 1}`,
-        categoryId: 0
-      })
+        title: `Schritt ${newId + 1}`,
+        categoryId: 0,
+        pdfLink: '',
+        editableBy: 'student',
+        workflowId: workflowIndex
+      });
     }
 
-    function updateItem(updatedItem) {
-      const index = items.value.findIndex(item => item.id === updatedItem.id)
+    function updateItem(updatedItem, workflowIndex) {
+      const index = workflows.value[workflowIndex].items.findIndex(item => item.id === updatedItem.id);
       if (index !== -1) {
-        items.value[index] = { ...updatedItem }
+        workflows.value[workflowIndex].items[index] = { ...updatedItem };
       }
     }
 
-    function onDragStart(e: DragEvent, item) {
-      e.dataTransfer.dropEffect = 'move'
-      e.dataTransfer.effectAllowed = 'move'
-      e.dataTransfer.setData('itemId', item.id.toString())
+    function onDragStart(e: DragEvent, item, workflowIndex) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('itemId', item.id.toString());
+      e.dataTransfer.setData('workflowId', workflowIndex.toString());
     }
 
-    function onDrop(e: DragEvent, categoryId) {
-      const itemId = parseInt(e.dataTransfer.getData('itemId'))
-      items.value = items.value.map((x) => {
-        if (x.id == itemId) x.categoryId = categoryId
-        return x
-      })
+    function onDrop(e: DragEvent, categoryId, workflowIndex) {
+      const itemId = parseInt(e.dataTransfer.getData('itemId'));
+      const sourceWorkflowIndex = parseInt(e.dataTransfer.getData('workflowId'));
+
+      if (sourceWorkflowIndex !== workflowIndex) {
+        return; // Prevent moving items between different workflows
+      }
+
+      const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.id === itemId);
+      if (itemIndex !== -1) {
+        workflows.value[workflowIndex].items[itemIndex].categoryId = categoryId;
+      }
     }
 
-    function openEditModal(item) {
-      currentItem.value = { ...item }
-      isEditModalOpen.value = true
+    function openEditModal(item, workflowIndex) {
+      currentItem.value = { ...item };
+      currentWorkflowIndex.value = workflowIndex;
+      isEditModalOpen.value = true;
     }
 
     function closeEditModal() {
-      isEditModalOpen.value = false
-      currentItem.value = null
+      isEditModalOpen.value = false;
+      currentItem.value = null;
+      currentWorkflowIndex.value = null;
     }
 
     function saveItem() {
-      if (currentItem.value) {
-        updateItem(currentItem.value)
-        closeEditModal()
+      if (currentItem.value && currentWorkflowIndex.value !== null) {
+        updateItem(currentItem.value, currentWorkflowIndex.value);
+        closeEditModal();
       }
     }
 
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          currentItem.value.pdfLink = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
 
-
-    async function createWorkflow(title, roles, description, platform_id, isOpen) {
+    async function createWorkflowAPI(title, roles, description, platform_id, isOpen) {
       try {
         const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
           title,
@@ -215,7 +254,7 @@ export default {
       }
     }
 
-    async function addStep(process_id, title, document, step_number, role_ids, pdfBytes) {
+    async function addStepAPI(process_id, title, document, step_number, role_ids, pdfBytes) {
       try {
         const response = await axios.post('http://localhost:3000/workflow/addStep', {
           process_id,
@@ -230,16 +269,16 @@ export default {
       }
     }
 
-    // Exposing state and methods to the template
     return {
-      items,
-      categories,
+      workflows,
       isEditModalOpen,
       currentItem,
+      currentWorkflowIndex,
       showDropDown,
       showSide,
       onDragStart,
       onDrop,
+      createWorkflow,
       createCategory,
       createItem,
       updateItem,
@@ -247,104 +286,107 @@ export default {
       closeEditModal,
       saveItem,
       toggleSideBar,
-      toggleDrop
+      toggleDrop,
+      handleFileUpload
     }
   }
 }
-
 </script>
 
 
-<style scoped>
-.controls {
-  margin: 20px;
-  display: flex;
-  gap: 10px;
-}
+  <style scoped>
+    .controls {
+      margin: 20px;
+      display: flex;
+      gap: 10px;
+    }
 
-.categories-container {
-  display: flex;
-  flex-direction: row;
-  gap: 10px; /* Adjust the gap between categories as needed */
-}
+    .categories-container {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      /* Adjust the gap between categories as needed */
+    }
 
-.droppable {
-  padding: 15px;
-  background: #2c3e50;
-  margin-bottom: 10px;
-  flex: 1; /* Adjust this to control the width of each category */
-}
+    .droppable {
+      padding: 15px;
+      background: #2c3e50;
+      margin-bottom: 10px;
+      flex: 1;
+      /* Adjust this to control the width of each category */
+    }
 
-.droppable h4 {
-  display: none; /* Hide category titles */
-}
+    .droppable h4 {
+      display: none;
+      /* Hide category titles */
+    }
 
-.draggable {
-  background: white;
-  padding: 5px;
-  margin-bottom: 5px;
-  display: flex;
-  align-items: center;
-}
+    .draggable {
+      background: white;
+      padding: 5px;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+    }
 
-.draggable input.item-title-input {
-  border: none;
-  background: transparent;
-  width: 100%;
-  padding: 5px;
-  margin-bottom: 5px;
-}
+    .draggable input.item-title-input {
+      border: none;
+      background: transparent;
+      width: 100%;
+      padding: 5px;
+      margin-bottom: 5px;
+    }
 
-.draggable input.item-title-input:focus {
-  outline: none;
-  border-bottom: 1px solid #000;
-}
+    .draggable input.item-title-input:focus {
+      outline: none;
+      border-bottom: 1px solid #000;
+    }
 
-.edit-button {
-  margin-left: 10px;
-  background: #3490dc;
-  color: white;
-  border: none;
-  padding: 5px;
-  border-radius: 3px;
-  cursor: pointer;
-}
+    .edit-button {
+      margin-left: 10px;
+      background: #3490dc;
+      color: white;
+      border: none;
+      padding: 5px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
 
-.edit-button:hover {
-  background: #2779bd;
-}
+    .edit-button:hover {
+      background: #2779bd;
+    }
 
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-}
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.5);
+    }
 
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 5px;
-  width: 300px;
-}
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      width: 300px;
+    }
 
-.modal-content h3 {
-  margin-top: 0;
-}
+    .modal-content h3 {
+      margin-top: 0;
+    }
 
-.modal-content button {
-  margin-right: 10px;
-}
-</style>
+    .modal-content button {
+      margin-right: 10px;
+    }
+  </style>
 
 
 
-<!-- <template>
+  <!-- <template>
   <div>
     <nav class="bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700">
       <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
