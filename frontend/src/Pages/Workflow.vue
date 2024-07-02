@@ -136,6 +136,13 @@ import "vue-router/dist/vue-router";
   export default {
     name: 'App',
 
+    created() {
+      // Hier kannst du auf das $route-Objekt zugreifen
+      console.log('Aktuelle Route:', this.$route.name);
+      if (this.$route.name == "EditWorkflow") {
+        workflowID = this.$route.params.id;
+      }
+    },
 
     setup() {
       const workflows = ref([
@@ -289,16 +296,17 @@ import "vue-router/dist/vue-router";
         }
       }
 
-      async function createWorkflowAPI(title, roles, description, platform_id, isOpen) {
+      async function createWorkflowAPI(title, description, platform_id, isOpen) {
         try {
           const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
-            title,
-            roles,
-            description,
-            platform_id,
-            isOpen
+            title:title,
+            description:description,
+            isOpen: isOpen,
+            platform_id: platform_id
           });
-          console.log('Workflow created:', response.data);
+          console.log("respons.data.id",response.data.id);
+          workflowID = response.data.id;
+          console.log('Workflow created:', response.data.title);
         } catch (error) {
           console.error('Error creating workflow:', error);
         }
@@ -317,6 +325,24 @@ import "vue-router/dist/vue-router";
         } catch (error) {
           console.error('Error adding step:', error);
         }
+      }
+
+      async function getAllStepsAPI(processID) {
+        try {
+          const response = await axios.get(`http://localhost:3000/workflow/allSteps/${processID}`);
+          console.log('All steps:', response.data);
+        } catch (error) {
+          console.error('Error fetching all steps:', error);
+        }
+      }
+
+      if(workflowID) {
+        getAllStepsAPI(workflowID);
+        console.log("workflowID", workflowID);
+      } else {
+        createWorkflowAPI('Title', 'Description', 1, true);
+
+        console.log("workflowID", workflowID);
       }
 
       return {
@@ -346,15 +372,7 @@ import "vue-router/dist/vue-router";
         handleFileUpload
       };
     },
-    created() {
-      // Hier kannst du auf das $route-Objekt zugreifen
-      console.log('Aktuelle Route:', this.$route.name);
-      if (this.$route.name == "NewWorkflow") {
 
-      } else if (this.$route.name == "EditWorkflow") {
-        workflowID = this.$route.params.id;
-      }
-    }
   }
 </script>
 
