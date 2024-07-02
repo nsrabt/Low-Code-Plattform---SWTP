@@ -8,7 +8,7 @@ export class ProcessController {
 
     //startProcess
     /*
-        This method returns all step_fields that are not yet defined.
+        This method returns all fields that are not yet defined.
         This allows displaying the form for the missing input data.
      */
     @Put('check')

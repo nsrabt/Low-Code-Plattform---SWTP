@@ -1,11 +1,11 @@
 import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 
 @Entity()
-export class user_platform_roles{
+export class UserProcessRoles {
     @PrimaryGeneratedColumn()
-    upr_id: number;
+    id:number;
     @Column()
-    userID:number;
+    process_role_id:number;
     @Column()
-    roleID:number;
+    userID: number
 }

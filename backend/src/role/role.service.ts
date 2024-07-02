@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import {roles} from "../database/roles";
+import {roles} from "../database/workflow/roles";
 import {InjectRepository} from "@nestjs/typeorm";
-import {users} from "../database/users";
+import {users} from "../database/user & execution/users";
 import {Repository} from "typeorm";
-import {user_platform} from "../database/user-platform";
-import {user_platform_roles} from "../database/user-platform-roles";
+import {user_platform} from "../database/user & execution/user-platform";
+import {user_platform_roles} from "../database/user & execution/user-roles";
 import {AddRoleDto} from "./dto/add-role-dto";
 import {UpdateRoleDto} from "./dto/update-role-dto";
 
@@ -16,7 +16,7 @@ export class RoleService {
     ) {}
 
     async getRole(id: number) {
-        return await this.rolesRepository.findOne({where:{roleID:id}});
+        return await this.rolesRepository.findOne({where:{id:id}});
     }
 
     async addRole(addRoleDto: AddRoleDto) {

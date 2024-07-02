@@ -3,7 +3,7 @@ import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 @Entity()
 export class step{
     @PrimaryGeneratedColumn()
-    step_id: number;
+    id: number;
 
     @Column()
     process_id:number;

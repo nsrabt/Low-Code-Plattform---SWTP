@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import {SetDataDto} from "./dto/SetDataDto";
 import {InjectRepository} from "@nestjs/typeorm";
-import {filling_data} from "../database/filling_data";
+import {filling_data} from "../database/user & execution/filling_data";
 import {Repository} from "typeorm";
-import {user_fillingdata} from "../database/user-fillingdata";
+import {user_fillingdata} from "../database/user & execution/user-fillingdata";
 import {UpdateUserDataDto} from "./dto/UpdateUserDataDto";
 import {GetSpecificDataDto} from "./dto/GetSpecificDataDto";
 
@@ -55,7 +55,7 @@ export class UserFillingDataService {
         let allUserPlatformData: user_fillingdata[];
 
         for(const data of allPlatformData) {
-            allUserPlatformData.push(await this.userFillingDataRepo.findOne({where:{pi_id : data.data_id, userID: userID}}));
+            allUserPlatformData.push(await this.userFillingDataRepo.findOne({where:{pi_id : data.id, userID: userID}}));
         }
         return allUserPlatformData;
     }

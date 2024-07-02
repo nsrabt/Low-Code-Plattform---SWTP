@@ -1,6 +1,6 @@
 import {Injectable, NotFoundException} from '@nestjs/common';
 import {AddFillingDataDto} from "./dto/addFillingDataDto";
-import {filling_data} from "../database/filling_data";
+import {filling_data} from "../database/user & execution/filling_data";
 import {InjectRepository} from "@nestjs/typeorm";
 import {Repository} from "typeorm";
 import {UpdateDataDto} from "./dto/UpdateDataDto";
@@ -35,7 +35,7 @@ export class FillingDataService {
     }
 
     async getDataById(id: number) {
-         const foundData = await this.fillingDataRepo.findOne({where:{data_id :id}})
+         const foundData = await this.fillingDataRepo.findOne({where:{id :id}})
         if(foundData==null){
             throw new NotFoundException();
         }

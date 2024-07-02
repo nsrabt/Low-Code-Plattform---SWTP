@@ -1,14 +1,14 @@
 import {Injectable, NotAcceptableException, NotFoundException} from '@nestjs/common';
 import {InjectRepository} from "@nestjs/typeorm";
-import {users} from '../database/users'
+import {users} from '../database/user & execution/users'
 
 import {Repository} from "typeorm";
 import { promises as fs } from 'fs';
 import * as path from "node:path";
-import {user_platform} from "../database/user-platform";
-import {user_platform_roles} from "../database/user-platform-roles";
+import {user_platform} from "../database/user & execution/user-platform";
+import {user_platform_roles} from "../database/user & execution/user-roles";
 import {timestamp} from "rxjs";
-import {roles} from "../database/roles";
+import {roles} from "../database/workflow/roles";
 import {AddUserDto} from "./dto/add-user-dto";
 import {UpdateUserDto} from "./dto/update-user-dto";
 import { fileURLToPath } from 'url';
@@ -118,9 +118,9 @@ export class UserService {
                 },
             });
 
-            defaultRole.roleID = await this.rolesRepository.getId(defaultRole);
+            defaultRole.id = await this.rolesRepository.getId(defaultRole);
             const userPlatformRole = new user_platform_roles();
-            userPlatformRole.roleID = defaultRole.roleID;
+            userPlatformRole.roleID = defaultRole.id;
             userPlatformRole.userID = userID;
             const savedUserPlatformRole = await this.userPlatformRolesRepository.save(userPlatformRole);
 
@@ -173,4 +173,11 @@ export class UserService {
         return await this.userPlatformRolesRepository.findOne({where:{userID: id}});
     }
 
+    async getUserOfRole(roleID: number) {
+        const userRoles =  await this.userPlatformRolesRepository.find({where:{roleID:roleID, platformID:1}});
+        let users:users[];
+        for(const ur of userRoles){
+            users.push()
+        }
+    }
 }

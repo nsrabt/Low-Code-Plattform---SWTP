@@ -1,15 +1,16 @@
 import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 
 @Entity()
-export class step_fields{
+export class user_step {
     @PrimaryGeneratedColumn()
-    step_field_id: number;
+    id: number;
+    @Column()
+    up_id:number;
     @Column()
     stepID:number;
     @Column()
-    data: string;
+    data:string;
     @Column()
-    dataID: number;
-    @Column()
-    type: string;
+    done: boolean;
+
 }

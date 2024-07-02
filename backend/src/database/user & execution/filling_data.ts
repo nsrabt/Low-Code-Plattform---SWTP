@@ -3,7 +3,7 @@ import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 @Entity()
 export class filling_data{
     @PrimaryGeneratedColumn()
-    data_id: number;
+    id: number;
 
     @Column()
     platformid:number;

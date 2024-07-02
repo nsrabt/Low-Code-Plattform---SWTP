@@ -5,12 +5,13 @@ import {step} from "./step";
 @Entity()
 export class step_roles{
     @PrimaryGeneratedColumn()
-    step_role_id:number;
+    id:number;
 
-    @ManyToMany(()=>step)
+    @Column()
     step_id: number;
 
     @Column()
-    role_id: number;
+    process_role_id: number;
+
 
 }

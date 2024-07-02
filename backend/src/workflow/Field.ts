@@ -1,5 +1,5 @@
 import {PDFField} from 'pdf-lib'
-import { roles } from "../database/roles";
+import { roles } from "../database/workflow/roles";
 export class Field{
     get fieldType(): string {
         return this._fieldType;

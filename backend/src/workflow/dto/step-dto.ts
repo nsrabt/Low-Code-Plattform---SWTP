@@ -2,7 +2,7 @@ import {IsArray, IsBoolean, IsNumber, IsString} from "class-validator";
 
 export class StepDto {
     @IsNumber()
-    process_id: number;
+    id: number;
 
     @IsString()
     title: string;

@@ -4,7 +4,7 @@ import {Timestamp} from "rxjs";
 @Entity()
 export class user_platform{
     @PrimaryGeneratedColumn()
-    user_platform_id: number;
+    id: number;
     @Column()
     userID: number;
 

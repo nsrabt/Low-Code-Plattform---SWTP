@@ -1,16 +1,14 @@
 import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 
 @Entity()
-export class user_process_step{
+export class user_fillingdata{
     @PrimaryGeneratedColumn()
-    ups_id: number;
+    id: number;
     @Column()
-    up_id:number;
+    userID: number;
+    //filling data id
     @Column()
-    stepID:number;
+    pi_id: number;
     @Column()
-    data:string;
-    @Column()
-    done: boolean;
-
+    value: string;
 }

@@ -1,10 +1,14 @@
 import {Injectable, NotFoundException} from '@nestjs/common';
-import {process} from "../database/process";
+import {process} from "../database/workflow/process";
 import {Repository} from "typeorm";
 import {InjectRepository} from "@nestjs/typeorm";
 
-import {step} from "../database/step";
-import {step_roles} from "../database/step-roles";
+import {step} from "../database/workflow/step";
+import {step_roles} from "../database/workflow/step-roles";
+import {process_roles} from "../database/workflow/process_roles";
+import {AddRoleDto} from "../role/dto/add-role-dto";
+import {AddProcessRoleDto} from "./dto/addProcessRoleDto";
+import {roles} from "../database/workflow/roles";
 
 
 
@@ -20,6 +24,11 @@ export class WorkflowService {
         private stepRepository: Repository<step>,
         @InjectRepository(step_roles)
         private stepRolesRepository: Repository<step_roles>,
+        @InjectRepository(roles)
+        private roleRepo: Repository<roles>,
+        @InjectRepository(process_roles)
+        private processRoleRepo: Repository<process_roles>,
+
     ) {}
 
     async createWorkflow(title: string, description: string, platform_id: number, isOPen: boolean): Promise<process> {
@@ -31,36 +40,48 @@ export class WorkflowService {
         return await this.processRepository.save(newWorkflow);
     }
 
-    async getWorkflows():Promise<process[]> {
+    async getAllWorkflows():Promise<process[]> {
         return await this.processRepository.find();
     }
-
-    async deleteWorkflow(id: number): Promise<void> {
-        await this.stepRepository.delete({ process_id: id });
-        await this.processRepository.delete(id);
+    async getAllOpenWorkflows(){
+        return await this.processRepository.find({where:{isOpen:true}});
+    }
+    async getAllClosedWorkflows(){
+        return await this.processRepository.find({where:{isOpen:false}});
     }
 
-    async getWorkflowById(id: number): Promise<process | null>  {
-        const searchedWorkflow = await this.processRepository.findOne({where: {process_id: id}});
+    async deleteWorkflow(id: number){
+        const stepDeleteResult = await this.stepRepository.delete({process_id: id});
+        if(stepDeleteResult){
+            const processDeleteResult =await this.processRepository.delete(id);
+            if(processDeleteResult){
+                return true;
+            }
+            else throw new Error("Couldn't delete the workflow");
+        }else{
+            throw new Error("Couldn't delete the workflow steps");
+        }
+    }
+
+    async getWorkflowById(id: number){
+        const searchedWorkflow = await this.processRepository.findOne({where: {id: id}});
         if(searchedWorkflow == null) {
             throw new NotFoundException();
         }
         return searchedWorkflow;
     }
 
-    async updateWorkflow(id: number, updateData: Partial<process>): Promise<process> {
+    async updateWorkflow(id: number, updateData: Partial<process>){
         await this.processRepository.update(id, updateData);
-        return this.processRepository.findOneBy({ process_id: id });
+        return this.processRepository.findOneBy({ id: id });
     }
 
 
-    async getStepsByProcessId(process_id: number): Promise<step[]> {
+    async getStepsByProcessId(process_id: number) {
         return await this.stepRepository.find({ where: { process_id } });
     }
 
-    async addStep(process_id: number, title: string, document: string, step_number: number, role_ids: number[]): Promise<step> {
-        //auch hier reicht string
-        //const pdfBytes = await document.save();
+    async addStep(process_id: number, title: string, document: string, step_number: number, role_ids: number[]) {
         const newStep = new step();
         newStep.process_id = process_id;
         newStep.title = title;
@@ -71,40 +92,63 @@ export class WorkflowService {
 
         for (const role_id of role_ids) {
             const stepRole = new step_roles();
-            stepRole.step_id = savedStep.step_id;
-            stepRole.role_id = role_id;
+            stepRole.step_id = savedStep.id;
+            stepRole.id = role_id;
             await this.stepRolesRepository.save(stepRole);
         }
         return savedStep;
     }
 
-    async deleteStep(id: number): Promise<void> {
-        await this.stepRepository.delete({ step_id: id});
+    async addRole(addProcessRoleDto: AddProcessRoleDto){
+        const role = new process_roles();
+        // if role exists
+        if(await this.roleRepo.find({where:{id: addProcessRoleDto.roleID}})){
+            role.roleID = addProcessRoleDto.roleID;
+        }
+        else{
+            throw new Error("Role with ID:"+addProcessRoleDto.roleID+" doesnt exist")
+        }
+        //if process exists
+        if(await this.processRepository.find({where:{id: addProcessRoleDto.roleID}})){
+            role.processID = addProcessRoleDto.processID;
+        }
+        else{
+            throw new Error("Process with ID: " + addProcessRoleDto.roleID + " doesnt exist!")
+        }
+        role.selectable = addProcessRoleDto.selectable;
+        role.process_role_name = addProcessRoleDto.process_role_name;
+
+        return await this.processRoleRepo.save(role);
     }
 
-    async getStepById(id: number): Promise<step | null> {
-        const searchedStep = await this.stepRepository.findOne({where: {step_id: id}});
+    async deleteStep(id: number){
+        await this.stepRepository.delete({ id: id});
+    }
+
+    async getStepById(id: number){
+        const searchedStep = await this.stepRepository.findOne({where: {id: id}});
         if(searchedStep == null) {
             throw new NotFoundException();
         }
         return searchedStep;
     }
 
-    async updateSteps(step_id: number, title: string, document: string): Promise<step> {
-        const stepToUpdate = await this.stepRepository.findOneBy({ step_id });
+    async updateStep(step_id: number, title: string, document: string){
+        const stepToUpdate = await this.stepRepository.findOneBy({ id: step_id });
         if (!stepToUpdate) {
             throw new Error(`Step with id ${step_id} not found`);
         }
-        //es ist hier nicht notwendig das document als pdf zu behandeln. es wird dann umgewandelt wenn gebraucht
-        //const pdfBytes = await document.save();
         stepToUpdate.title = title;
         stepToUpdate.data = document;
         return await this.stepRepository.save(stepToUpdate);
     }
 
-    async getSteps(process_id: number): Promise<step[]> {
+    async getSteps(process_id: number) {
         return await this.stepRepository.find({ where: { process_id } });
     }
 
 
+    async getAllRoles(id: number) {
+        return await this.processRoleRepo.find({where:{processID:id}});
+    }
 }

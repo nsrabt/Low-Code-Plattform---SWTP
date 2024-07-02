@@ -11,7 +11,6 @@ export class AuthController {
         const user = await this.authService.login(loginDto.username, loginDto.password);
 
         if (user) {
-            console.log("user auth token", user.id);
             return user;
         } else {
 

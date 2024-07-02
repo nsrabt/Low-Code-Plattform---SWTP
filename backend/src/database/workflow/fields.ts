@@ -1,14 +1,15 @@
 import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 
 @Entity()
-export class user_fillingdata{
+export class fields {
     @PrimaryGeneratedColumn()
-    upi_id: number;
+    id: number;
     @Column()
-    userID: number;
-    //filling data id
+    stepID:number;
+//    @Column()
+//    data: string;
     @Column()
-    pi_id: number;
+    dataID: number;
     @Column()
-    value: string;
+    type: string;
 }

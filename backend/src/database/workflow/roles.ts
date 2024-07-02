@@ -4,7 +4,7 @@ import {IsArray} from "class-validator";
 @Entity()
 export class roles{
     @PrimaryGeneratedColumn()
-    roleID: number;
+    id: number;
 
     @Column()
     roleName:string;

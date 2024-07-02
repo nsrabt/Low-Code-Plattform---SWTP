@@ -57,4 +57,9 @@ export class UserController {
     async getRole(@Param('id',ParseIntPipe) id:number){
         return await this.userService.getRoleOfUser(id);
     }
+
+    @Get('allUsersOfRole/:id')
+    async getUsersOfRole(@Param('id',ParseIntPipe) roleID:number){
+        return await this.userService.getUserOfRole(roleID);
+    }
 }

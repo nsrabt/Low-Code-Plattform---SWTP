@@ -3,6 +3,7 @@ import * as ldap from 'ldapjs';
 import {exec} from 'child_process';
 import {UserService} from "../user/user.service";
 import {AddUserDto} from "../user/dto/add-user-dto";
+import {users} from "../database/user & execution/users";
 
 @Injectable()
 export class AuthService {
@@ -47,22 +48,21 @@ export class AuthService {
     private parseLdapSearchResult(output: string): any {
         // Einfaches Parsen der LDAP-Suchergebnisse
         const lines = output.split('\n');
-        const user: any = {};
+        let user = new users();
         for (const line of lines) {
             const [key, value] = line.split(': ');
             if (key && value) {
-                if (key === 'mail') user.email = value;
-                if (key === 'givenName') user.firstName = value;
-                if (key === 'sn') user.lastName = value;
+                if (key === 'mail') user.eMail = value;
+                //first name, last name should be added to fielddata
             }
         }
-        if (user.email && user.firstName && user.lastName) {
+        if (user.eMail) {
             return user;
         }
         return null;
     }
 
-    private ldapSearch(username: string): Promise<AddUserDto | null> {
+    private ldapSearch(username: string): Promise<users> {
         return new Promise((resolve, reject) => {
             const command = `ldapsearch -H ldaps://ldap.fh-giessen.de:636 -x -b ou=Giessen,dc=fh-giessen-friedberg,dc=de "(uid=${username})"`;
             exec(command, (error, stdout, stderr) => {
@@ -76,11 +76,7 @@ export class AuthService {
                 }
                 const user = this.parseLdapSearchResult(stdout);
                 if (user) {
-                    const addUserDto: AddUserDto = {
-                        username: user.firstName +" "+ user.lastName,
-                        eMail: user.email,
-                    };
-                    resolve(addUserDto);
+                    resolve(user);
                 } else {
                     resolve(null);
                 }
@@ -91,12 +87,15 @@ export class AuthService {
     async login(username: string, password: string): Promise<any | null> {
         if(await this.authenticateUser(username, password)) {
             const addUser = await this.ldapSearch(username);
+            console.log(addUser.eMail + "  " + username)
+            const addUserDto: AddUserDto = {
+                eMail: addUser.eMail,
+                username: username
+            }
             if(addUser) {
-
                 //Ich habe etwas geändert. Nasser braucht das User Objekt
-                await this.userService.addUser(addUser);
+                await this.userService.addUser(addUserDto);
                 return addUser;
-
             }
         } else {
             console.log("not authenticated")
