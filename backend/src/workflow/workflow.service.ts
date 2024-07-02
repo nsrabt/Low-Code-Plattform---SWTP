@@ -151,4 +151,8 @@ export class WorkflowService {
     async getAllRoles(id: number) {
         return await this.processRoleRepo.find({where:{processID:id}});
     }
+
+    async getAllSteps(processID: number) {
+        return await this.stepRepository.find({where:{process_id: processID}});
+    }
 }

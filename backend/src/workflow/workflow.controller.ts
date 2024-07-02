@@ -15,8 +15,7 @@ export class WorkflowController {
 
     @Post('addStep')
     async addStep(@Body() stepDto: StepDto) {
-        return this.workflowService.addStep(stepDto.id, stepDto.title,
-            stepDto.document, stepDto.step_number, stepDto.role_ids);
+        return this.workflowService.addStep(stepDto.id, stepDto.title, stepDto.document, stepDto.step_number, stepDto.role_ids);
     }
 
     @Post('addRole')
@@ -26,13 +25,19 @@ export class WorkflowController {
 
     //get all roles
     @Get('allRoles/:id')
-    async getAllRoles(@Param('id', ParseIntPipe) id:number){
-        return await this.workflowService.getAllRoles(id);
+    async getAllRoles(@Param('id', ParseIntPipe) processID:number){
+        return await this.workflowService.getAllRoles(processID);
     }
     //get all steps
-
+    @Get('allSteps')
+    async getAllSteps(@Param('id', ParseIntPipe) processID:number){
+        return await this.workflowService.getAllSteps(processID);
+    }
     //get step by id
+    @Get('step/:id')
+    async getStepById(@Param('id',ParseIntPipe)stepID:number){
 
+    }
     //getworkflow
 
     //update workflow

@@ -43,9 +43,14 @@ const routes = [
         component:login
     },
     {
-        name: 'Workflow',
-        path: '/workflow',
-        component:workflow
+        name: 'NewWorkflow',
+        path: '/createWorkflow',
+        component:workflow,
+    },
+    {
+        name: 'EditWorkflow',
+        path: '/editWorkflow/:id',
+        component:workflow,
     }
 ];
 const router = Router();

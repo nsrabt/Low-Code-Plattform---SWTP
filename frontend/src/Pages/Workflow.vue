@@ -127,39 +127,42 @@
     </div>
   </template>
 
-
-  <script lang="ts">
+<script lang="ts">
 import { ref } from 'vue'
 import axios from "axios";
+import "vue-router/dist/vue-router";
+    export let workflowID: number;
 
   export default {
     name: 'App',
+
+
     setup() {
       const workflows = ref([
         {
           id: 0,
           categories: [
-            { id: 0, title: 'Category 1' },
-            { id: 1, title: 'Category 2' }
+            {id: 0, title: 'Category 1'},
+            {id: 1, title: 'Category 2'}
           ],
           items: [
-            { id: 0, title: 'Schritt 1', categoryId: 0, pdfLink: '', objects: [], workflowId: 0 },
-            { id: 1, title: 'Schritt 2', categoryId: 1, pdfLink: '', objects: [], workflowId: 0 }
+            {id: 0, title: 'Schritt 1', categoryId: 0, pdfLink: '', objects: [], workflowId: 0},
+            {id: 1, title: 'Schritt 2', categoryId: 1, pdfLink: '', objects: [], workflowId: 0}
           ]
         }
       ]);
 
       const objects = ref([
-        { id: 0, role: 'student' },
-        { id: 1, role: 'professor' },
-        { id: 2, role: 'admin' }
+        {id: 0, role: 'student'},
+        {id: 1, role: 'professor'},
+        {id: 2, role: 'admin'}
       ]);
 
       const isEditModalOpen = ref(false);
       const isObjectModalOpen = ref(false);
       const currentItem = ref(null);
       const currentWorkflowIndex = ref(null);
-      const newObject = ref({ role: '', id: '' });
+      const newObject = ref({role: '', id: ''});
 
       const showDropDown = ref(false);
       const showSide = ref(true);
@@ -182,8 +185,8 @@ import axios from "axios";
 
       function createItem(workflowIndex) {
         const newId = workflows.value[workflowIndex].items.length > 0
-          ? Math.max(...workflows.value[workflowIndex].items.map(item => item.id)) + 1
-          : 0;
+            ? Math.max(...workflows.value[workflowIndex].items.map(item => item.id)) + 1
+            : 0;
         workflows.value[workflowIndex].items.push({
           id: newId,
           title: `Schritt ${newId + 1}`,
@@ -197,7 +200,7 @@ import axios from "axios";
       function updateItem(updatedItem, workflowIndex) {
         const index = workflows.value[workflowIndex].items.findIndex(item => item.id === updatedItem.id);
         if (index !== -1) {
-          workflows.value[workflowIndex].items[index] = { ...updatedItem };
+          workflows.value[workflowIndex].items[index] = {...updatedItem};
         }
       }
 
@@ -220,7 +223,7 @@ import axios from "axios";
           const objectId = parseInt(e.dataTransfer.getData('objectId'));
           const object = objects.value.find(obj => obj.id === objectId);
           if (object) {
-            const newObject = { ...object };
+            const newObject = {...object};
             workflows.value[workflowIndex].items.forEach(item => {
               if (item.categoryId === categoryId) {
                 item.objects.push(newObject);
@@ -240,7 +243,7 @@ import axios from "axios";
       }
 
       function openEditModal(item, workflowIndex) {
-        currentItem.value = { ...item };
+        currentItem.value = {...item};
         currentWorkflowIndex.value = workflowIndex;
         isEditModalOpen.value = true;
       }
@@ -268,10 +271,10 @@ import axios from "axios";
 
       function addObject() {
         const newId = objects.value.length > 0
-          ? Math.max(...objects.value.map(obj => obj.id)) + 1
-          : 0;
-        objects.value.push({ ...newObject.value, id: newId });
-        newObject.value = { role: '', id: '' };
+            ? Math.max(...objects.value.map(obj => obj.id)) + 1
+            : 0;
+        objects.value.push({...newObject.value, id: newId});
+        newObject.value = {role: '', id: ''};
         closeObjectModal();
       }
 
@@ -342,8 +345,17 @@ import axios from "axios";
         toggleDrop,
         handleFileUpload
       };
+    },
+    created() {
+      // Hier kannst du auf das $route-Objekt zugreifen
+      console.log('Aktuelle Route:', this.$route.name);
+      if (this.$route.name == "NewWorkflow") {
+
+      } else if (this.$route.name == "EditWorkflow") {
+        workflowID = this.$route.params.id;
+      }
     }
-  };
+  }
 </script>
 
 
