@@ -143,11 +143,8 @@ import "vue-router/dist/vue-router";
         workflowID = this.$route.params.id;
       }
     },
+
     setup() {
-
-      if(workflowID)console.log(workflowID);
-      else console.log("no workflowID")
-
       const workflows = ref([
         {
           id: 0,
@@ -303,6 +300,8 @@ import "vue-router/dist/vue-router";
             isOpen: isOpen,
             platform_id: platform_id
           });
+          console.log("respons.data.id",response.data.id);
+          workflowID = response.data.id;
           console.log('Workflow created:', response.data.title);
         } catch (error) {
           console.error('Error creating workflow:', error);
@@ -322,6 +321,24 @@ import "vue-router/dist/vue-router";
         } catch (error) {
           console.error('Error adding step:', error);
         }
+      }
+
+      async function getAllStepsAPI(processID) {
+        try {
+          const response = await axios.get(`http://localhost:3000/workflow/allSteps/${processID}`);
+          console.log('All steps:', response.data);
+        } catch (error) {
+          console.error('Error fetching all steps:', error);
+        }
+      }
+
+      if(workflowID) {
+        getAllStepsAPI(workflowID);
+        console.log("workflowID", workflowID);
+      } else {
+        createWorkflowAPI('Title', 'Description', 1, true);
+
+        console.log("workflowID", workflowID);
       }
 
       return {
