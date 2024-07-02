@@ -3,6 +3,11 @@ import {WorkflowService} from "./workflow.service";
 import {CreateWorkflowDto} from "./dto/create-workflow-dto";
 import {StepDto} from "./dto/step-dto";
 import {AddProcessRoleDto} from "./dto/addProcessRoleDto";
+import {UpdateWorkflowDto} from "./dto/update-workflow-dto";
+import {UpdateStepDto} from "./dto/update-step-dto";
+import {UpdateProcessRoleDto} from "./dto/update-process-role-dto";
+import {ChangeOrderDto} from "./dto/change-order-dto";
+import {step} from "../database/workflow/step";
 
 @Controller('workflow')
 export class WorkflowController {
@@ -15,7 +20,7 @@ export class WorkflowController {
 
     @Post('addStep')
     async addStep(@Body() stepDto: StepDto) {
-        return this.workflowService.addStep(stepDto.id, stepDto.title, stepDto.document, stepDto.step_number, stepDto.role_ids);
+        return this.workflowService.addStep(stepDto.id, stepDto.title, stepDto.document, stepDto.step_number);
     }
 
     @Post('addRole')
@@ -36,25 +41,47 @@ export class WorkflowController {
     //get step by id
     @Get('step/:id')
     async getStepById(@Param('id',ParseIntPipe)stepID:number){
-
+        return await this.workflowService.getStepById(stepID);
     }
     //getworkflow
-
+    @Get('workflow/:id')
+    async getWorkflow(@Param('id',ParseIntPipe)workflowID:number){
+        return await this.workflowService.getWorkflowById(workflowID);
+    }
     //update workflow
-
+    @Post('updateWorkflow')
+    async updateWorkflow(@Body() updateWorkflowDto: UpdateWorkflowDto){
+        return await this.workflowService.updateWorkflow(updateWorkflowDto)
+    }
     //updateStep
-
-    //updateSteps
+    @Post('updateStep')
+    async updateStep(@Body()updateStepDto: UpdateStepDto){
+        return await this.workflowService.updateStep(updateStepDto)
+    }
 
     //updaterole
-
+    @Post('updateRole')
+    async updateRole(@Body() updateRoleDto: UpdateProcessRoleDto){
+        return await this.workflowService.updateRole(updateRoleDto);
+    }
     //deleteStep
+    @Post('deleteStep/:id')
+    async deleteStep(@Param('id', ParseIntPipe)stepID: number){
+        return await this.workflowService.deleteStep(stepID);
+    }
 
     //deleteWorkflow
+    @Post('deleteStep/:id')
+    async deleteWorkflow(@Param('id', ParseIntPipe)workflowID: number){
+        return await this.workflowService.deleteWorkflow(workflowID);
+    }
 
     //changeOrderOf
+    @Post('changeOrder')
+    async changeOrder(@Body()changeOrderDto: ChangeOrderDto){
+        return await this.workflowService.changeOrder(changeOrderDto);
+    }
 
-    //addUserTo process_role
 
 
 }

@@ -9,6 +9,10 @@ import {process_roles} from "../database/workflow/process_roles";
 import {AddRoleDto} from "../role/dto/add-role-dto";
 import {AddProcessRoleDto} from "./dto/addProcessRoleDto";
 import {roles} from "../database/workflow/roles";
+import {UpdateWorkflowDto} from "./dto/update-workflow-dto";
+import {UpdateStepDto} from "./dto/update-step-dto";
+import {UpdateProcessRoleDto} from "./dto/update-process-role-dto";
+import {ChangeOrderDto} from "./dto/change-order-dto";
 
 
 
@@ -31,12 +35,12 @@ export class WorkflowService {
 
     ) {}
 
-    async createWorkflow(title: string, description: string, platform_id: number, isOPen: boolean): Promise<process> {
+    async createWorkflow(title: string, description: string, platform_id: number, isOpen: boolean): Promise<process> {
         const newWorkflow = new process();
         newWorkflow.title = title;
         newWorkflow.description = description;
         newWorkflow.platform_id = platform_id;
-        newWorkflow.isOpen = isOPen;
+        newWorkflow.isOpen = isOpen;
         return await this.processRepository.save(newWorkflow);
     }
 
@@ -51,16 +55,12 @@ export class WorkflowService {
     }
 
     async deleteWorkflow(id: number){
+
         const stepDeleteResult = await this.stepRepository.delete({process_id: id});
-        if(stepDeleteResult){
-            const processDeleteResult =await this.processRepository.delete(id);
-            if(processDeleteResult){
-                return true;
-            }
-            else throw new Error("Couldn't delete the workflow");
-        }else{
-            throw new Error("Couldn't delete the workflow steps");
-        }
+        const processRolesDeleteResult = await this.processRoleRepo.delete({processID: id})
+        const processDeleteResult =await this.processRepository.delete(id);
+
+
     }
 
     async getWorkflowById(id: number){
@@ -71,9 +71,14 @@ export class WorkflowService {
         return searchedWorkflow;
     }
 
-    async updateWorkflow(id: number, updateData: Partial<process>){
-        await this.processRepository.update(id, updateData);
-        return this.processRepository.findOneBy({ id: id });
+    async updateWorkflow(updateWorkflowDto: UpdateWorkflowDto){
+        const updatedProcess = new process();
+            updatedProcess.isOpen= updateWorkflowDto.isOpen;
+            updatedProcess.id= updateWorkflowDto.processID;
+            updatedProcess.description= updateWorkflowDto.description;
+            updatedProcess.title= updateWorkflowDto.title;
+
+        return await this.processRepository.update(updateWorkflowDto.processID, updatedProcess);
     }
 
 
@@ -81,7 +86,7 @@ export class WorkflowService {
         return await this.stepRepository.find({ where: { process_id } });
     }
 
-    async addStep(process_id: number, title: string, document: string, step_number: number, role_ids: number[]) {
+    async addStep(process_id: number, title: string, document: string, step_number: number) {
         const newStep = new step();
         newStep.process_id = process_id;
         newStep.title = title;
@@ -90,12 +95,6 @@ export class WorkflowService {
 
         const savedStep = await this.stepRepository.save(newStep);
 
-        for (const role_id of role_ids) {
-            const stepRole = new step_roles();
-            stepRole.step_id = savedStep.id;
-            stepRole.id = role_id;
-            await this.stepRolesRepository.save(stepRole);
-        }
         return savedStep;
     }
 
@@ -122,7 +121,8 @@ export class WorkflowService {
     }
 
     async deleteStep(id: number){
-        await this.stepRepository.delete({ id: id});
+        await this.stepRolesRepository.delete({step_id: id})
+        return await this.stepRepository.delete({ id: id});
     }
 
     async getStepById(id: number){
@@ -133,13 +133,14 @@ export class WorkflowService {
         return searchedStep;
     }
 
-    async updateStep(step_id: number, title: string, document: string){
-        const stepToUpdate = await this.stepRepository.findOneBy({ id: step_id });
+    async updateStep(updateStepDto: UpdateStepDto){
+        const stepToUpdate = await this.stepRepository.findOneBy({ id: updateStepDto.id });
         if (!stepToUpdate) {
-            throw new Error(`Step with id ${step_id} not found`);
+            throw new Error(`Step with id ${updateStepDto.id} not found`);
         }
-        stepToUpdate.title = title;
-        stepToUpdate.data = document;
+        stepToUpdate.title = updateStepDto.title;
+        stepToUpdate.data = updateStepDto.data;
+        stepToUpdate.stepNumber = updateStepDto.stepNumber;
         return await this.stepRepository.save(stepToUpdate);
     }
 
@@ -154,5 +155,18 @@ export class WorkflowService {
 
     async getAllSteps(processID: number) {
         return await this.stepRepository.find({where:{process_id: processID}});
+    }
+
+    async updateRole(updateRoleDto: UpdateProcessRoleDto) {
+        const updatedRole = new process_roles();
+        updatedRole.selectable = updateRoleDto.selectable;
+        updatedRole.process_role_name = updateRoleDto.process_role_name;
+        return await this.processRoleRepo.update(updateRoleDto.roleID,updateRoleDto)
+    }
+
+    async changeOrder(changeOrderDto: ChangeOrderDto) {
+        const updatedStep = new step();
+        updatedStep.stepNumber = changeOrderDto.stepNumber;
+        return await this.stepRepository.update(changeOrderDto.stepID, updatedStep);
     }
 }

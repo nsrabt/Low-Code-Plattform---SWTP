@@ -136,18 +136,24 @@ import "vue-router/dist/vue-router";
   export default {
     name: 'App',
 
-
+    created() {
+      // Hier kannst du auf das $route-Objekt zugreifen
+      console.log('Aktuelle Route:', this.$route.name);
+      if (this.$route.name == "EditWorkflow") {
+        workflowID = this.$route.params.id;
+      }
+    },
     setup() {
+
+      if(workflowID)console.log(workflowID);
+      else console.log("no workflowID")
+
       const workflows = ref([
         {
           id: 0,
           categories: [
-            {id: 0, title: 'Category 1'},
-            {id: 1, title: 'Category 2'}
           ],
           items: [
-            {id: 0, title: 'Schritt 1', categoryId: 0, pdfLink: '', objects: [], workflowId: 0},
-            {id: 1, title: 'Schritt 2', categoryId: 1, pdfLink: '', objects: [], workflowId: 0}
           ]
         }
       ]);
@@ -289,16 +295,15 @@ import "vue-router/dist/vue-router";
         }
       }
 
-      async function createWorkflowAPI(title, roles, description, platform_id, isOpen) {
+      async function createWorkflowAPI(title, description, platform_id, isOpen) {
         try {
           const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
-            title,
-            roles,
-            description,
-            platform_id,
-            isOpen
+            title:title,
+            description:description,
+            isOpen: isOpen,
+            platform_id: platform_id
           });
-          console.log('Workflow created:', response.data);
+          console.log('Workflow created:', response.data.title);
         } catch (error) {
           console.error('Error creating workflow:', error);
         }
@@ -346,15 +351,7 @@ import "vue-router/dist/vue-router";
         handleFileUpload
       };
     },
-    created() {
-      // Hier kannst du auf das $route-Objekt zugreifen
-      console.log('Aktuelle Route:', this.$route.name);
-      if (this.$route.name == "NewWorkflow") {
 
-      } else if (this.$route.name == "EditWorkflow") {
-        workflowID = this.$route.params.id;
-      }
-    }
   }
 </script>
 

@@ -13,7 +13,4 @@ export class StepDto {
     @IsNumber()
     step_number: number;
 
-    @IsArray()
-    role_ids: number[];
-
 }

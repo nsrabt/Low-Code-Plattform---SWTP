@@ -13,5 +13,4 @@ export class CreateWorkflowDto {
     @IsBoolean()
     isOpen: boolean;
 
-
 }
