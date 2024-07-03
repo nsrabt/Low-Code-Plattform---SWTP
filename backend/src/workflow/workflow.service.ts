@@ -73,7 +73,7 @@ export class WorkflowService {
     }
 
     async updateWorkflow(updateWorkflowDto: UpdateWorkflowDto){
-        const updatedProcess = new process();
+        const updatedProcess = await this.processRepository.findOne({where:{id: updateWorkflowDto.processID}});
             updatedProcess.isOpen= updateWorkflowDto.isOpen;
             updatedProcess.id= updateWorkflowDto.processID;
             updatedProcess.description= updateWorkflowDto.description;

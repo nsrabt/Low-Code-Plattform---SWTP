@@ -38,6 +38,8 @@ export class UserController {
         return await this.userService.updateUser(id, updateUserDto);
     }
 
+
+
     @Put('delete/:id')
     async deleteUser(@Param('id',ParseIntPipe) id:number){
         return await this.userService.deleteUser(id);

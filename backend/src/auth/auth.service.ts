@@ -84,7 +84,7 @@ export class AuthService {
         });
     }
 
-    async login(username: string, password: string): Promise<any | null> {
+    async login(username: string, password: string) {
         if(await this.authenticateUser(username, password)) {
             const addUser = await this.ldapSearch(username);
             console.log(addUser.eMail + "  " + username)
@@ -94,7 +94,9 @@ export class AuthService {
             }
             if(addUser) {
                 //Ich habe etwas geändert. Nasser braucht das User Objekt
+                console.log("b")
                 await this.userService.addUser(addUserDto);
+                console.log("a")
                 return addUser;
             }
         } else {
