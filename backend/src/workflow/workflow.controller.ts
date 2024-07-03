@@ -7,6 +7,7 @@ import {UpdateWorkflowDto} from "./dto/update-workflow-dto";
 import {UpdateStepDto} from "./dto/update-step-dto";
 import {UpdateProcessRoleDto} from "./dto/update-process-role-dto";
 import {ChangeOrderDto} from "./dto/change-order-dto";
+import {AssignRoleDto} from './dto/assign-role-dto'
 
 @Controller('workflow')
 export class WorkflowController {
@@ -81,6 +82,15 @@ export class WorkflowController {
         return await this.workflowService.changeOrder(changeOrderDto);
     }
 
+    @Post('assignRole')
+    async assignRole(@Body()assignRoleDto: AssignRoleDto){
+        return await this.workflowService.assignRole(assignRoleDto)
+    }
 
-
+    @Post('deleteRole/:id')
+    async deleteRole(@Param('id',ParseIntPipe)roleID){
+        return await this.workflowService.deleteRole(roleID);
+    }
 }
+
+

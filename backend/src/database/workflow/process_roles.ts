@@ -21,11 +21,20 @@ export class process_roles{
     @Column()
     process_role_name: string
     /*
-    can the user chose who should take this role?
+    can the applicant chose who should take this role?
     for example. which prof is responsible for the student
 
     but the user shouldn't choose which assistant will work on this
+
+    so the roles who are not selectable will be filled manually.
+    the users with the needed roles will have it added to their process overview
+
      */
     @Column()
     selectable: boolean;
+    /*
+    The person that applies for the process always gets this role
+     */
+    @Column()
+    isApplicant: boolean;
 }

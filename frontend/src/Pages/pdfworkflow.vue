@@ -1,4 +1,6 @@
+
 <template>
+
     <nav class="bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700">
         <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
             <a href="#" class="flex items-center space-x-3 rtl:space-x-reverse">
@@ -85,7 +87,8 @@
         </aside>
         <div class="p-4 sm:ml-64">
             <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
-                <iframe id="pdf-viewer" class="h-screen w-full"></iframe>
+                <iframe id="pdf-viewer"></iframe>
+
             </div>
         </div>
     </div>
@@ -94,9 +97,15 @@
 <script>
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
+
+
 export default {
-    name: 'Home',
-    data() {
+
+
+  name: 'Home',
+
+
+  data() {
         return {
             items: [
                 { title: 'Word1', isEditing: false },
@@ -105,6 +114,7 @@ export default {
             pdfDoc: null,
             showDropDown: false,
             showSide: true
+
         };
     },
     mounted() {
@@ -118,22 +128,40 @@ export default {
                 if (!response.ok) throw new Error(`Failed to fetch: ${response.statusText}`);
                 const existingPdfBytes = await response.arrayBuffer();
                 this.pdfDoc = await PDFDocument.load(existingPdfBytes);
-                this.renderPdf();
+
+                await this.renderPdf()
+                const localPdfDoc = await PDFDocument.load(existingPdfBytes);
+                const pdfForms =  localPdfDoc.getForm()
+                const pdfFields = pdfForms.getFields();
+
+              for(const field of pdfFields){
+                  const widgets = field.acroField.getWidgets()
+                  for(const widget of widgets){
+                    const rectangle = widget.getRectangle();
+                    let x,y,width,height;
+                    x = rectangle.x;
+                    y = rectangle.y;
+                    width = rectangle.width;
+                    height = rectangle.height
+                    console.log(field.getName()+": \nx: "+x+"\ny_ "+y+"\nwidth: "+width+"\nheight: "+height);
+                  }
+                }
             } catch (error) {
                 console.error("Error loading PDF:", error);
             }
+
         },
         async renderPdf() {
             const pdfBytes = await this.pdfDoc.save();
             const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-            document.getElementById('pdf-viewer').src = URL.createObjectURL(blob);
+            document.getElementById('pdf-viewer').src = URL.createObjectURL(blob)+'#toolbar=0';
         },
         async onDrop(event) {
+
             const pdfViewer = document.getElementById('pdf-viewer');
             const rect = pdfViewer.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = rect.bottom - event.clientY;
-
             const page = this.pdfDoc.getPage(0);
             const font = await this.pdfDoc.embedFont(StandardFonts.Helvetica);
             const fontSize = 12;
@@ -149,14 +177,14 @@ export default {
                 color: rgb(0.95, 0.1, 0.1),
             });
 
-            this.renderPdf();
+            await this.renderPdf();
         },
         onDragStart(event, item) {
             event.dataTransfer.setData('text', item.title);
             event.dataTransfer.effectAllowed = 'move';
         },
         addItem() {
-            const newItem = { title: `Word${this.items.length + 1}`, isEditing: false };
+            const newItem = { title: `Word${this.items.length + 1}`, isEditing: false};
             this.items.push(newItem);
         },
         editItem(item) {
