@@ -155,7 +155,8 @@ export default {
           categories: [
           ],
           items: [
-          ]
+          ],
+          step_id: 0
         }
       ]);
 
@@ -236,7 +237,8 @@ export default {
             categoryId: 0,
             pdfLink: '',
             objects: [],
-            workflowId: workflowIndex
+            workflowId: workflowIndex,
+            step_id: response.data.id
           });
         } catch (error) {
           console.error('Error adding step:', error);
@@ -269,6 +271,9 @@ export default {
       e.dataTransfer.setData('objectId', object.id.toString());
     }
 
+      function countItemsInCategory(workflowIndex, categoryId) {
+        return workflows.value[workflowIndex].items.filter(item => item.categoryId === categoryId).length;
+      }
     function onDrop(e: DragEvent, categoryId, workflowIndex) {
       const itemId = parseInt(e.dataTransfer.getData('itemId'));
       const sourceWorkflowIndex = parseInt(e.dataTransfer.getData('workflowId'));
@@ -294,6 +299,14 @@ export default {
 
         const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.id === itemId);
         if (itemIndex !== -1) {
+          const oldStepNumber = workflows.value[workflowIndex].items[itemIndex].categoryId + 1;
+          const newStepNumber = categoryId + 1;
+          console.log("Verschieben von Kategorie", oldStepNumber, "nach", newStepNumber);
+          const stepId = workflows.value[workflowIndex].items[itemIndex].step_id;
+          //console.log("updateStepNumber", workflows);
+          if(newStepNumber !== oldStepNumber) {
+            changeStepOrder(stepId, newStepNumber);
+          }
           workflows.value[workflowIndex].items[itemIndex].categoryId = categoryId;
         }
       }
@@ -368,6 +381,20 @@ export default {
         reader.readAsDataURL(file);
       }
     }
+
+      async function changeStepOrder(stepId, stepNumber) {
+        try {
+          const response = await axios.post('http://localhost:3000/workflow/changeOrder', {
+            stepID: stepId,
+            stepNumber: stepNumber
+          });
+          console.log('Order changed:', response.data);
+          return response.data;
+        } catch (error) {
+          console.error('Error changing order:', error);
+          return null;
+        }
+      }
 
     async function createWorkflowAPI(title, description, platform_id, isOpen) {
       try {
