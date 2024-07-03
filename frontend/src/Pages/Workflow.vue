@@ -132,7 +132,7 @@
 
 
 <script lang="ts">
-import { ref } from 'vue';
+import {onMounted, ref} from 'vue';
 import axios from 'axios';
 import "vue-router/dist/vue-router";
 
@@ -174,6 +174,29 @@ export default {
     const showDropDown = ref(false);
     const showSide = ref(true);
 
+      async function loadWorkflowData() {
+        try {
+          if (!workflowID) {
+            const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
+              title: 'Title',
+              description: 'Description',
+              isOpen: true,
+              platform_id: 1
+            });
+            workflowID = response.data.id;
+            console.log('Workflow created:', response.data.title);
+            console.log('Workflow ID:', response.data.id);
+          } else {
+            await getAllStepsAPI(workflowID);
+          }
+        } catch (error) {
+          console.error('Error creating or loading workflow:', error);
+        }
+      }
+      onMounted(() => {
+        loadWorkflowData();
+      });
+
     function toggleSideBar() {
       showSide.value = !showSide.value;
     }
@@ -194,19 +217,32 @@ export default {
       })
     }
 
-    function createItem(workflowIndex) {
-      const newId = workflows.value[workflowIndex].items.length > 0
-        ? Math.max(...workflows.value[workflowIndex].items.map(item => item.id)) + 1
-        : 0;
-      workflows.value[workflowIndex].items.push({
-        id: newId,
-        title: `Schritt ${newId + 1}`,
-        categoryId: 0,
-        pdfLink: '',
-        objects: [],
-        workflowId: workflowIndex
-      });
-    }
+      async function createItem(workflowIndex) {
+        const newId = workflows.value[workflowIndex].items.length > 0
+            ? Math.max(...workflows.value[workflowIndex].items.map(item => item.id)) + 1
+            : 0;
+        const stepData = {
+          id: workflowID,
+          title: `WorkflowElement ${newId + 1}`,
+          document: "null",
+          step_number: 1,
+          role_ids: []
+        };
+        try {
+          const response = await axios.post('http://localhost:3000/workflow/addStep', stepData);
+          workflows.value[workflowIndex].items.push({
+            id: newId,
+            title: `Schritt ${newId + 1}`,
+            categoryId: 0,
+            pdfLink: '',
+            objects: [],
+            workflowId: workflowIndex
+          });
+        } catch (error) {
+          console.error('Error adding step:', error);
+        }
+
+      }
 
     function updateItem(updatedItem, workflowIndex) {
       const index = workflows.value[workflowIndex].items.findIndex(item => item.id === updatedItem.id);
@@ -296,11 +332,6 @@ export default {
           };
           reader.readAsDataURL(file);
         }
-
-
-
-
-
         updateItem(currentItem.value, currentWorkflowIndex.value);
         closeEditModal();
       }
@@ -376,14 +407,6 @@ export default {
       } catch (error) {
         console.error('Error fetching all steps:', error);
       }
-    }
-
-    if (workflowID) {
-      getAllStepsAPI(workflowID);
-      console.log("workflowID", workflowID);
-    } else {
-      createWorkflowAPI('Title', 'Description', 1, true);
-      console.log("workflowID", workflowID);
     }
 
     return {
