@@ -130,7 +130,7 @@
 
 
 <script lang="ts">
-import { ref } from 'vue';
+import {onMounted, ref} from 'vue';
 import axios from 'axios';
 import "vue-router/dist/vue-router";
 
@@ -149,9 +149,12 @@ export default {
     setup() {
       const workflows = ref([
         {
+          //workflowId
           id: 0,
+
           categories: [
           ],
+
           items: [
           ]
         }
@@ -171,6 +174,28 @@ export default {
 
     const showDropDown = ref(false);
     const showSide = ref(true);
+      async function loadWorkflowData() {
+        try {
+          if (!workflowID) {
+            const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
+              title: 'Title',
+              description: 'Description',
+              isOpen: true,
+              platform_id: 1
+            });
+            workflowID = response.data.id;
+            console.log('Workflow created:', response.data.title);
+            console.log('Workflow ID:', response.data.id);
+          } else {
+            await getAllStepsAPI(workflowID);
+          }
+        } catch (error) {
+          console.error('Error creating or loading workflow:', error);
+        }
+      }
+      onMounted(() => {
+        loadWorkflowData();
+      });
 
     function toggleSideBar() {
       showSide.value = !showSide.value;
@@ -180,26 +205,46 @@ export default {
       showDropDown.value = !showDropDown.value;
     }
 
-    function createCategory(workflowIndex) {
-      const newId = workflows.value[workflowIndex].categories.length;
+    //
+     function createCategory(workflowIndex) {
+
+        console.log("create Category", workflowID);
+        console.log("workflowIndex", workflowIndex);
+        const newId = workflows.value[workflowIndex].categories.length;
       workflows.value[workflowIndex].categories.push({
         id: newId,
         title: `Category ${newId + 1}`
       });
-    }
+      console.log("new ID", newId);
+      console.log("workflows: ",workflows);
+      }
 
-    function createItem(workflowIndex) {
+     // Workflow element hinzufügen
+    async function createItem(workflowIndex) {
       const newId = workflows.value[workflowIndex].items.length > 0
         ? Math.max(...workflows.value[workflowIndex].items.map(item => item.id)) + 1
         : 0;
-      workflows.value[workflowIndex].items.push({
-        id: newId,
-        title: `Schritt ${newId + 1}`,
-        categoryId: 0,
-        pdfLink: '',
-        objects: [],
-        workflowId: workflowIndex
-      });
+      const stepData = {
+        id: workflowID,
+        title: `WorkflowElement ${newId+1}`,
+        document: "null",
+        step_number: 1,
+        role_ids: []
+      };
+      try {
+        const response = await axios.post('http://localhost:3000/workflow/addStep', stepData);
+        workflows.value[workflowIndex].items.push({
+          id: newId,
+          title: `Schritt ${newId + 1}`,
+          categoryId: 0,
+          pdfLink: '',
+          objects: [],
+          workflowId: workflowIndex
+        });
+      } catch (error) {
+        console.error('Error adding step:', error);
+      }
+
     }
 
     function updateItem(updatedItem, workflowIndex) {
@@ -230,13 +275,13 @@ export default {
     function onDrop(e: DragEvent, categoryId, workflowIndex) {
       const itemId = parseInt(e.dataTransfer.getData('itemId'));
       const sourceWorkflowIndex = parseInt(e.dataTransfer.getData('workflowId'));
-
       if (isNaN(itemId)) {
         const objectId = parseInt(e.dataTransfer.getData('objectId'));
         const object = objects.value.find(obj => obj.id === objectId);
         if (object) {
           const newObject = { ...object };
           const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.categoryId === categoryId);
+
           if (itemIndex !== -1) {
             const stepId = e.target.closest('.draggable').getAttribute('data-step-id');
             const step = workflows.value[workflowIndex].items.find(item => item.id == stepId);
@@ -246,6 +291,7 @@ export default {
           }
         }
       } else {
+
         if (sourceWorkflowIndex !== workflowIndex) {
           return; // Prevent moving items between different workflows
         }
@@ -253,6 +299,7 @@ export default {
         const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.id === itemId);
         if (itemIndex !== -1) {
           workflows.value[workflowIndex].items[itemIndex].categoryId = categoryId;
+          console.log(":::", workflows.value[workflowIndex].items[itemIndex].categoryId);
         }
       }
     }
@@ -346,14 +393,6 @@ export default {
       } catch (error) {
         console.error('Error fetching all steps:', error);
       }
-    }
-
-    if (workflowID) {
-      getAllStepsAPI(workflowID);
-      console.log("workflowID", workflowID);
-    } else {
-      createWorkflowAPI('Title', 'Description', 1, true);
-      console.log("workflowID", workflowID);
     }
 
     return {
