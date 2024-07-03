@@ -86,9 +86,9 @@
       </div>
       <div class="controls rounded-xl bg-white border-gray-200 dark:bg-white dark:border-gray-500">
         <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-          @click="createItem(workflowIndex)">Schritt hinzufügen</button>
+          @click="createItem(workflowIndex)">Add workflow-element</button>
         <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-          @click="createCategory(workflowIndex)"> Feld hinzufügen </button>
+          @click="createCategory(workflowIndex)"> Add workflow-step </button>
       </div>
     </div>
 
@@ -103,6 +103,8 @@
           <input id="item-role" v-model="obj.role" />
           <label for="item-id">ID:</label>
           <input id="item-id" v-model="obj.id" />
+          <input id="pdf-id" type="file" accept="application/pdf">
+
         </div>
 
         <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
@@ -186,6 +188,10 @@ export default {
         id: newId,
         title: `Category ${newId + 1}`
       });
+
+      workflows.value.forEach(()=>{
+
+      })
     }
 
     function createItem(workflowIndex) {
@@ -269,8 +275,32 @@ export default {
       currentWorkflowIndex.value = null;
     }
 
+
     function saveItem() {
       if (currentItem.value && currentWorkflowIndex.value !== null) {
+        //readPDF
+        const pdfInput = document.getElementById('pdf-id') as HTMLInputElement;
+        const file = pdfInput?.files?.[0];
+
+        if (file) {
+          const reader = new FileReader();
+
+          reader.onload = function(event) {
+            const result = event.target?.result;
+            if (typeof result === 'string') {
+              const pdf = result.split(',')[1]; // Verwende 'split' auf dem string
+              console.log('Base64 String: ', pdf);
+            } else {
+              console.error('FileReader result is not a string');
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+
+
+
+
+
         updateItem(currentItem.value, currentWorkflowIndex.value);
         closeEditModal();
       }

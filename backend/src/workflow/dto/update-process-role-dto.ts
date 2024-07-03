@@ -2,6 +2,7 @@ import {IsBoolean, IsNumber, IsString} from "class-validator";
 
 export class UpdateProcessRoleDto {
 
+
     @IsNumber()
     roleID: number;
     //maybe instead of Moderator, Moderator, Moderator => Moderator, assistant Moderator ...
@@ -15,4 +16,6 @@ export class UpdateProcessRoleDto {
      */
     @IsBoolean()
     selectable: boolean;
+
+
 }

@@ -13,6 +13,7 @@ import {UpdateWorkflowDto} from "./dto/update-workflow-dto";
 import {UpdateStepDto} from "./dto/update-step-dto";
 import {UpdateProcessRoleDto} from "./dto/update-process-role-dto";
 import {ChangeOrderDto} from "./dto/change-order-dto";
+import {AssignRoleDto} from './dto/assign-role-dto'
 
 
 
@@ -141,6 +142,7 @@ export class WorkflowService {
         stepToUpdate.title = updateStepDto.title;
         stepToUpdate.data = updateStepDto.data;
         stepToUpdate.stepNumber = updateStepDto.stepNumber;
+        stepToUpdate.stepNumber = updateStepDto.stepNumber;
         return await this.stepRepository.save(stepToUpdate);
     }
 
@@ -168,5 +170,16 @@ export class WorkflowService {
         const updatedStep = new step();
         updatedStep.stepNumber = changeOrderDto.stepNumber;
         return await this.stepRepository.update(changeOrderDto.stepID, updatedStep);
+    }
+
+    async assignRole(assignRoleDto: AssignRoleDto) {
+        const newStepRole = new step_roles();
+        newStepRole.process_role_id = assignRoleDto.process_role_id;
+        newStepRole.step_id = assignRoleDto.step_id;
+        return await this.stepRolesRepository.save(newStepRole);
+    }
+
+    async deleteRole(roleID) {
+        return await this.processRoleRepo.delete(roleID);
     }
 }
