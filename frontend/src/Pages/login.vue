@@ -177,7 +177,7 @@ export default {
         // Hier könntest du die Weiterleitung zum Dashboard implementieren
         if (user) {
           // Beispiel: Weiterleitung zur Dashboard-Seite
-          this.$router.push('/Pages/home.vue');
+          this.$router.push('/home');
         } else {
           // Handle Fehlerfallpa
           console.error('Authentication failed front');

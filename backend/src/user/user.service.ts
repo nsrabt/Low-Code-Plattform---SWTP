@@ -61,18 +61,13 @@ export class UserService {
         const username = addUserDto.username;
         const email = addUserDto.eMail;
 
-        //check if user or email is already defined!
-        const checkUser = await this.userRepository.exists({ where: { username: username } });
-        const checkEmail = await this.userRepository.exists({ where: { eMail: email } });
+            //check if user or email is already defined!
+            const definedUser = await this.userRepository.findOne({where:{eMail:email, username: username}});
+            if(definedUser){
+                return definedUser;
+            }
 
-        if (checkUser) {
-            throw new NotAcceptableException('Username already taken');
-        }
-
-        if (checkEmail) {
-            throw new NotAcceptableException('Email already taken');
-        }
-
+            //if not add the user to our database
             try {
                 const newUser = new users();
                 newUser.username = username;
