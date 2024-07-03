@@ -160,17 +160,23 @@ export class WorkflowService {
     }
 
     async updateRole(updateRoleDto: UpdateProcessRoleDto) {
-        const updatedRole = new process_roles();
+        const updatedRole = await this.processRoleRepo.findOne({where:{id: updateRoleDto.roleID}});
         updatedRole.selectable = updateRoleDto.selectable;
         updatedRole.process_role_name = updateRoleDto.process_role_name;
         return await this.processRoleRepo.update(updateRoleDto.roleID,updateRoleDto)
     }
 
     async changeOrder(changeOrderDto: ChangeOrderDto) {
-        const updatedStep = new step();
-        updatedStep.stepNumber = changeOrderDto.stepNumber;
-        return await this.stepRepository.update(changeOrderDto.stepID, updatedStep);
+        const existingStep = await this.stepRepository.findOne({where:{id:changeOrderDto.stepID}});
+
+        if (!existingStep) {
+            throw new Error(`Step with ID ${changeOrderDto.stepID} not found`);
+        }
+        existingStep.stepNumber = changeOrderDto.stepNumber;
+
+        return await this.stepRepository.save(existingStep);
     }
+
 
     async assignRole(assignRoleDto: AssignRoleDto) {
         const newStepRole = new step_roles();
