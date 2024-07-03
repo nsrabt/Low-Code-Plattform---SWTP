@@ -303,7 +303,6 @@ export default {
           const newStepNumber = categoryId + 1;
           console.log("Verschieben von Kategorie", oldStepNumber, "nach", newStepNumber);
           const stepId = workflows.value[workflowIndex].items[itemIndex].step_id;
-          //console.log("updateStepNumber", workflows);
           if(newStepNumber !== oldStepNumber) {
             changeStepOrder(stepId, newStepNumber);
           }
