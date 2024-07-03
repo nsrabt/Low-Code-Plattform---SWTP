@@ -55,7 +55,7 @@ import {process_roles} from "./database/workflow/process_roles";
       username: 'postgres',
       password: 'passwort',
       database: 'LowCode',
-      entities: [filling_data,platform,process,roles,step,fields,users,user_fillingdata,user_platform,user_platform_roles, user_process,user_step, process, UserProcessRoles, field_roles, process_roles],
+      entities: [filling_data,platform,process,roles,step,fields,users,user_fillingdata,user_platform,user_platform_roles, user_process,user_step, process, UserProcessRoles, field_roles, process_roles, step_roles],
       synchronize: true,
     }),
     ServeStaticModule.forRoot({ // New

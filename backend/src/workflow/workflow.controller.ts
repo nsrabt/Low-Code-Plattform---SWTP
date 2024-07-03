@@ -7,7 +7,6 @@ import {UpdateWorkflowDto} from "./dto/update-workflow-dto";
 import {UpdateStepDto} from "./dto/update-step-dto";
 import {UpdateProcessRoleDto} from "./dto/update-process-role-dto";
 import {ChangeOrderDto} from "./dto/change-order-dto";
-import {step} from "../database/workflow/step";
 
 @Controller('workflow')
 export class WorkflowController {
