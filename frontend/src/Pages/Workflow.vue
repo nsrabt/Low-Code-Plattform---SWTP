@@ -17,7 +17,6 @@
         <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Low-Code</span>
       </a>
 
-
       <!-- User login -->
       <div
         class="relative w-[200px] rounded-md hover:bg-gray-700 hover:text-gray-800 transition duration-400 ease-in-out">
@@ -56,93 +55,96 @@
       </div>
     </div>
   </nav>
-    <div>
-      <div class="object-container">
-        <h2>Available Objects</h2>
-        <div class="controls">
-          <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-            @click="openObjectModal">Add Object</button>
-        </div>
-        <div v-for="object in objects" :key="object.id" class="draggable object-item rounded-xl"
-          @dragstart="onDragStartObject($event, object)" draggable="true">
-          {{ object.role }} - {{ object.id }}
-        </div>
+  <div>
+    <div class="object-container">
+      <h2>Available Objects</h2>
+      <div class="controls">
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          @click="openObjectModal">Role hinzufügen</button>
       </div>
-
-      <div v-for="(workflow, workflowIndex) in workflows" :key="workflowIndex" class="workflow-container">
-        <h2>Workflow {{ workflowIndex + 1 }}</h2>
-        <div class="categories-container">
-          <div v-for="category in workflow.categories" :key="category.id"
-            @drop="onDrop($event, category.id, workflowIndex)" class="droppable category" @dragover.prevent
-            @dragenter.prevent>
-            <div v-for="item in workflow.items.filter((x) => x.categoryId === category.id)" :key="item.id"
-              @dragstart="onDragStart($event, item, workflowIndex)" class="draggable rounded-xl" draggable="true">
-              <input v-model="item.title" @blur="updateItem(item, workflowIndex)" class="item-title-input" />
-              <div v-for="obj in item.objects" :key="obj.id">{{ obj.role }} - {{ obj.id }}</div>
-              <button class="edit-button" @click="openEditModal(item, workflowIndex)">Bearbeiten</button>
-            </div>
-          </div>
-        </div>
-        <div class="controls rounded-xl bg-white border-gray-200 dark:bg-white dark:border-gray-500">
-          <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-            @click="createItem(workflowIndex)">Schritt hinzufügen</button>
-          <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-            @click="createCategory(workflowIndex)"> Feld hinzufügen </button>
-        </div>
-      </div>
-
-      <div v-if="isEditModalOpen" class="modal">
-        <div class="modal-content">
-          <h3>Schritt bearbeiten</h3>
-          <label for="item-title">Name: </label>
-          <input id="item-title" v-model="currentItem.title" />
-
-          <div v-for="(obj, index) in currentItem.objects" :key="index">
-            <label for="item-role">Role:</label>
-            <input id="item-role" v-model="obj.role" />
-            <label for="item-id">ID:</label>
-            <input id="item-id" v-model="obj.id" />
-          </div>
-
-          <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-            @click="saveItem">Save</button>
-          <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-            @click="closeEditModal">Cancel</button>
-        </div>
-      </div>
-
-      <div v-if="isObjectModalOpen" class="modal">
-        <div class="modal-content">
-          <h3>Add Object</h3>
-          <label for="object-role">Role:</label>
-          <input id="object-role" v-model="newObject.role" />
-          <label for="object-id">ID:</label>
-          <input id="object-id" v-model="newObject.id" />
-          <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-            @click="addObject">Add</button>
-          <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-            @click="closeObjectModal">Cancel</button>
-        </div>
+      <div v-for="object in objects" :key="object.id" class="draggable object-item rounded-xl"
+        @dragstart="onDragStartObject($event, object)" draggable="true">
+        {{ object.role }} - {{ object.id }}
       </div>
     </div>
-  </template>
+
+    <div v-for="(workflow, workflowIndex) in workflows" :key="workflowIndex" class="workflow-container">
+      <h2>Workflow {{ workflowIndex + 1 }}</h2>
+      <div class="categories-container">
+        <div v-for="category in workflow.categories" :key="category.id"
+          @drop="onDrop($event, category.id, workflowIndex)" class="droppable category" @dragover.prevent
+          @dragenter.prevent>
+          <div v-for="item in workflow.items.filter((x) => x.categoryId === category.id)" :key="item.id"
+            @dragstart="onDragStart($event, item, workflowIndex)" class="draggable rounded-xl" draggable="true"
+            :data-step-id="item.id">
+            <input v-model="item.title" @blur="updateItem(item, workflowIndex)" class="item-title-input" />
+            <div v-for="obj in item.objects" :key="obj.id">{{ obj.role }} - {{ obj.id }}</div>
+            <button class="edit-button" @click="openEditModal(item, workflowIndex)">Bearbeiten</button>
+            <button class="delete-button" @click="deleteItem(workflowIndex, item.id)">Löschen</button>
+          </div>
+        </div>
+      </div>
+      <div class="controls rounded-xl bg-white border-gray-200 dark:bg-white dark:border-gray-500">
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          @click="createItem(workflowIndex)">Schritt hinzufügen</button>
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          @click="createCategory(workflowIndex)"> Feld hinzufügen </button>
+      </div>
+    </div>
+
+    <div v-if="isEditModalOpen" class="modal">
+      <div class="modal-content">
+        <h3>Schritt bearbeiten</h3>
+        <label for="item-title">Name: </label>
+        <input id="item-title" v-model="currentItem.title" />
+
+        <div v-for="(obj, index) in currentItem.objects" :key="index">
+          <label for="item-role">Role:</label>
+          <input id="item-role" v-model="obj.role" />
+          <label for="item-id">ID:</label>
+          <input id="item-id" v-model="obj.id" />
+        </div>
+
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          @click="saveItem">Save</button>
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          @click="closeEditModal">Cancel</button>
+      </div>
+    </div>
+
+    <div v-if="isObjectModalOpen" class="modal">
+      <div class="modal-content">
+        <h3>Add Object</h3>
+        <label for="object-role">Role:</label>
+        <input id="object-role" v-model="newObject.role" />
+        <label for="object-id">ID:</label>
+        <input id="object-id" v-model="newObject.id" />
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          @click="addObject">Add</button>
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          @click="closeObjectModal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</template>
+
 
 <script lang="ts">
-import { ref } from 'vue'
-import axios from "axios";
+import { ref } from 'vue';
+import axios from 'axios';
 import "vue-router/dist/vue-router";
-    export let workflowID: number;
 
-  export default {
-    name: 'App',
+export let workflowID: number;
 
-    created() {
-      // Hier kannst du auf das $route-Objekt zugreifen
-      console.log('Aktuelle Route:', this.$route.name);
-      if (this.$route.name == "EditWorkflow") {
-        workflowID = this.$route.params.id;
-      }
-    },
+export default {
+  name: 'App',
+
+  created() {
+    console.log('Aktuelle Route:', this.$route.name);
+    if (this.$route.name == "EditWorkflow") {
+      workflowID = this.$route.params.id;
+    }
+  },
 
     setup() {
       const workflows = ref([
@@ -155,310 +157,343 @@ import "vue-router/dist/vue-router";
         }
       ]);
 
-      const objects = ref([
-        {id: 0, role: 'student'},
-        {id: 1, role: 'professor'},
-        {id: 2, role: 'admin'}
-      ]);
+    const objects = ref([
+      { id: 0, role: 'student' },
+      { id: 1, role: 'professor' },
+      { id: 2, role: 'admin' }
+    ]);
 
-      const isEditModalOpen = ref(false);
-      const isObjectModalOpen = ref(false);
-      const currentItem = ref(null);
-      const currentWorkflowIndex = ref(null);
-      const newObject = ref({role: '', id: ''});
+    const isEditModalOpen = ref(false);
+    const isObjectModalOpen = ref(false);
+    const currentItem = ref(null);
+    const currentWorkflowIndex = ref(null);
+    const newObject = ref({ role: '', id: '' });
 
-      const showDropDown = ref(false);
-      const showSide = ref(true);
+    const showDropDown = ref(false);
+    const showSide = ref(true);
 
-      function toggleSideBar() {
-        showSide.value = !showSide.value;
+    function toggleSideBar() {
+      showSide.value = !showSide.value;
+    }
+
+    function toggleDrop() {
+      showDropDown.value = !showDropDown.value;
+    }
+
+    function createCategory(workflowIndex) {
+      const newId = workflows.value[workflowIndex].categories.length;
+      workflows.value[workflowIndex].categories.push({
+        id: newId,
+        title: `Category ${newId + 1}`
+      });
+    }
+
+    function createItem(workflowIndex) {
+      const newId = workflows.value[workflowIndex].items.length > 0
+        ? Math.max(...workflows.value[workflowIndex].items.map(item => item.id)) + 1
+        : 0;
+      workflows.value[workflowIndex].items.push({
+        id: newId,
+        title: `Schritt ${newId + 1}`,
+        categoryId: 0,
+        pdfLink: '',
+        objects: [],
+        workflowId: workflowIndex
+      });
+    }
+
+    function updateItem(updatedItem, workflowIndex) {
+      const index = workflows.value[workflowIndex].items.findIndex(item => item.id === updatedItem.id);
+      if (index !== -1) {
+        workflows.value[workflowIndex].items[index] = { ...updatedItem };
       }
+    }
 
-      function toggleDrop() {
-        showDropDown.value = !showDropDown.value;
+    function deleteItem(workflowIndex, itemId) {
+      const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.id === itemId);
+      if (itemIndex !== -1) {
+        workflows.value[workflowIndex].items.splice(itemIndex, 1);
       }
+    }
 
-      function createCategory(workflowIndex) {
-        const newId = workflows.value[workflowIndex].categories.length;
-        workflows.value[workflowIndex].categories.push({
-          id: newId,
-          title: `Category ${newId + 1}`
-        });
-      }
+    function onDragStart(e: DragEvent, item, workflowIndex) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('itemId', item.id.toString());
+      e.dataTransfer.setData('workflowId', workflowIndex.toString());
+    }
 
-      function createItem(workflowIndex) {
-        const newId = workflows.value[workflowIndex].items.length > 0
-            ? Math.max(...workflows.value[workflowIndex].items.map(item => item.id)) + 1
-            : 0;
-        workflows.value[workflowIndex].items.push({
-          id: newId,
-          title: `Schritt ${newId + 1}`,
-          categoryId: 0,
-          pdfLink: '',
-          objects: [],
-          workflowId: workflowIndex
-        });
-      }
+    function onDragStartObject(e: DragEvent, object) {
+      e.dataTransfer.effectAllowed = 'copy';
+      e.dataTransfer.setData('objectId', object.id.toString());
+    }
 
-      function updateItem(updatedItem, workflowIndex) {
-        const index = workflows.value[workflowIndex].items.findIndex(item => item.id === updatedItem.id);
-        if (index !== -1) {
-          workflows.value[workflowIndex].items[index] = {...updatedItem};
-        }
-      }
+    function onDrop(e: DragEvent, categoryId, workflowIndex) {
+      const itemId = parseInt(e.dataTransfer.getData('itemId'));
+      const sourceWorkflowIndex = parseInt(e.dataTransfer.getData('workflowId'));
 
-      function onDragStart(e: DragEvent, item, workflowIndex) {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('itemId', item.id.toString());
-        e.dataTransfer.setData('workflowId', workflowIndex.toString());
-      }
-
-      function onDragStartObject(e: DragEvent, object) {
-        e.dataTransfer.effectAllowed = 'copy';
-        e.dataTransfer.setData('objectId', object.id.toString());
-      }
-
-      function onDrop(e: DragEvent, categoryId, workflowIndex) {
-        const itemId = parseInt(e.dataTransfer.getData('itemId'));
-        const sourceWorkflowIndex = parseInt(e.dataTransfer.getData('workflowId'));
-
-        if (isNaN(itemId)) {
-          const objectId = parseInt(e.dataTransfer.getData('objectId'));
-          const object = objects.value.find(obj => obj.id === objectId);
-          if (object) {
-            const newObject = {...object};
-            workflows.value[workflowIndex].items.forEach(item => {
-              if (item.categoryId === categoryId) {
-                item.objects.push(newObject);
-              }
-            });
-          }
-        } else {
-          if (sourceWorkflowIndex !== workflowIndex) {
-            return; // Prevent moving items between different workflows
-          }
-
-          const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.id === itemId);
+      if (isNaN(itemId)) {
+        const objectId = parseInt(e.dataTransfer.getData('objectId'));
+        const object = objects.value.find(obj => obj.id === objectId);
+        if (object) {
+          const newObject = { ...object };
+          const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.categoryId === categoryId);
           if (itemIndex !== -1) {
-            workflows.value[workflowIndex].items[itemIndex].categoryId = categoryId;
+            const stepId = e.target.closest('.draggable').getAttribute('data-step-id');
+            const step = workflows.value[workflowIndex].items.find(item => item.id == stepId);
+            if (step) {
+              step.objects.push(newObject);
+            }
           }
         }
-      }
+      } else {
+        if (sourceWorkflowIndex !== workflowIndex) {
+          return; // Prevent moving items between different workflows
+        }
 
-      function openEditModal(item, workflowIndex) {
-        currentItem.value = {...item};
-        currentWorkflowIndex.value = workflowIndex;
-        isEditModalOpen.value = true;
-      }
-
-      function closeEditModal() {
-        isEditModalOpen.value = false;
-        currentItem.value = null;
-        currentWorkflowIndex.value = null;
-      }
-
-      function saveItem() {
-        if (currentItem.value && currentWorkflowIndex.value !== null) {
-          updateItem(currentItem.value, currentWorkflowIndex.value);
-          closeEditModal();
+        const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.id === itemId);
+        if (itemIndex !== -1) {
+          workflows.value[workflowIndex].items[itemIndex].categoryId = categoryId;
         }
       }
+    }
 
-      function openObjectModal() {
-        isObjectModalOpen.value = true;
+    function openEditModal(item, workflowIndex) {
+      currentItem.value = { ...item };
+      currentWorkflowIndex.value = workflowIndex;
+      isEditModalOpen.value = true;
+    }
+
+    function closeEditModal() {
+      isEditModalOpen.value = false;
+      currentItem.value = null;
+      currentWorkflowIndex.value = null;
+    }
+
+    function saveItem() {
+      if (currentItem.value && currentWorkflowIndex.value !== null) {
+        updateItem(currentItem.value, currentWorkflowIndex.value);
+        closeEditModal();
       }
+    }
 
-      function closeObjectModal() {
-        isObjectModalOpen.value = false;
-      }
+    function openObjectModal() {
+      isObjectModalOpen.value = true;
+    }
 
-      function addObject() {
-        const newId = objects.value.length > 0
-            ? Math.max(...objects.value.map(obj => obj.id)) + 1
-            : 0;
-        objects.value.push({...newObject.value, id: newId});
-        newObject.value = {role: '', id: ''};
+    function closeObjectModal() {
+      isObjectModalOpen.value = false;
+    }
+
+    function addObject() {
+      // Check if the custom ID already exists in the objects list
+      const exists = objects.value.some(obj => obj.id === newObject.value.id);
+
+      if (exists) {
+        alert('This ID already exists. Please choose a different ID.');
+      } else {
+        objects.value.push({ ...newObject.value });
+        newObject.value = { role: '', id: '' };
         closeObjectModal();
       }
+    }
 
-      function handleFileUpload(event) {
-        const file = event.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            currentItem.value.pdfLink = e.target.result;
-          };
-          reader.readAsDataURL(file);
-        }
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          currentItem.value.pdfLink = e.target.result;
+        };
+        reader.readAsDataURL(file);
       }
+    }
 
-      async function createWorkflowAPI(title, description, platform_id, isOpen) {
-        try {
-          const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
-            title:title,
-            description:description,
-            isOpen: isOpen,
-            platform_id: platform_id
-          });
-          console.log("respons.data.id",response.data.id);
-          workflowID = response.data.id;
-          console.log('Workflow created:', response.data.title);
-        } catch (error) {
-          console.error('Error creating workflow:', error);
-        }
+    async function createWorkflowAPI(title, description, platform_id, isOpen) {
+      try {
+        const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
+          title: title,
+          description: description,
+          isOpen: isOpen,
+          platform_id: platform_id
+        });
+        console.log("respons.data.id", response.data.id);
+        workflowID = response.data.id;
+        console.log('Workflow created:', response.data.title);
+      } catch (error) {
+        console.error('Error creating workflow:', error);
       }
+    }
 
-      async function addStepAPI(process_id, title, document, step_number, role_ids, pdfBytes) {
-        try {
-          const response = await axios.post('http://localhost:3000/workflow/addStep', {
-            process_id,
-            title,
-            document: pdfBytes,
-            step_number,
-            role_ids
-          });
-          console.log('Step added:', response.data);
-        } catch (error) {
-          console.error('Error adding step:', error);
-        }
+    async function addStepAPI(process_id, title, document, step_number, role_ids, pdfBytes) {
+      try {
+        const response = await axios.post('http://localhost:3000/workflow/addStep', {
+          process_id,
+          title,
+          document: pdfBytes,
+          step_number,
+          role_ids
+        });
+        console.log('Step added:', response.data);
+      } catch (error) {
+        console.error('Error adding step:', error);
       }
+    }
 
-      async function getAllStepsAPI(processID) {
-        try {
-          const response = await axios.get(`http://localhost:3000/workflow/allSteps/${processID}`);
-          console.log('All steps:', response.data);
-        } catch (error) {
-          console.error('Error fetching all steps:', error);
-        }
+    async function getAllStepsAPI(processID) {
+      try {
+        const response = await axios.get(`http://localhost:3000/workflow/allSteps/${processID}`);
+        console.log('All steps:', response.data);
+      } catch (error) {
+        console.error('Error fetching all steps:', error);
       }
+    }
 
-      if(workflowID) {
-        getAllStepsAPI(workflowID);
-        console.log("workflowID", workflowID);
-      } else {
-        createWorkflowAPI('Title', 'Description', 1, true);
+    if (workflowID) {
+      getAllStepsAPI(workflowID);
+      console.log("workflowID", workflowID);
+    } else {
+      createWorkflowAPI('Title', 'Description', 1, true);
+      console.log("workflowID", workflowID);
+    }
 
-        console.log("workflowID", workflowID);
-      }
-
-      return {
-        workflows,
-        objects,
-        isEditModalOpen,
-        isObjectModalOpen,
-        currentItem,
-        currentWorkflowIndex,
-        newObject,
-        showDropDown,
-        showSide,
-        onDragStart,
-        onDragStartObject,
-        onDrop,
-        createCategory,
-        createItem,
-        updateItem,
-        openEditModal,
-        closeEditModal,
-        saveItem,
-        openObjectModal,
-        closeObjectModal,
-        addObject,
-        toggleSideBar,
-        toggleDrop,
-        handleFileUpload
-      };
-    },
-
+    return {
+      workflows,
+      objects,
+      isEditModalOpen,
+      isObjectModalOpen,
+      currentItem,
+      currentWorkflowIndex,
+      newObject,
+      showDropDown,
+      showSide,
+      onDragStart,
+      onDragStartObject,
+      onDrop,
+      createCategory,
+      createItem,
+      updateItem,
+      deleteItem,
+      openEditModal,
+      closeEditModal,
+      saveItem,
+      openObjectModal,
+      closeObjectModal,
+      addObject,
+      toggleSideBar,
+      toggleDrop,
+      handleFileUpload
+    };
   }
+}
 </script>
 
+<style scoped>
+.controls {
+  margin: 20px;
+  display: flex;
+  gap: 10px;
+}
 
-  <style scoped>
-    .controls {
-      margin: 20px;
-      display: flex;
-      gap: 10px;
-    }
+.object-container {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: #f4f4f4;
+  border-radius: 5px;
+}
 
-    .categories-container {
-      display: flex;
-      flex-direction: row;
-      gap: 10px;
-      /* Adjust the gap between categories as needed */
-    }
+.categories-container {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  /* Adjust the gap between categories as needed */
+}
 
-    .droppable {
-      padding: 15px;
-      background: #2c3e50;
-      margin-bottom: 10px;
-      flex: 1;
-      /* Adjust this to control the width of each category */
-    }
+.droppable {
+  padding: 15px;
+  background: #2c3e50;
+  margin-bottom: 10px;
+  flex: 1;
+  /* Adjust this to control the width of each category */
+}
 
-    .droppable h4 {
-      display: none;
-      /* Hide category titles */
-    }
+.droppable h4 {
+  display: none;
+  /* Hide category titles */
+}
 
-    .draggable {
-      background: white;
-      padding: 5px;
-      margin-bottom: 5px;
-      display: flex;
-      align-items: center;
-    }
+.draggable {
+  background: white;
+  padding: 5px;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+}
 
-    .draggable input.item-title-input {
-      border: none;
-      background: transparent;
-      width: 100%;
-      padding: 5px;
-      margin-bottom: 5px;
-    }
+.draggable input.item-title-input {
+  border: none;
+  background: transparent;
+  width: 100%;
+  padding: 5px;
+  margin-bottom: 5px;
+}
 
-    .draggable input.item-title-input:focus {
-      outline: none;
-      border-bottom: 1px solid #000;
-    }
+.draggable input.item-title-input:focus {
+  outline: none;
+  border-bottom: 1px solid #000;
+}
 
-    .edit-button {
-      margin-left: 10px;
-      background: #3490dc;
-      color: white;
-      border: none;
-      padding: 5px;
-      border-radius: 3px;
-      cursor: pointer;
-    }
+.edit-button {
+  margin-left: 10px;
+  background: #3490dc;
+  color: white;
+  border: none;
+  padding: 5px;
+  border-radius: 3px;
+  cursor: pointer;
+}
 
-    .edit-button:hover {
-      background: #2779bd;
-    }
+.edit-button:hover {
+  background: #2779bd;
+}
 
-    .modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.5);
-    }
+.delete-button {
+  margin-left: 10px;
+  background: #e3342f;
+  color: white;
+  border: none;
+  padding: 5px;
+  border-radius: 3px;
+  cursor: pointer;
+}
 
-    .modal-content {
-      background: white;
-      padding: 20px;
-      border-radius: 5px;
-      width: 300px;
-    }
+.delete-button:hover {
+  background: #cc1f1a;
+}
 
-    .modal-content h3 {
-      margin-top: 0;
-    }
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
 
-    .modal-content button {
-      margin-right: 10px;
-    }
-  </style>
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  width: 300px;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+}
+
+.modal-content button {
+  margin-right: 10px;
+}
+</style>
