@@ -45,4 +45,7 @@ export class RoleService {
         return await this.rolesRepository.delete(id);
     }
 
+    async getAllRolesOfPlatform(id: number) {
+        return await this.rolesRepository.find({where:{platformID:id}});
+    }
 }

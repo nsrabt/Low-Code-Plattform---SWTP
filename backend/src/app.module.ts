@@ -59,7 +59,7 @@ import {process_roles} from "./database/workflow/process_roles";
       synchronize: true,
     }),
     ServeStaticModule.forRoot({ // New
-      rootPath: join(__dirname, '..', 'frontend/dist'), // New
+      rootPath: join(__dirname, '../../frontend/dist'), // New
     }), // New
     TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles,filling_data, process,step,process,platform,step_roles,fields, user_fillingdata, user_process, user_step, UserProcessRoles, field_roles, process_roles]),
   ],

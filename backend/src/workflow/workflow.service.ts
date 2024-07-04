@@ -117,7 +117,8 @@ export class WorkflowService {
         }
         role.selectable = addProcessRoleDto.selectable;
         role.process_role_name = addProcessRoleDto.process_role_name;
-
+        role.isApplicant= addProcessRoleDto.isApplicant;
+        console.log(role.selectable)
         return await this.processRoleRepo.save(role);
     }
 

@@ -19,6 +19,10 @@ export class RoleController {
     async addRole(@Body() addRoleDto: AddRoleDto){
         return await this.roleService.addRole(addRoleDto);
     }
+    @Get('allRoles/:id')
+    async getALlRolesOfPlatform(@Param('id',ParseIntPipe) id:number){
+        return await this.roleService.getAllRolesOfPlatform(id);
+    }
 
 
     /*

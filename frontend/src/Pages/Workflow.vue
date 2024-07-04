@@ -120,7 +120,18 @@
         <label for="object-role">Role:</label>
         <input id="object-role" v-model="newObject.role" />
         <label for="object-id">ID:</label>
-        <input id="object-id" v-model="newObject.id" />
+        <select name="PlatformRole" id="object-id" v-model="newObject.id">
+          <option v-for="role in platformRoles" :key="role.id" :value="role.id">{{ role.roleName }}</option>
+        </select>
+        <div>
+          <label for="isSelectable">is selectable? </label>
+          <input v-model="newObject.selectable" type="checkbox" id="isSelectable" name="isSelectable">
+        </div>
+        <div>
+          <label for="isApplicant">is applicant? </label>
+          <input v-model="newObject.applicant" type="checkbox" id="isApplicant" name="isApplicant">
+        </div>
+
         <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
           @click="addObject">Add</button>
         <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
@@ -160,19 +171,18 @@ export default {
       ]);
 
     const objects = ref([
-      { id: 0, role: 'student' },
-      { id: 1, role: 'professor' },
-      { id: 2, role: 'admin' }
+
     ]);
 
     const isEditModalOpen = ref(false);
     const isObjectModalOpen = ref(false);
     const currentItem = ref(null);
     const currentWorkflowIndex = ref(null);
-    const newObject = ref({ role: '', id: '' });
-
+    const newObject = ref({ role: '', id: null , applicant: false, selectable: false});
+    const selectedRole = ref(null)
     const showDropDown = ref(false);
     const showSide = ref(true);
+    const platformRoles = ref([]);// Example values
 
       async function loadWorkflowData() {
         try {
@@ -337,7 +347,17 @@ export default {
       }
     }
 
-    function openObjectModal() {
+    async function openObjectModal() {
+      console.log("opeeeen");
+      const response = await axios.get('http://localhost:3000/role/allRoles/'+1);//1=THM
+      const data = response.data;
+      if(data){
+        this.platformRoles=data;
+      }
+      else{
+        console.error("Failed to load roles")
+      }
+
       isObjectModalOpen.value = true;
     }
 
@@ -347,14 +367,26 @@ export default {
 
     function addObject() {
       // Check if the custom ID already exists in the objects list
-      const exists = objects.value.some(obj => obj.id === newObject.value.id);
 
-      if (exists) {
-        alert('This ID already exists. Please choose a different ID.');
-      } else {
         objects.value.push({ ...newObject.value });
-        newObject.value = { role: '', id: '' };
+      saveRoleInDatabase(newObject.value.role,newObject.value.id,newObject.value.selectable, newObject.value.applicant)
+      newObject.value = { role: '', id: null , applicant: false, selectable: false};
         closeObjectModal();
+
+
+
+    }
+
+    async function saveRoleInDatabase(rolename: string, roleID: number, selectable: boolean, applicant: boolean){
+      const response = await axios.post('http://localhost:3000/workflow/addRole', {
+        processID: workflowID,
+        roleID: roleID,
+        process_role_name: rolename,
+        selectable: selectable,
+        isApplicant: applicant
+      });
+      if(response){
+        console.log(response.data.process_role_name)
       }
     }
 
@@ -434,7 +466,9 @@ export default {
       addObject,
       toggleSideBar,
       toggleDrop,
-      handleFileUpload
+      handleFileUpload,
+      platformRoles,
+      selectedRole
     };
   }
 }
