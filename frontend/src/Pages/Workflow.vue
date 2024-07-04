@@ -64,7 +64,7 @@
       </div>
       <div v-for="object in objects" :key="object.id" class="draggable object-item rounded-xl"
         @dragstart="onDragStartObject($event, object)" draggable="true">
-        {{ object.role }} - {{ object.id }}
+        {{ object.role }} - {{ platformRoles.find(role => role.id === object.id).roleName }}
       </div>
     </div>
 
