@@ -61,7 +61,6 @@
             </div>
         </div>
     </nav>
-
     <div>
         <aside id="sidebar-multi-level-sidebar"
             class="fixed top-14 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
@@ -77,114 +76,226 @@
                                 <span class="flex-1 ms-3 whitespace-nowrap">{{ item.title }}</span>
                             </a>
                         </div>
-                        <input v-else v-model="item.title" @blur="item.isEditing = false"
-                            @keyup.enter="item.isEditing = false" class="p-2 rounded-lg w-full">
+                        <input v-else v-model="item.title" @blur="finishEditing(item)"
+                            @keyup.enter="finishEditing(item)" class="p-2 rounded-lg w-full" />
                     </li>
                 </ul>
-                <button @click="addItem" class="mt-4 p-2 bg-blue-500 text-white rounded hover:bg-blue-700">Add
-                    Item</button>
+                <button @click="addItem" class="mt-4 p-2 bg-blue-500 text-white rounded hover:bg-blue-700">
+                    Add Item
+                </button>
             </div>
         </aside>
-        <div class="p-4 sm:ml-64">
-            <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
-                <iframe id="pdf-viewer"></iframe>
-
+        <div class="p-4 sm:ml-64 relative">
+            <div
+                class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 relative overflow-y-auto h-screen">
+                <div v-for="(page, index) in pdfPages" :key="index" class="relative mb-4">
+                    <canvas :id="'pdf-canvas-' + index" class="w-full h-auto" @dragover.prevent
+                        @drop="onDrop($event, index)"></canvas>
+                    <div v-for="field in getFieldsForPage(index)" :key="field.name" class="absolute" :style="{
+                        top: field.transformedTop + 'px',
+                        left: field.transformedLeft + 'px',
+                        width: field.transformedWidth + 'px',
+                        height: field.transformedHeight + 'px',
+                    }" @dragover.prevent @drop="onDropField($event, field)">
+                        <input type="text" v-if="field.type !== 'PDFCheckBox'" v-model="field.value"
+                            @input="updateFieldContent(field)"
+                            class="w-full h-full p-1 border border-gray-500 rounded" />
+                        <input type="checkbox" v-else v-model="field.checked" @change="updateFieldContent(field)"
+                            class="w-full h-full p-1 border border-gray-500 rounded" disabled />
+                    </div>
+                </div>
             </div>
+            <button @click="savePdf"
+                class="fixed bottom-4 right-4 p-2 bg-green-500 text-white rounded hover:bg-green-700">
+                Save PDF
+            </button>
         </div>
     </div>
 </template>
 
 <script>
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/build/pdf";
+import "pdfjs-dist/web/pdf_viewer.css";
+import "pdfjs-dist/build/pdf.worker.mjs";
+import { PDFDocument } from "pdf-lib";
+import { toRaw, reactive } from "vue";
 
-
+// Specify the workerSrc path to the local copy
+GlobalWorkerOptions.workerSrc = "/pdf.worker.js";
 
 export default {
-
-
-  name: 'Home',
-
-
-  data() {
+    name: "Home",
+    data() {
         return {
-            items: [
-                { title: 'Word1', isEditing: false },
-                { title: 'Word2', isEditing: false },
-            ],
+            items: reactive([
+                { title: "Word1", isEditing: false, content: "Word1" },
+                { title: "Word2", isEditing: false, content: "Word2" },
+            ]),
             pdfDoc: null,
+            pdfFile: null,
+            pdfFields: reactive([]),
+            pdfPages: [],
             showDropDown: false,
-            showSide: true
-
+            showSide: true,
         };
     },
     mounted() {
         this.loadExistingPdf();
+        window.addEventListener("resize", this.transformPdfFields);
+    },
+    beforeUnmount() {
+        window.removeEventListener("resize", this.transformPdfFields);
     },
     methods: {
         async loadExistingPdf() {
-            const existingPdfUrl = '/testblatt.pdf';
+            const existingPdfUrl = "/testblatt.pdf";
             try {
                 const response = await fetch(existingPdfUrl);
-                if (!response.ok) throw new Error(`Failed to fetch: ${response.statusText}`);
-                const existingPdfBytes = await response.arrayBuffer();
-                this.pdfDoc = await PDFDocument.load(existingPdfBytes);
+                const blob = await response.blob();
+                this.pdfFile = new File([blob], "testblatt.pdf", { type: blob.type });
 
-                await this.renderPdf()
-                const localPdfDoc = await PDFDocument.load(existingPdfBytes);
-                const pdfForms =  localPdfDoc.getForm()
-                const pdfFields = pdfForms.getFields();
-
-              for(const field of pdfFields){
-                  const widgets = field.acroField.getWidgets()
-                  for(const widget of widgets){
-                    const rectangle = widget.getRectangle();
-                    let x,y,width,height;
-                    x = rectangle.x;
-                    y = rectangle.y;
-                    width = rectangle.width;
-                    height = rectangle.height
-                    console.log(field.getName()+": \nx: "+x+"\ny_ "+y+"\nwidth: "+width+"\nheight: "+height);
-                  }
-                }
+                const arrayBuffer = await blob.arrayBuffer();
+                const uint8Array = new Uint8Array(arrayBuffer);
+                const loadingTask = getDocument({ data: uint8Array });
+                this.pdfDoc = await loadingTask.promise;
+                this.pdfPages = Array.from(
+                    { length: toRaw(this.pdfDoc).numPages },
+                    (_, index) => index + 1
+                );
+                await this.renderPdfPages();
+                await this.extractFieldPositions();
+                this.transformPdfFields();
             } catch (error) {
                 console.error("Error loading PDF:", error);
             }
-
         },
-        async renderPdf() {
-            const pdfBytes = await this.pdfDoc.save();
-            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-            document.getElementById('pdf-viewer').src = URL.createObjectURL(blob)+'#toolbar=0';
+        async renderPdfPages() {
+            try {
+                for (let pageNumber of this.pdfPages) {
+                    const page = await toRaw(this.pdfDoc).getPage(pageNumber);
+                    const viewport = page.getViewport({ scale: 1.5 });
+
+                    const canvas = document.getElementById(`pdf-canvas-${pageNumber - 1}`);
+                    const context = canvas.getContext("2d");
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport,
+                    };
+                    await toRaw(page).render(renderContext).promise;
+                }
+            } catch (error) {
+                console.error("Error rendering PDF pages:", error);
+            }
         },
-        async onDrop(event) {
+        async extractFieldPositions() {
+            try {
+                const pdfDoc = toRaw(this.pdfDoc);
+                for (let pageNumber of this.pdfPages) {
+                    const page = await pdfDoc.getPage(pageNumber);
+                    const annotations = await page.getAnnotations();
+                    const viewport = page.getViewport({ scale: 1.5 });
 
-            const pdfViewer = document.getElementById('pdf-viewer');
-            const rect = pdfViewer.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = rect.bottom - event.clientY;
-            const page = this.pdfDoc.getPage(0);
-            const font = await this.pdfDoc.embedFont(StandardFonts.Helvetica);
-            const fontSize = 12;
-            const text = event.dataTransfer.getData('text');
+                    annotations.forEach((annotation) => {
+                        if (annotation.fieldName) {
+                            const [x1, y1, x2, y2] = annotation.rect;
+                            const [transformedLeft, transformedBottom, transformedRight, transformedTop] =
+                                viewport.convertToViewportRectangle([x1, y1, x2, y2]);
 
-            const scale = page.getWidth() / rect.width;
+                            let fieldType = "text";
+                            if (annotation.fieldType === 'Btn' && annotation.checkBox) {
+                                fieldType = 'PDFCheckBox';
+                            }
 
-            page.drawText(text, {
-                x: x * scale,
-                y: y * scale - fontSize,
-                size: fontSize,
-                font,
-                color: rgb(0.95, 0.1, 0.1),
+                            const field = reactive({
+                                name: annotation.fieldName,
+                                page: pageNumber,
+                                top: transformedTop,
+                                left: transformedLeft,
+                                width: transformedRight - transformedLeft,
+                                height: transformedBottom - transformedTop,
+                                transformedTop: transformedTop,
+                                transformedLeft: transformedLeft,
+                                transformedWidth: transformedRight - transformedLeft,
+                                transformedHeight: transformedBottom - transformedTop,
+                                value: "",
+                                checked: false,
+                                type: fieldType,
+                            });
+
+                            this.pdfFields.push(field);
+                            console.log("Extracted field:", field); // Debugging statement
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error("Error extracting field positions:", error);
+            }
+        },
+        getFieldsForPage(pageIndex) {
+            return this.pdfFields.filter((field) => field.page === pageIndex + 1);
+        },
+        transformPdfFields() {
+            this.pdfFields.forEach((field) => {
+                const canvas = document.getElementById(`pdf-canvas-${field.page - 1}`);
+                if (!canvas) return;
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = rect.width / canvas.width;
+                const scaleY = rect.height / canvas.height;
+
+                field.transformedTop = field.top * scaleY;
+                field.transformedLeft = field.left * scaleX;
+                field.transformedWidth = field.width * scaleX;
+                field.transformedHeight = field.height * scaleY;
+                console.log("Transformed field:", field); // Debugging statement
             });
-
-            await this.renderPdf();
+        },
+        async onDrop(event, pageIndex) {
+            event.preventDefault();
+        },
+        async onDropField(event, field) {
+            if (field.type === 'PDFCheckBox') {
+                console.log("Cannot drop text into a checkbox field.");
+                return;
+            }
+            const text = event.dataTransfer.getData("text");
+            console.log("Dropped text:", text); // Debugging statement
+            if (field.type !== 'PDFCheckBox' && field) {
+                field.value = text;
+                console.log("Field updated:", field); // Debugging statement
+            } else {
+                console.error("Field not found for name:", field.name); // Debugging statement
+            }
         },
         onDragStart(event, item) {
-            event.dataTransfer.setData('text', item.title);
-            event.dataTransfer.effectAllowed = 'move';
+            console.log("Dragging item:", item); // Debugging statement
+            event.dataTransfer.setData("text", item.title); // Set the title as the data
+            event.dataTransfer.effectAllowed = "move";
+        },
+        updateFieldContent(field) {
+            console.log("Field content updated:", field); // Debugging statement
+            const item = this.items.find((i) => i.title === field.value);
+            if (item) {
+                item.content = field.value; // Update the item's content when the field value changes
+            }
+        },
+        finishEditing(item) {
+            item.isEditing = false;
+            // Find the corresponding field and update its value
+            const field = this.pdfFields.find((f) => f.value === item.title);
+            if (field) {
+                field.value = item.title;
+                console.log("Field value updated on finish editing:", field); // Debugging statement
+            }
         },
         addItem() {
-            const newItem = { title: `Word${this.items.length + 1}`, isEditing: false};
+            const newItem = {
+                title: `Word${this.items.length + 1}`,
+                isEditing: false,
+                content: `Word${this.items.length + 1}`,
+            };
             this.items.push(newItem);
         },
         editItem(item) {
@@ -195,7 +306,58 @@ export default {
         },
         toggleDrop() {
             this.showDropDown = !this.showDropDown;
-        }
-    }
+        },
+        async savePdf() {
+            try {
+                // Load the existing PDF into pdf-lib using the file
+                const arrayBuffer = await this.pdfFile.arrayBuffer();
+                const pdfDoc = await PDFDocument.load(arrayBuffer);
+                const form = pdfDoc.getForm();
+
+                // Debugging: Log all form fields
+                const fields = form.getFields();
+                fields.forEach((field) => {
+                    const type = field.constructor.name;
+                    const name = field.getName();
+                    console.log(`Field name: ${name}, Field type: ${type}`);
+                });
+
+                // Update each field in the new PDF
+                this.pdfFields.forEach((field) => {
+                    const pdfField = form.getField(field.name);
+                    if (pdfField) {
+                        const fieldType = pdfField.constructor.name;
+                        console.log(`Updating field: ${field.name}, Type: ${fieldType}, Value: ${field.value}`); // Debugging statement
+                        if (fieldType === 'PDFTextField' || fieldType === 'PDFTextField2') {
+                            pdfField.setText(field.value);
+                        } else if (fieldType === 'PDFCheckBox') {
+                            field.checked ? pdfField.check() : pdfField.uncheck();
+                        } else if (fieldType === 'PDFRadioGroup') {
+                            pdfField.select(field.value);
+                        } else if (fieldType === 'PDFDropdown') {
+                            pdfField.select(field.value);
+                        } else if (fieldType === 'PDFOptionList') {
+                            pdfField.select(field.value);
+                        } else {
+                            console.error(`Unhandled field type for field: ${field.name}, Type: ${fieldType}`);
+                        }
+                    } else {
+                        console.error("PDF field not found for:", field.name);
+                    }
+                });
+
+                // Save the updated PDF
+                const newPdfBytes = await pdfDoc.save();
+                const blob = new Blob([newPdfBytes], { type: "application/pdf" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "updated.pdf";
+                link.click();
+                URL.revokeObjectURL(link.href);
+            } catch (error) {
+                console.error("Error saving PDF:", error);
+            }
+        },
+    },
 };
 </script>
