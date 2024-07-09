@@ -7,9 +7,6 @@ export class UpdateStepDto{
     @IsString()
     title: string;
 
-    @IsNumber()
-    stepNumber: number;
-
     @IsString()
     data:string;
 }

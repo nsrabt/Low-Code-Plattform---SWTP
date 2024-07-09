@@ -188,17 +188,41 @@ export default {
       async function loadWorkflowData() {
         try {
           if (!workflowID) {
-            const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
-              title: 'Title',
-              description: 'Description',
-              isOpen: true,
-              platform_id: 1
-            });
-            workflowID = response.data.id;
-            console.log('Workflow created:', response.data.title);
-            console.log('Workflow ID:', response.data.id);
+            console.error('Error: Workflow ID is not defined.');
+
           } else {
-            await getAllStepsAPI(workflowID);
+            const response = await axios.get(`http://localhost:3000/workflow/allSteps/${workflowID}`);
+            console.log('Steps loaded for Workflow ID:', workflowID);
+
+            console.log(response.data);
+            const allSteps  = response.data.map(step => ({
+              id: step.id,
+              title: step.title,
+              document: step.data,
+              step_number: step.stepNumber,
+              role_ids: step.role_ids || []
+            }));
+            console.log("all", allSteps);
+            const maxStepNumber = Math.max(...allSteps.map(step => step.step_number));
+            for (let i = 1; i <= maxStepNumber; i++) {
+               createCategory(0);
+            }
+            let newIndex = 0;
+            for (const step of allSteps) {
+              workflows.value[0].items.push({
+                id: newIndex,
+                title: step.title,
+                categoryId: step.step_number-1,
+                pdfLink: '',
+                objects: [],
+                workflowId: 0,
+                step_id: step.id
+              });
+              newIndex++;
+            }
+
+
+
           }
         } catch (error) {
           console.error('Error creating or loading workflow:', error);
@@ -227,7 +251,6 @@ export default {
 
       })
     }
-
       async function createItem(workflowIndex) {
         const newId = workflows.value[workflowIndex].items.length > 0
             ? Math.max(...workflows.value[workflowIndex].items.map(item => item.id)) + 1
@@ -256,16 +279,30 @@ export default {
 
       }
 
-    function updateItem(updatedItem, workflowIndex) {
+    async function updateItem(updatedItem, workflowIndex) {
       const index = workflows.value[workflowIndex].items.findIndex(item => item.id === updatedItem.id);
       if (index !== -1) {
         workflows.value[workflowIndex].items[index] = { ...updatedItem };
+        const updateStepDto = {
+          id: updatedItem.step_id,
+          title: updatedItem.title,
+          data: updatedItem.pdfLink || "null"
+        };
+        try {
+          const response = await axios.post(`http://localhost:3000/workflow/updateStep`, updateStepDto);
+          console.log('Step updated successfully:', response.data);
+        } catch (error) {
+          console.error('Error updating step:', error);
+        }
       }
     }
 
-    function deleteItem(workflowIndex, itemId) {
+    async function deleteItem(workflowIndex, itemId) {
       const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.id === itemId);
       if (itemIndex !== -1) {
+        const stepId = workflows.value[workflowIndex].items[itemIndex].step_id;
+        const response = await axios.post(`http://localhost:3000/workflow/deleteStep/${stepId}`);
+        console.log("stepId", stepId);
         workflows.value[workflowIndex].items.splice(itemIndex, 1);
       }
     }
@@ -455,15 +492,6 @@ export default {
         console.log('Step added:', response.data);
       } catch (error) {
         console.error('Error adding step:', error);
-      }
-    }
-
-    async function getAllStepsAPI(processID) {
-      try {
-        const response = await axios.get(`http://localhost:3000/workflow/allSteps/${processID}`);
-        console.log('All steps:', response.data);
-      } catch (error) {
-        console.error('Error fetching all steps:', error);
       }
     }
 

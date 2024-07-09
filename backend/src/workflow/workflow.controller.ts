@@ -34,7 +34,7 @@ export class WorkflowController {
         return await this.workflowService.getAllRoles(processID);
     }
     //get all steps
-    @Get('allSteps')
+    @Get('allSteps/:id')
     async getAllSteps(@Param('id', ParseIntPipe) processID:number){
         return await this.workflowService.getAllSteps(processID);
     }

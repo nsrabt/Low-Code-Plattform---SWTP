@@ -142,8 +142,6 @@ export class WorkflowService {
         }
         stepToUpdate.title = updateStepDto.title;
         stepToUpdate.data = updateStepDto.data;
-        stepToUpdate.stepNumber = updateStepDto.stepNumber;
-        stepToUpdate.stepNumber = updateStepDto.stepNumber;
         return await this.stepRepository.save(stepToUpdate);
     }
 
