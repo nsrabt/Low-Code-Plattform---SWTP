@@ -15,10 +15,10 @@
                         </g>
                     </g>
                 </svg>
-                <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Low-Code</span>
+                <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Simple-Form</span>
             </a>
 
-        
+
             <!-- User login -->
             <div
                 class="relative w-[200px] rounded-md hover:bg-gray-700 hover:text-gray-800 transition duration-400 ease-in-out">

@@ -14,7 +14,7 @@
             </g>
           </g>
         </svg>
-        <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Low-Code</span>
+        <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Simple-Form</span>
       </a>
 
       <!-- User login -->
