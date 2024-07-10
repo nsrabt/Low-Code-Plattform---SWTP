@@ -1,5 +1,5 @@
 <template>
-    <div class="main-container">
+    <div class="main-container}">
         <!-- Navigation -->
         <nav class="bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700">
             <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
@@ -59,77 +59,73 @@
                 </div>
             </div>
         </nav>
-
-        <!-- Landing Page Content -->
-        <div class="max-w-screen-xl mx-auto p-4 flex flex-col lg:flex-row items-center lg:items-start">
-            <div class="lg:w-1/2 p-4">
-                <h1 class="text-7xl text-blue-900 ostrich-sans -lefttext">Willkommen auf unserer
-                    Simple-Form Plattform</h1>
-                <p class="mt-4 text-2xl bold-text text-gray-700 text-left">Wir bieten eine benutzerfreundliche Lösung
-                    zur Automatisierung und Optimierung
-                    wiederkehrender Prozesse sowie zur Verwaltung und automatischen Ausfüllung von PDF-Dokumenten</p>
-
-            </div>
-            <div class="lg:w-1/2 p-4 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <router-link v-for="(box) in boxes" :key="box.name" :to="box.link"
-                    class="p-6 bg-gray-100 rounded-lg shadow-md hover:shadow-lg transition-transform transform hover:scale-105 duration-300"
-                    style="width: 300px; height: 450px;">
-                    <img :src="box.photo" alt="Box Image" class="w-full h-50 object-cover rounded-t-lg mb-4">
-                    <h2 class="text-2xl font-bold mb-2 ">{{ box.name }}</h2>
-                    <p class="text-gray-700 mb-4 ">{{ box.description }}</p>
-                </router-link>
+        <div class="flex justify-center items-center min-h-screen bg-gray-100"
+            :style="{ backgroundImage: 'url(/bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }">
+            <div class=" bg-white rounded-lg shadow-lg w-3/4 md:w-1/2">
+                <div class="flex border-b">
+                    <button v-for="(tab, index) in tabs" :key="index" @click="selectedTab = tab" :class="{
+                        'bg-blue-500 text-white': selectedTab === tab,
+                        'bg-white text-blue-500': selectedTab !== tab
+                    }" class="w-full p-2 text-center">
+                        {{ tab }}
+                    </button>
+                </div>
+                <div class="p-4">
+                    <table class="min-w-full border-collapse block md:table">
+                        <thead class="block md:table-header-group">
+                            <tr class="border border-grey-500 md:border-none block md:table-row">
+                                <th class="block md:table-cell">Process Name</th>
+                                <th class="block md:table-cell">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="block md:table-row-group">
+                            <tr v-for="(process, index) in currentProcesses" :key="index"
+                                class="bg-gray-100 border border-grey-500 md:border-none block md:table-row">
+                                <td class="p-2 block md:table-cell text-left">{{ process }}</td>
+                                <td class="p-2 block md:table-cell">
+                                    <button class="bg-blue-600 text-white p-1 rounded mr-2">Open</button>
+                                    <button class="bg-red-700 text-white p-1 rounded">Delete</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-
-const showDropDown = ref(false);
-const toggleDrop = () => {
-    showDropDown.value = !showDropDown.value;
+<script>
+export default {
+    data() {
+        return {
+            tabs: ['To do', 'Waiting', 'Public', 'Done'],
+            selectedTab: 'To do',
+            todoProcesses: ['Process 1', 'Process 2', 'Process 3'],
+            waitingProcesses: ['Process A', 'Process B', 'Process C'],
+            publicProcesses: ['Process X', 'Process Y', 'Process Z'],
+            doneProcesses: ['Process Alpha', 'Process Beta', 'Process Gamma'],
+        };
+    },
+    computed: {
+        currentProcesses() {
+            switch (this.selectedTab) {
+                case 'To do':
+                    return this.todoProcesses;
+                case 'Waiting':
+                    return this.waitingProcesses;
+                case 'Public':
+                    return this.publicProcesses;
+                case 'Done':
+                    return this.doneProcesses;
+                default:
+                    return [];
+            }
+        },
+    },
 };
-
-const boxes = ref([
-    { name: 'Prozesse', description: 'Übersicht der Prozesse', link: '/prozesse', photo: '/process.png' },
-    { name: 'Workflow Management', description: 'Koordination und Automatisierung von Arbeitsabläufen zur Steigerung der Effizienz.', link: '/createWorkflow', photo: '/Workflow.png' },
-    { name: 'Plattform Manager', description: 'Verwaltung und Bearbeitung von den Plattformen', link: '/page3', photo: '/Plattform.png' },
-    { name: 'Ausfülldaten Verwaltung', description: 'Verwaltung und Speicherung von den Benutzerdaten.', link: '/settings', photo: '/einstellung.png' },
-]);
 </script>
 
-<style lang="scss" scoped>
-@font-face {
-    font-family: 'Ostrich Sans';
-    src: url('/OstrichSans-Black.otf') format('opentype');
-}
-
-.ostrich-sans {
-    font-family: 'Ostrich Sans', sans-serif;
-}
-
-.main-container {
-    min-height: 100vh;
-    background: url('/bg.jpg') no-repeat center center fixed;
-    background-size: cover;
-}
-
-nav {
-    background-color: #1a202c;
-    border-bottom: 1px solid #2d3748;
-}
-
-a {
-    color: #63b3ed;
-    text-decoration: none;
-}
-
-a:hover {
-    color: #3182ce;
-}
-
-.box:hover {
-    transform: scale(1.05);
-}
+<style>
+/* Add any additional styling if needed */
 </style>

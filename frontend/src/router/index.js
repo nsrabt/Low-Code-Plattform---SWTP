@@ -8,6 +8,8 @@ import login from "../Pages/login.vue"
 import workflow from "../Pages/Workflow.vue"
 import settings from "../Pages/settings.vue"
 import pdfworkflow from "../Pages/pdfworkflow.vue"
+import process from "../Pages/process.vue"
+
 
 
 
@@ -51,6 +53,11 @@ const routes = [
         name: 'EditWorkflow',
         path: '/editWorkflow/:id',
         component:workflow,
+    },
+    {
+        name: 'Process',
+        path: '/process',
+        component:process,
     }
 ];
 const router = Router();
