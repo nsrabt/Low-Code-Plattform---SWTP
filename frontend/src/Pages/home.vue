@@ -67,8 +67,7 @@
                     Simple-Form Plattform</h1>
                 <p class="mt-4 text-2xl bold-text text-gray-700 text-left">Wir bieten eine benutzerfreundliche Lösung
                     zur Automatisierung und Optimierung
-                    wiederkehrender Prozesse bietet, inklusive der nahtlosen Verwaltung und automatischen Ausfüllung von
-                    PDF-Dokumenten.</p>
+                    wiederkehrender Prozesse sowie zur Verwaltung und automatischen Ausfüllung von PDF-Dokumenten</p>
 
             </div>
             <div class="lg:w-1/2 p-4 grid grid-cols-1 sm:grid-cols-2 gap-6">
