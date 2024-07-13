@@ -1,7 +1,7 @@
 import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 
 @Entity()
-export class UserProcessRoles {
+export class user_process_roles {
     @PrimaryGeneratedColumn()
     id:number;
     @Column()

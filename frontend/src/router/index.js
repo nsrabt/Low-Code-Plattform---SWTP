@@ -55,8 +55,8 @@ const routes = [
         component:workflow,
     },
     {
-        name: 'Process',
-        path: '/process',
+        name: 'ProcessOverview',
+        path: '/processOverview',
         component:process,
     }
 ];

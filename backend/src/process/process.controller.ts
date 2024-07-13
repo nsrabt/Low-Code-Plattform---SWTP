@@ -1,6 +1,7 @@
 import {Body, Controller, Get, Put} from '@nestjs/common';
 import {ProcessService} from "./process.service";
 import {StartProcessDto} from "./dto/StartProcessDto";
+import {filledDataDto} from "./dto/putFilledDataDto";
 
 @Controller('process')
 export class ProcessController {
@@ -36,7 +37,11 @@ export class ProcessController {
 
 
 
-
+    //Put FilledData
+    @Put('filledData')
+    async putFilledData(@Body()filledRoleDto: filledDataDto){
+        this.processService.saveMissingData(filledDataDto);
+    }
 
     //GetAllOpenProcesses
 
@@ -46,4 +51,7 @@ export class ProcessController {
 
     //Accept application
 
+    //Apply
+
+    //Get all Process Roles
 }

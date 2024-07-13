@@ -11,6 +11,12 @@ import {user_step} from "../database/user & execution/user_step";
 import {filling_data} from "../database/user & execution/filling_data";
 import {async} from "rxjs";
 import {user_process} from "../database/user & execution/user_process";
+import {step_roles} from "../database/workflow/step-roles";
+import {process_roles} from "../database/workflow/process_roles";
+import {user_process_roles} from "../database/user & execution/user_process_roles";
+import {filledDataDto} from "./dto/putFilledDataDto";
+
+
 @Injectable()
 export class ProcessService {
 
@@ -19,6 +25,13 @@ export class ProcessService {
             private processRepository: Repository<process>,
             @InjectRepository(step)
             private stepRepository: Repository<step>,
+            @InjectRepository(step_roles)
+            private stepRolesRepository: Repository<step_roles>,
+            @InjectRepository(process_roles)
+            private processRolesRepository: Repository<process_roles>,
+            @InjectRepository(user_process_roles)
+            private userProcessRolesRepository: Repository<user_process_roles>,
+
             @InjectRepository(user_fillingdata)
             private userFillingRepo: Repository<user_fillingdata>,
             @InjectRepository(fields)
@@ -32,14 +45,16 @@ export class ProcessService {
     ) {}
 
 
-
+    userID:number;
+    processID:number
+    steps: step[];
 
     async getMissingData(startProcessDto: StartProcessDto) {
-        const processID = startProcessDto.processID;
-        const userID = startProcessDto.userID;
+         this.processID = startProcessDto.processID;
+         this.userID = startProcessDto.userID;
 
         // Abrufen des aktuellen Workflows
-        const currentWorkflow = await this.processRepository.findOne({ where: { id: processID } });
+        const currentWorkflow = await this.processRepository.findOne({ where: { id: this.processID } });
 
         if (!currentWorkflow) {
             throw new Error("Workflow not found");
@@ -52,24 +67,46 @@ export class ProcessService {
 
         // Erstellen eines neuen Benutzerprozesses
         const userPro = new user_process();
-        userPro.processID = processID;
+        userPro.processID = this.processID;
         userPro.state = 'missing data';
-        userPro.userID = userID;
+        userPro.userID = this.userID;
         userPro.done = false;
         await this.userProRepo.save(userPro);
 
         // Initialisieren der Liste für fehlende Felder
         const notDefined: fields[] = [];
 
-        // Abrufen und Sortieren der Schritte
-        const steps = await this.stepRepository.find({ where: { process_id: processID } });
-        steps.sort((a, b) => a.stepNumber - b.stepNumber);
+
+
+        //get the all Roles in Process
+        const processRoles = await this.processRolesRepository.find({where:{processID:this.processID}});
+        let userRole = null;
+        //check for each process-role if user has it
+        for(const processRole of processRoles){
+            const isUserRole= await this.userProcessRolesRepository.exists({where:{userID: this.userID, process_role_id: processRole.id}});
+            if(isUserRole){
+                userRole = this.userProcessRolesRepository.findOne({where:{userID: this.userID, process_role_id: processRole.id}});
+            }
+        }
+        if(userRole == null){
+            throw new Error("User is not part of the process");
+        }
+
+
+        const stepsRoles = await this.stepRolesRepository.find({where:{process_role_id: userRole.process_role_id}});
+       //finde alle felder die zur userRolle gehören
+        const steps :step[]= []
+        for(const stepRole of stepsRoles){
+            steps.push(await this.stepRepository.findOne({where: {id: stepRole.step_id}}));
+        }
+        this.steps=steps;
+
 
         // Durchlaufen der Schritte und Felder
         for (const step of steps) {
             const curFields = await this.stepFieldRepo.find({ where: { stepID: step.id } });
             for (const field of curFields) {
-                const userField = await this.userFillingRepo.findOne({ where: { pi_id: field.dataID, userID: userID } });
+                const userField = await this.userFillingRepo.findOne({ where: { pi_id: field.dataID, userID: this.userID } });
                 if (!userField) {
                     notDefined.push(field);
                 }
@@ -85,7 +122,7 @@ export class ProcessService {
     async walkThroughSteps(processID: number, userID: number, up_id: number) {
         try {
             // Retrieve and sort steps
-            let steps = await this.stepRepository.find({ where: { process_id: processID } });
+            let steps = this.steps;
             steps = steps.sort((a, b) => a.stepNumber - b.stepNumber);
 
             for (const step of steps) {
@@ -108,8 +145,6 @@ export class ProcessService {
                         } else if (fData.datatype === 'check') {
                             const curCheckbox = form.getCheckBox(fData.name);
                             if (ufData.value === 'true') curCheckbox.check();
-                        } else if (fData.datatype === 'picture') {
-                            // Handle picture logic here
                         }
                         console.log(ufData.value);
                     } else {
@@ -131,4 +166,15 @@ export class ProcessService {
             console.error(`Error processing steps: ${error.message}`);
         }
     }
+
+    async saveMissingData(filledDataDto: filledDataDto) {
+        const fillingData = new user_fillingdata();
+        fillingData.pi_id = filledDataDto.dataID;
+        fillingData.value = filledDataDto.value;
+        fillingData.userID = filledDataDto.userID;
+
+        return await this.userFillingRepo.save(fillingData)
+    }
+
+
 }

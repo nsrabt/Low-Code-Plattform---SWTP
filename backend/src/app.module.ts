@@ -53,7 +53,7 @@ import {process_roles} from "./database/workflow/process_roles";
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: '1234.Qwer',
+      password: 'password',
       database: 'postgres',
       entities: [filling_data,platform,process,roles,step,fields,users,user_fillingdata,user_platform,user_platform_roles, user_process,user_step, process, UserProcessRoles, field_roles, process_roles, step_roles],
       synchronize: true,
