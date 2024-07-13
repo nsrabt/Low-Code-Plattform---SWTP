@@ -1,7 +1,9 @@
-import {Body, Controller, Get, Put} from '@nestjs/common';
+import {Body, Controller, Get, Param, ParseIntPipe, Put} from '@nestjs/common';
 import {ProcessService} from "./process.service";
 import {StartProcessDto} from "./dto/StartProcessDto";
 import {filledDataDto} from "./dto/putFilledDataDto";
+import {SendProcessRoleDto} from "./dto/SendProcessRoleDto";
+import {IsNumber} from "class-validator";
 
 @Controller('process')
 export class ProcessController {
@@ -43,15 +45,32 @@ export class ProcessController {
         return await this.processService.saveMissingData(filledDataDto);
     }
 
-    //GetAllOpenProcesses
+    //creates the process in the database an returns the process roles
+    @Put('startProcess')
+    async startProcess(@Body()startProcessDto: StartProcessDto){
+        return await this.processService.startProcess(startProcessDto);
+    }
+    //if null => process role already has a user assigned to it
+    @Put('sendProcessRole')
+    async sendProcessRole(@Body()sendProcessRoleDto: SendProcessRoleDto){
+        return await this.processService.saveProcessRole(sendProcessRoleDto);
+    }
 
-    //GetAllClosedProcesses
 
-    //GetAllProcesses
 
-    //Accept application
+    //Get all the running processes
+    @Get(':id')
+    async getAllCurByUser(@Param('id',ParseIntPipe) userID:number){
+        return await this.processService.getAllCurByUser(userID);
+    }
+    //Get all the done Processes
+    @Get('done/:id')
+    async getAllDoneByUser(@Param('id',ParseIntPipe) userID:number){
+        return await this.processService.getAllDoneByUser(userID):
+    }
+
+        //Accept application
 
     //Apply
 
-    //Get all Process Roles
 }
