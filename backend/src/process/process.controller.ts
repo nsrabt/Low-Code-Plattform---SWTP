@@ -39,8 +39,8 @@ export class ProcessController {
 
     //Put FilledData
     @Put('filledData')
-    async putFilledData(@Body()filledRoleDto: filledDataDto){
-        this.processService.saveMissingData(filledDataDto);
+    async putFilledData(@Body()filledDataDto: filledDataDto){
+        return await this.processService.saveMissingData(filledDataDto);
     }
 
     //GetAllOpenProcesses
