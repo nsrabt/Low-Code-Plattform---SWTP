@@ -37,8 +37,10 @@ export class ProcessController {
        // return await this.processService.walkThroughSteps();
     }
 
-
-
+    @Get('userProcess/:id')
+    async getUserProcess(@Param('id',ParseIntPipe) userProcessID:number){
+        return await this.processService.getUserProcess(userProcessID);
+    }
     //Put FilledData
     @Put('filledData')
     async putFilledData(@Body()filledDataDto: filledDataDto){

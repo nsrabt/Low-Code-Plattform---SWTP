@@ -58,10 +58,6 @@ export class ProcessService {
 
         // Initialisieren der Liste für fehlende Felder
         const notDefined: fields[] = [];
-
-
-
-
         this.stepRoles = await this.stepRolesRepository.find({where:{process_role_id: this.userRole.process_role_id}});
        //finde alle felder die zur userRolle gehören
         const steps :step[]= []
@@ -218,6 +214,7 @@ export class ProcessService {
         this.stepRoles = await this.stepRolesRepository.find({where:{process_role_id: this.userRole.process_role_id}});
         return this.stepRoles;
 
+
     }
 
     async saveProcessRole(sendProcessRoleDto: SendProcessRoleDto) {
@@ -237,5 +234,10 @@ export class ProcessService {
 
     async getAllDoneByUser(userID: number) {
         return await this.userProRepo.find({where:{userID:userID,done:true}});
+    }
+
+    async getUserProcess(userProcessID: number) {
+        return await this.processRolesRepository.findOne({where:{id:userProcessID}});
+
     }
 }
