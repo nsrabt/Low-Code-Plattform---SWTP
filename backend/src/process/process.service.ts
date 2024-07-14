@@ -17,6 +17,7 @@ import {user_process_roles} from "../database/user & execution/user_process_role
 import {filledDataDto} from "./dto/putFilledDataDto";
 import {SendProcessRoleDto} from "./dto/SendProcessRoleDto";
 import {field_roles} from "../database/workflow/field_roles";
+import {roles} from "../database/workflow/roles";
 
 
 @Injectable()
@@ -44,8 +45,11 @@ export class ProcessService {
             @InjectRepository(filling_data)
             private fillingRepo: Repository<filling_data>,
             @InjectRepository(user_process)
-            private userProRepo: Repository<user_process>
-    ) {}
+            private userProRepo: Repository<user_process>,
+            @InjectRepository(roles)
+            private roleRepo: Repository<roles>
+
+) {}
 
 
     userID:number;
@@ -214,7 +218,6 @@ export class ProcessService {
         this.stepRoles = await this.stepRolesRepository.find({where:{process_role_id: this.userRole.process_role_id}});
         return this.stepRoles;
 
-
     }
 
     async saveProcessRole(sendProcessRoleDto: SendProcessRoleDto) {
@@ -236,8 +239,14 @@ export class ProcessService {
         return await this.userProRepo.find({where:{userID:userID,done:true}});
     }
 
-    async getUserProcess(userProcessID: number) {
+    async getUserProcessRole(userProcessID: number) {
         return await this.processRolesRepository.findOne({where:{id:userProcessID}});
 
+    }
+
+    async getRole(process_role_id: number) {
+        const proRole= await this.processRolesRepository.findOne({where:{id:process_role_id}});
+        const role= await this.roleRepo.findOne({where:{id:proRole.roleID}});
+        return role;
     }
 }

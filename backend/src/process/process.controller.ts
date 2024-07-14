@@ -4,6 +4,7 @@ import {StartProcessDto} from "./dto/StartProcessDto";
 import {filledDataDto} from "./dto/putFilledDataDto";
 import {SendProcessRoleDto} from "./dto/SendProcessRoleDto";
 import {IsNumber} from "class-validator";
+import {process_roles} from "../database/workflow/process_roles";
 
 @Controller('process')
 export class ProcessController {
@@ -38,8 +39,8 @@ export class ProcessController {
     }
 
     @Get('userProcess/:id')
-    async getUserProcess(@Param('id',ParseIntPipe) userProcessID:number){
-        return await this.processService.getUserProcess(userProcessID);
+    async getUserProcessRole(@Param('id',ParseIntPipe) userProcessID:number){
+        return await this.processService.getUserProcessRole(userProcessID);
     }
     //Put FilledData
     @Put('filledData')
@@ -58,14 +59,17 @@ export class ProcessController {
         return await this.processService.saveProcessRole(sendProcessRoleDto);
     }
 
+    @Get('role/:id')
+    async getRole(@Param('id',ParseIntPipe) process_role_id:number) {
+        return await this.processService.getRole(process_role_id);
+    }
 
-
-    //Get all the running processes
+            //Get all the running processes
     @Get(':id')
     async getAllCurByUser(@Param('id',ParseIntPipe) userID:number){
         return await this.processService.getAllCurByUser(userID);
     }
-    //Get all the done Processes
+        //Get all the done Processes
     @Get('done/:id')
     async getAllDoneByUser(@Param('id',ParseIntPipe) userID:number){
         return await this.processService.getAllDoneByUser(userID);
