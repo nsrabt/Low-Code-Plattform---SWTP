@@ -9,6 +9,7 @@ import workflow from "../Pages/Workflow.vue"
 import settings from "../Pages/settings.vue"
 import pdfworkflow from "../Pages/pdfworkflow.vue"
 import process from "../Pages/process.vue"
+import fillingdata from "@/Pages/fillingdata.vue";
 
 
 
@@ -23,6 +24,11 @@ const routes = [
         name: 'Home',
         path: '/home',
         component:home
+    },
+    {
+        name: 'fillingdata',
+        path: '/fillingdata',
+        component:fillingdata
     },
     {
         name: 'Pdfworkflow',
