@@ -8,6 +8,4 @@ export class AddUserDto {
     @IsEmail()
     eMail: string;
 
-
-
 }

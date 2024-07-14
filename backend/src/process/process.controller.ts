@@ -47,7 +47,7 @@ export class ProcessController {
         return await this.processService.saveMissingData(filledDataDto);
     }
 
-    //creates the process in the database an returns the process roles
+    //creates the process in the database and returns the process roles
     @Put('startProcess')
     async startProcess(@Body()startProcessDto: StartProcessDto){
         return await this.processService.startProcess(startProcessDto);
@@ -68,7 +68,7 @@ export class ProcessController {
     //Get all the done Processes
     @Get('done/:id')
     async getAllDoneByUser(@Param('id',ParseIntPipe) userID:number){
-        return await this.processService.getAllDoneByUser(userID):
+        return await this.processService.getAllDoneByUser(userID);
     }
 
         //Accept application

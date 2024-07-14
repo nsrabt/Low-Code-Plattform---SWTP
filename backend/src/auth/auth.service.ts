@@ -88,16 +88,16 @@ export class AuthService {
         if(await this.authenticateUser(username, password)) {
             const addUser = await this.ldapSearch(username);
             console.log(addUser.eMail + "  " + username)
-            const addUserDto: AddUserDto = {
-                eMail: addUser.eMail,
-                username: username
-            }
+
             if(addUser) {
+                const newUser = await this.userService.addUser({
+                    username: username,
+                    eMail: addUser.eMail
+                });
                 //Ich habe etwas geändert. Nasser braucht das User Objekt
                 console.log("b")
-                await this.userService.addUser(addUserDto);
                 console.log("a")
-                return addUser;
+                return newUser;
             }
         } else {
             console.log("not authenticated")

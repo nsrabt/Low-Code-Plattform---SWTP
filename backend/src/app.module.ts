@@ -14,7 +14,7 @@ import {users} from './database/user & execution/users';
 import {user_fillingdata} from './database/user & execution/user-fillingdata';
 import {user_platform} from './database/user & execution/user-platform';
 
-import {UserProcessRoles} from './database/user & execution/user_process_roles';
+import {user_process_roles} from './database/user & execution/user_process_roles';
 
 
 
@@ -53,15 +53,15 @@ import {process_roles} from "./database/workflow/process_roles";
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'password',
+      password: 'passwort',
       database: 'postgres',
-      entities: [filling_data,platform,process,roles,step,fields,users,user_fillingdata,user_platform,user_platform_roles, user_process,user_step, process, UserProcessRoles, field_roles, process_roles, step_roles],
+      entities: [filling_data,platform,process,roles,step,fields,users,user_fillingdata,user_platform,user_platform_roles, user_process,user_step, process, user_process_roles, field_roles, process_roles, step_roles],
       synchronize: true,
     }),
     ServeStaticModule.forRoot({ // New
       rootPath: join(__dirname, '../../frontend/dist'), // New
     }), // New
-    TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles,filling_data, process,step,process,platform,step_roles,fields, user_fillingdata, user_process, user_step, UserProcessRoles, field_roles, process_roles]),
+    TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles,filling_data, process,step,process,platform,step_roles,fields, user_fillingdata, user_process, user_step, user_process_roles, field_roles, process_roles]),
   ],
   controllers: [AppController, WorkflowController, UserController, RoleController, FillingDataController, WorkflowController, UserFillingDataController, ProcessController],
   providers: [AppService, WorkflowService, UserService, RoleService, FillingDataService, WorkflowService, UserFillingDataService, ProcessService],

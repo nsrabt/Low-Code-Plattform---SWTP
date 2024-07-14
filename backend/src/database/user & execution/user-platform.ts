@@ -2,7 +2,7 @@ import {Column, CreateDateColumn, Entity, PrimaryGeneratedColumn} from "typeorm"
 import {Timestamp} from "rxjs";
 
 @Entity()
-export class user_platform{
+export class user_platform {
     @PrimaryGeneratedColumn()
     id: number;
     @Column()

@@ -149,14 +149,15 @@
     </div>
   </div>
 </template>
-<script>
+<script lang="ts">
 import axios from 'axios'; // Stelle sicher, dass axios installiert ist: npm install axios
+export let userID: number;
 
 export default {
   data() {
     return {
       email: '', // Hier werden die Eingabefelder für Benutzername und Passwort gespeichert
-      password: '',
+      password: ''
     };
   },
   methods: {
@@ -167,14 +168,14 @@ export default {
         // Hier wird ein HTTP-POST-Request an deine NestJS-Route gesendet
         const response = await axios.post('http://localhost:3000/auth/login', {
           username: this.email,  // Benutzername und Passwort aus den Vue-Daten
-          password: this.password
+          password: this.password,
         });
 
         // Hier kannst du die Antwort des Servers verarbeiten
         const user = response.data;
+        userID = user.id;
+        console.log("user id",userID);
 
-
-        // Hier könntest du die Weiterleitung zum Dashboard implementieren
         if (user) {
           // Beispiel: Weiterleitung zur Dashboard-Seite
           this.$router.push('/home');

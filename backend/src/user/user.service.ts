@@ -63,6 +63,7 @@ export class UserService {
 
             //check if user or email is already defined!
             const definedUser = await this.userRepository.findOne({where:{eMail:email, username: username}});
+            console.log("definedUser", definedUser);
             if(definedUser){
                 return definedUser;
             }
@@ -81,6 +82,7 @@ export class UserService {
                 //finally save user in database
 
                 const savedUser = await this.userRepository.save(newUser) //Save user in user-table
+                console.log("savedUser",savedUser);
                 const savedUserID = await this.userRepository.getId(savedUser);
                 await this.assignDefaultRole(savedUserID, this.platformID);
                 await this.addUserToPlatform(savedUserID, this.platformID);

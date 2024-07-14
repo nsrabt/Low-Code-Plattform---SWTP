@@ -75,32 +75,47 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
     data() {
         return {
             showDropDown: false,
             fields: [],
+            processResponse: null,
+            startProcessDto: {
+            // Beispielparameter für den Startprozess
+            processId: 1,
+            userId: 10
+          }
         };
     },
     methods: {
         toggleDrop() {
             this.showDropDown = !this.showDropDown;
         },
-        async fetchMissingData() {
-            try {
-                const response = await fetch('/api/missing-data'); // Adjust the URL as necessary
-                const data = await response.json();
-                this.fields = data.map(item => ({
-                    key: item.key,
-                    label: item.label,
-                    value: ''
-                }));
-            } catch (error) {
-                console.error('Error fetching missing data:', error);
-            }
-        },
+      async fetchMissingData() {
+        try {
+          const response = await axios.put('http://localhost:3000/process/check');
+          this.fields = response.data.map(item => ({
+            key: item.key,
+            label: item.label,
+            value: '',
+          }));
+        } catch (error) {
+          console.error('Error fetching missing data:', error);
+        }
+      },
+      async startProcess() {
+        try {
+          const response = await axios.put('http://localhost:3000/process/startProcess', this.startProcessDto);
+          this.processResponse = response.data;
+        } catch (error) {
+          console.error('Error starting process:', error);
+        }
+      },
         handleSubmit() {
-            console.log(this.fields);
+            console.log("fields ",this.fields);
             // Handle form submission logic here
         }
     },
