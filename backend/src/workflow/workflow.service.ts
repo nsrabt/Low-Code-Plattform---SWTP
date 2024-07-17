@@ -187,4 +187,10 @@ export class WorkflowService {
     async deleteRole(roleID) {
         return await this.processRoleRepo.delete(roleID);
     }
+
+    async sendNotification(){
+
+    }
+
+
 }

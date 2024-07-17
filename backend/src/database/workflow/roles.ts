@@ -16,12 +16,10 @@ export class roles{
     isDefault: boolean;
 
     /*
-        0 => apply for process
-        1 => check process overview
-        2 => use monitoring dashboard
-        3 => edit workflows
-        4 => create workflows
-        5 => edit platform-info
+        0 => processes
+        1 => use admin dashboard
+        2 => edit workflows
+        4 => edit platform-info
      */
     @Column("boolean", {array: true})
     permissions: boolean[];

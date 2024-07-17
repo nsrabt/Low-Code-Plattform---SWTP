@@ -20,7 +20,7 @@ export class WorkflowController {
 
     @Post('addStep')
     async addStep(@Body() stepDto: StepDto) {
-        return this.workflowService.addStep(stepDto.id, stepDto.title, stepDto.document, stepDto.step_number);
+        return this.workflowService.addStep(stepDto.process_id, stepDto.title, stepDto.document, stepDto.step_number);
     }
 
     @Post('addRole')

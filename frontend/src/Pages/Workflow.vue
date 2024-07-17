@@ -152,14 +152,35 @@ export let workflowID: number;
 export default {
   name: 'App',
 
-  created() {
-    console.log('Aktuelle Route:', this.$route.name);
-    if (this.$route.name == "EditWorkflow") {
-      workflowID = this.$route.params.id;
+  async createWorkflowAPI(title, description, platform_id, isOpen) {
+    try {
+      const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
+        title: title,
+        description: description,
+        isOpen: isOpen,
+        platform_id: platform_id
+      });
+      console.log("response.data.id", response.data.id);
+      workflowID = response.data.id;
+      console.log('Workflow created:', response.data.title);
+    } catch (error) {
+      console.error('Error creating workflow:', error);
     }
   },
 
+  async created() {
+    if (this.$route.name == "EditWorkflow") {
+      workflowID = this.$route.params.id;
+    }
+    else {
+      console.log("new!")
+      await this.createWorkflowAPI('Default Title', 'Default Description', 1, true); // Beispielwerte für title, description, platform_id und isOpen
+    }
+  },
   setup() {
+
+
+
     const workflows = ref([
       {
         id: 0,
@@ -168,6 +189,7 @@ export default {
         step_id: 0
       }
     ]);
+
 
     const objects = ref([]);
 
@@ -220,9 +242,9 @@ export default {
         console.error('Error creating or loading workflow:', error);
       }
     }
-    onMounted(() => {
-      loadWorkflowData();
-    });
+    //onMounted(() => {
+    //  loadWorkflowData();
+    //});
 
     function toggleSideBar() {
       showSide.value = !showSide.value;
@@ -450,21 +472,6 @@ export default {
       }
     }
 
-    async function createWorkflowAPI(title, description, platform_id, isOpen) {
-      try {
-        const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
-          title: title,
-          description: description,
-          isOpen: isOpen,
-          platform_id: platform_id
-        });
-        console.log("respons.data.id", response.data.id);
-        workflowID = response.data.id;
-        console.log('Workflow created:', response.data.title);
-      } catch (error) {
-        console.error('Error creating workflow:', error);
-      }
-    }
 
     async function addStepAPI(process_id, title, document, step_number, role_ids, pdfBytes) {
       try {
