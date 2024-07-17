@@ -4,7 +4,7 @@ import {StartProcessDto} from "./dto/StartProcessDto";
 import {filledDataDto} from "./dto/putFilledDataDto";
 import {SendProcessRoleDto} from "./dto/SendProcessRoleDto";
 import {IsNumber} from "class-validator";
-import {process_roles} from "../database/workflow/process_roles";
+import {workflow_roles} from "../database/workflow/Workflow_roles";
 
 @Controller('process')
 export class ProcessController {
@@ -13,14 +13,7 @@ export class ProcessController {
 
 
 
-    /*
-        This method should be called as soon as the user starts the process
-        so the user can decide which
-     */
-    @Get('allSelectableRoles')
-    async getAllSelectableRoles(){
 
-}
 
     /*
     This method returns all fields that are not yet defined.
@@ -32,50 +25,56 @@ export class ProcessController {
     }
 
 
-
+    //Starts the automatic pdf filling
     @Put('startFill')
     async startFill(@Body()startProcessDto: StartProcessDto){
        // return await this.processService.walkThroughSteps();
     }
 
+    //Returns a userProcess by its ID
     @Get('userProcess/:id')
     async getUserProcessRole(@Param('id',ParseIntPipe) userProcessID:number){
         return await this.processService.getUserProcessRole(userProcessID);
     }
-    //Put FilledData
+    //saves one single Filling Data in Database
     @Put('filledData')
     async putFilledData(@Body()filledDataDto: filledDataDto){
         return await this.processService.saveMissingData(filledDataDto);
     }
 
-    //creates the process in the database and returns the process roles
+    //creates the workflow in the database and returns the selectable workflow roles
     @Put('startProcess')
     async startProcess(@Body()startProcessDto: StartProcessDto){
         return await this.processService.startProcess(startProcessDto);
     }
-    //if null => process role already has a user assigned to it
+    //if null => workflow role already has a user assigned to it
     @Put('sendProcessRole')
     async sendProcessRole(@Body()sendProcessRoleDto: SendProcessRoleDto){
         return await this.processService.saveProcessRole(sendProcessRoleDto);
     }
 
+    @Get('allPublic')
+    async getAllPublicProcesses(){
+        return await this.processService.getAllPublic();
+    }
+    //Returns the PROCESS ROLE by it's id
     @Get('role/:id')
     async getRole(@Param('id',ParseIntPipe) process_role_id:number) {
         return await this.processService.getRole(process_role_id);
     }
 
-            //Get all the running processes
+    //Get all the running processes
     @Get(':id')
     async getAllCurByUser(@Param('id',ParseIntPipe) userID:number){
         return await this.processService.getAllCurByUser(userID);
     }
-        //Get all the done Processes
+    //Get all the done Processes
     @Get('done/:id')
     async getAllDoneByUser(@Param('id',ParseIntPipe) userID:number){
         return await this.processService.getAllDoneByUser(userID);
     }
 
-        //Accept application
+    //Accept application
 
     //Apply
 

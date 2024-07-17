@@ -9,12 +9,12 @@ import {user_platform_roles} from "../database/user & execution/user-roles";
 import {roles} from "../database/workflow/roles";
 import {filling_data} from "../database/user & execution/filling_data";
 import {platform} from "../database/platform_management/platform";
-import {process} from "../database/workflow/process";
-import {step} from "../database/workflow/step";
+import {workflow} from "../database/workflow/Workflow";
+import {workflowElement} from "../database/workflow/WorkflowElement";
 import {fields} from "../database/workflow/fields";
 import {user_fillingdata} from "../database/user & execution/user-fillingdata";
 import {user_process} from "../database/user & execution/user_process";
-import {user_step} from "../database/user & execution/user_step";
+import {user_process_element} from "../database/user & execution/user_process_element";
 import {UserService} from "../user/user.service";
 import {UpdateRoleDto} from "./dto/update-role-dto";
 
@@ -31,7 +31,7 @@ describe('RoleService', () => {
           username: 'postgres',
           password: 'passwort',
           database: 'LowCode',
-          entities: [filling_data,platform,process,roles,step,fields,users,user_fillingdata,user_platform,user_platform_roles, user_process,user_step],
+          entities: [filling_data,platform,workflow,roles,workflowElement,fields,users,user_fillingdata,user_platform,user_platform_roles, user_process,user_process_element],
           synchronize: true,
         }),
         TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles]),

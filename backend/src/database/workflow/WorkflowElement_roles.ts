@@ -1,17 +1,19 @@
 import {Column, Entity, ManyToMany, PrimaryGeneratedColumn} from "typeorm";
 import {roles} from "./roles";
-import {step} from "./step";
+import {workflowElement} from "./WorkflowElement";
 
 @Entity()
-export class step_roles{
+export class workflowElement_roles{
     @PrimaryGeneratedColumn()
     id:number;
 
     @Column()
-    step_id: number;
+    workflowElementID: number;
 
     @Column()
-    process_role_id: number;
+    workflowRoleID: number;
 
+    @Column()
+    position: number;
 
 }

@@ -1,7 +1,7 @@
 import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 
 @Entity()
-export class process{
+export class workflow {
     @PrimaryGeneratedColumn()
     id: number;
 

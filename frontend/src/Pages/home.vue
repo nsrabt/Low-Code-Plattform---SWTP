@@ -92,7 +92,7 @@ const toggleDrop = () => {
 };
 
 const boxes = ref([
-    { name: 'Prozess-Übersicht', description: 'Übersicht der Prozesse', link: '/processOverview', photo: '/process.png' },
+    { name: 'Prozess-Übersicht', description: 'Übersicht der Prozesse', link: '/processOverview', photo: '/workflow.png' },
     { name: 'Workflow Management', description: 'Koordination und Automatisierung von Arbeitsabläufen zur Steigerung der Effizienz.', link: '/createWorkflow', photo: '/Workflow.png' },
     { name: 'Plattform Manager', description: 'Verwaltung und Bearbeitung von den Plattformen', link: '/page3', photo: '/Plattform.png' },
     { name: 'Ausfülldaten Verwaltung', description: 'Verwaltung und Speicherung von den Benutzerdaten.', link: '/settings', photo: '/einstellung.png' },

@@ -89,7 +89,7 @@
           <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
             @click="createItem(workflowIndex)">Add workflow-element</button>
           <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-            @click="createCategory(workflowIndex)"> Add workflow-step </button>
+            @click="createCategory(workflowIndex)"> Add workflow-workflowElement </button>
         </div>
       </div>
 
@@ -207,7 +207,7 @@ const workflows = ref([
           console.log('Steps loaded for Workflow ID:', workflowID.value);
 
           console.log(response.data);
-          const allSteps = response.data.map(step => ({
+          const allSteps = response.data.map(workflowElement => ({
             id: step.id,
             title: step.title,
             document: step.data,
@@ -215,12 +215,12 @@ const workflows = ref([
             role_ids: step.role_ids || []
           }));
           console.log("all", allSteps);
-          const maxStepNumber = Math.max(...allSteps.map(step => step.step_number));
+          const maxStepNumber = Math.max(...allSteps.map(workflowElement => step.step_number));
           for (let i = 1; i <= maxStepNumber; i++) {
             createCategory(0);
           }
           let newIndex = 0;
-          for (const step of allSteps) {
+          for (const workflowElement of allSteps) {
             workflows.value[0].items.push({
               id: newIndex,
               title: step.title,
@@ -285,7 +285,7 @@ const workflows = ref([
           step_id: response.data.id
         });
       } catch (error) {
-        console.error('Error adding step:', error);
+        console.error('Error adding workflowElement:', error);
       }
     }
 
@@ -302,7 +302,7 @@ const workflows = ref([
           const response = await axios.post(`http://localhost:3000/workflow/updateStep`, updateStepDto);
           console.log('Step updated successfully:', response.data);
         } catch (error) {
-          console.error('Error updating step:', error);
+          console.error('Error updating workflowElement:', error);
         }
       }
     }
@@ -343,8 +343,8 @@ const workflows = ref([
           const newObject = { ...object };
           const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.categoryId === categoryId);
           if (itemIndex !== -1) {
-            const stepId = e.target.closest('.draggable').getAttribute('data-step-id');
-            const step = workflows.value[workflowIndex].items.find(item => item.id == stepId);
+            const stepId = e.target.closest('.draggable').getAttribute('data-workflowElement-id');
+            const workflowElement = workflows.value[workflowIndex].items.find(item => item.id == stepId);
             if (step) {
               step.objects.push(newObject);
             }
@@ -482,7 +482,7 @@ const workflows = ref([
         });
         console.log('Step added:', response.data);
       } catch (error) {
-        console.error('Error adding step:', error);
+        console.error('Error adding workflowElement:', error);
       }
     }
 

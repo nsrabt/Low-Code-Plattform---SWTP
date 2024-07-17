@@ -28,7 +28,7 @@ export class RoleController {
     /*
     Permissions:
     0 => apply for processes
-    1 => check process overview
+    1 => check workflow overview
     2 => use monitoring dashboard
     3 => edit workflows
     4 => create workflows

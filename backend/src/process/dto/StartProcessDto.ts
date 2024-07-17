@@ -5,6 +5,7 @@ export class StartProcessDto {
     userID: number;
 
     @IsNumber()
-    processID: number;
+    workflowID: number;
+
 
 }

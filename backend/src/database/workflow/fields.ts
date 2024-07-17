@@ -5,7 +5,7 @@ export class fields {
     @PrimaryGeneratedColumn()
     id: number;
     @Column()
-    stepID:number;
+    workflowElementID:number;
 //    @Column()
 //    data: string;
     @Column()

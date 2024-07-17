@@ -1,13 +1,13 @@
 import {Column, Entity, ManyToOne, PrimaryColumn, PrimaryGeneratedColumn} from "typeorm";
 import {IsNumber, IsString} from "class-validator";
-import {process} from "./process";
+import {workflow} from "./Workflow";
 /*
-    This function only says which roles should get defined in the process.
+    This function only says which roles should get defined in the workflow.
     for example
     Professor, Student, Assistant 1, Assisitant 2
  */
 @Entity()
-export class process_roles{
+export class workflow_roles {
 
     @PrimaryGeneratedColumn()
     id: number
@@ -19,7 +19,7 @@ export class process_roles{
     roleID: number;
     //maybe instead of Moderator, Moderator, Moderator: Moderator, assistant Moderator ...
     @Column()
-    process_role_name: string
+    workflowRoleName: string
     /*
     can the applicant chose who should take this role?
     for example. which prof is responsible for the student
@@ -27,13 +27,13 @@ export class process_roles{
     but the user shouldn't choose which assistant will work on this
 
     so the roles who are not selectable will be filled manually.
-    the users with the needed roles will have it added to their process overview
+    the users with the needed roles will have it added to their workflow overview
 
      */
     @Column()
     selectable: boolean;
     /*
-    The person that applies for the process always gets this role
+    The person that applies for the workflow always gets this role
      */
     @Column()
     isApplicant: boolean;

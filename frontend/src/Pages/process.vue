@@ -79,9 +79,9 @@
                             </tr>
                         </thead>
                         <tbody class="block md:table-row-group">
-                            <tr v-for="(process, index) in currentProcesses" :key="index"
+                            <tr v-for="(workflow, index) in currentProcesses" :key="index"
                                 class="bg-gray-100 border border-grey-500 md:border-none block md:table-row">
-                                <td class="p-2 block md:table-cell text-left">{{ process }}</td>
+                                <td class="p-2 block md:table-cell text-left">{{ workflow }}</td>
                                 <td class="p-2 block md:table-cell">
                                     <button class="bg-blue-600 text-white p-1 rounded mr-2">Open</button>
                                     <button class="bg-red-700 text-white p-1 rounded">Delete</button>

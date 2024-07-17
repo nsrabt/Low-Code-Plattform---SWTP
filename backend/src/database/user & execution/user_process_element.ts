@@ -1,15 +1,19 @@
 import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 
 @Entity()
-export class user_step {
+export class user_process_element {
     @PrimaryGeneratedColumn()
     id: number;
+
     @Column()
-    up_id:number;
+    processID:number;
+
     @Column()
-    stepID:number;
+    userID: number;
+
     @Column()
-    data:string;
+    workflow_element_id:number;
+
     @Column()
     done: boolean;
 

@@ -1,16 +1,14 @@
 import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 
 @Entity()
-export class user_notifications {
+export class process{
     @PrimaryGeneratedColumn()
-    id: number;
+    id:number;
 
     @Column()
-    userID:number;
+    workflowID: number;
 
     @Column()
-    message: string;
+    curStep:number;
 
-    @Column()
-    link: string;
 }

@@ -1,12 +1,12 @@
 import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 
 @Entity()
-export class step{
+export class workflowElement {
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column()
-    process_id:number;
+    workflowID:number;
 
     @Column()
     title: string;

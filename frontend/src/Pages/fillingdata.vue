@@ -111,7 +111,7 @@ export default {
           const response = await axios.put('http://localhost:3000/process/startProcess', this.startProcessDto);
           this.processResponse = response.data;
         } catch (error) {
-          console.error('Error starting process:', error);
+          console.error('Error starting workflow:', error);
         }
       },
         handleSubmit() {

@@ -1,37 +1,38 @@
-import { Injectable } from '@nestjs/common';
+import {Injectable} from '@nestjs/common';
 import {StartProcessDto} from "./dto/StartProcessDto";
 import {InjectRepository} from "@nestjs/typeorm";
-import {process} from "../database/workflow/process";
+import {workflow} from "../database/workflow/Workflow";
 import {Repository} from "typeorm";
-import {step} from "../database/workflow/step";
+import {workflowElement} from "../database/workflow/WorkflowElement";
 import {PDFDocument} from 'pdf-lib';
 import {user_fillingdata} from "../database/user & execution/user-fillingdata";
 import {fields} from "../database/workflow/fields";
-import {user_step} from "../database/user & execution/user_step";
+import {user_process_element} from "../database/user & execution/user_process_element";
 import {filling_data} from "../database/user & execution/filling_data";
-import {async} from "rxjs";
 import {user_process} from "../database/user & execution/user_process";
-import {step_roles} from "../database/workflow/step-roles";
-import {process_roles} from "../database/workflow/process_roles";
+import {workflowElement_roles} from "../database/workflow/WorkflowElement_roles";
+import {workflow_roles} from "../database/workflow/Workflow_roles";
 import {user_process_roles} from "../database/user & execution/user_process_roles";
 import {filledDataDto} from "./dto/putFilledDataDto";
 import {SendProcessRoleDto} from "./dto/SendProcessRoleDto";
 import {field_roles} from "../database/workflow/field_roles";
 import {roles} from "../database/workflow/roles";
+import {process} from "../database/user & execution/process"
+import {process_element} from "../database/user & execution/process_element";
 
 
 @Injectable()
 export class ProcessService {
 
     constructor(
-            @InjectRepository(process)
-            private processRepository: Repository<process>,
-            @InjectRepository(step)
-            private stepRepository: Repository<step>,
-            @InjectRepository(step_roles)
-            private stepRolesRepository: Repository<step_roles>,
-            @InjectRepository(process_roles)
-            private processRolesRepository: Repository<process_roles>,
+            @InjectRepository(workflow)
+            private workflowRepository: Repository<workflow>,
+            @InjectRepository(workflowElement)
+            private workflowElementRepository: Repository<workflowElement>,
+            @InjectRepository(workflowElement_roles)
+            private workflowElementRolesRepository: Repository<workflowElement_roles>,
+            @InjectRepository(workflow_roles)
+            private workflowRolesRepository: Repository<workflow_roles>,
             @InjectRepository(user_process_roles)
             private userProcessRolesRepository: Repository<user_process_roles>,
             @InjectRepository(field_roles)
@@ -40,42 +41,133 @@ export class ProcessService {
             private userFillingRepo: Repository<user_fillingdata>,
             @InjectRepository(fields)
             private stepFieldRepo: Repository<fields>,
-            @InjectRepository(user_step)
-            private userProStepRepo: Repository<user_step>,
+            @InjectRepository(user_process_element)
+            private userProElemRepo: Repository<user_process_element>,
             @InjectRepository(filling_data)
             private fillingRepo: Repository<filling_data>,
             @InjectRepository(user_process)
             private userProRepo: Repository<user_process>,
             @InjectRepository(roles)
-            private roleRepo: Repository<roles>
+            private roleRepo: Repository<roles>,
+            @InjectRepository(process)
+            private processRepo: Repository<process>,
+            @InjectRepository(process_element)
+            private proElemRepo: Repository<process_element>
 
 ) {}
 
 
     userID:number;
-    processID:number
-    steps: step[];
-    stepRoles: step_roles[];
+    workflowID:number
+    workflowElements: workflowElement[];
+    workflowElementRoles: workflowElement_roles[];
     userRole: user_process_roles;
+    processRoles: workflow_roles[];
+    curStep:number;
+    curProcess:process;
 
+
+    async continueProcess(){
+
+    }
+
+
+    async startProcess(startProcessDto: StartProcessDto) {
+
+        this.workflowID = startProcessDto.workflowID;
+        this.userID = startProcessDto.userID;
+        this.curStep=1;
+
+        // Abrufen des aktuellen Workflows
+        const currentWorkflow = await this.workflowRepository.findOne({ where: { id: this.workflowID } });
+
+        if (!currentWorkflow) {
+            throw new Error("Workflow not found");
+        }
+
+
+
+        //Speichern des Prozesses
+        const newProcess = new process();
+        newProcess.curStep=1;
+        newProcess.workflowID = this.workflowID;
+        this.curProcess = await this.processRepo.save(newProcess);
+
+        const workflowElements = await this.workflowElementRepository.find({where:{workflowID:this.workflowID}});
+
+
+        //create all processElements
+        for(const workflowelem of workflowElements){
+            const proElem = new process_element();
+            proElem.data = workflowelem.data;
+            proElem.workflowElementID = workflowelem.id;
+            proElem.phase=1;
+            await this.proElemRepo.save(proElem);
+        }
+
+
+        // Erstellen eines neuen Benutzerprozesses
+        const userPro = new user_process();
+        userPro.processID = this.workflowID;
+        userPro.state = 'missing data';
+        userPro.userID = this.userID;
+        await this.userProRepo.save(userPro);
+
+
+        for(const workflowelem of workflowElements) {
+            const userProElem = new user_process_element();
+            userProElem.workflow_element_id = userPro.id;
+            userProElem.done=false;
+            userProElem.workflow_element_id = workflowelem.id;
+        }
+
+
+            //Save Applicant in his role
+        const applicantRole =await this.workflowRolesRepository.findOne({where:{isApplicant:true}});
+        this.userRole.workflowRoleID = applicantRole.id;
+        this.userRole.userID = this.userID;
+        await this.userProcessRolesRepository.save(this.userRole);
+
+
+
+        //return all selectable Roles in Process
+        return await this.workflowRolesRepository.find({where: {processID: this.workflowID, selectable: true}});
+    }
+
+
+
+
+
+
+
+
+    /*
+        All Filling Data of the first phase will be collected. even if other users have to fill out a form before you do
+     */
     async getMissingData(startProcessDto: StartProcessDto) {
 
         // Initialisieren der Liste für fehlende Felder
         const notDefined: fields[] = [];
-        this.stepRoles = await this.stepRolesRepository.find({where:{process_role_id: this.userRole.process_role_id}});
-       //finde alle felder die zur userRolle gehören
-        const steps :step[]= []
-        for(const stepRole of this.stepRoles){
-            steps.push(await this.stepRepository.findOne({where: {id: stepRole.step_id}}));
+
+        this.workflowElementRoles = await this.workflowElementRolesRepository.find({where:{workflowRoleID: this.userRole.workflowRoleID}});
+
+        //finde alle felder die zur userRolle gehören
+        const steps :workflowElement[]= []
+        for(const workflowElementRole of this.workflowElementRoles){
+            steps.push(await this.workflowElementRepository.findOne({where: {id : workflowElementRole.workflowElementID, stepNumber : this.curStep}}));
         }
-        this.steps=steps;
+        this.workflowElements=steps;
 
 
         // Durchlaufen der Schritte und Felder
         for (const step of steps) {
-            const curFields = await this.stepFieldRepo.find({ where: { stepID: step.id } });
+
+            const curFields = await this.stepFieldRepo.find({ where: { workflowElementID: step.id }});
+
             for (const field of curFields) {
+
                 const userField = await this.userFillingRepo.findOne({ where: { pi_id: field.dataID, userID: this.userID } });
+
                 if (!userField) {
                     notDefined.push(field);
                 }
@@ -90,17 +182,35 @@ export class ProcessService {
 
     async walkThroughSteps(processID: number, userID: number, up_id: number) {
         try {
-            // Retrieve and sort steps
-            let steps = this.steps;
-            steps = steps.sort((a, b) => a.stepNumber - b.stepNumber);
-            let userProSteps: user_step[];
-            for (const step of steps) {
+            const toFill:user_process_element[] = [];
+
+
+            // Welche Rolle hat user in dem prozess
+            const workflowElementRole = await this.workflowElementRolesRepository.find({where:{workflowRoleID: this.userRole.workflowRoleID}});
+            for(const role of workflowElementRole){
+                const workflowElement = await this.proElemRepo.findOne({where:{workflowElementID:role.workflowElementID}});
+                if(role.position == workflowElement.phase){
+                    toFill.push(await this.userProElemRepo.findOne({where:{workflow_element_id: workflowElement.id}}));
+                }
+            }
+
+            //get all steps wo User an der Reihe ist
+
+
+
+            let workflowElements = this.workflowElements;
+            workflowElements = workflowElements.sort((a, b) => a.stepNumber - b.stepNumber);
+            let userProSteps: user_process_element[];
+
+
+
+            for (const workflowElement of workflowElements) {
                 // Load document and form
-                const document = await PDFDocument.load(step.data);
+                const document = await PDFDocument.load(workflowElement.data);
                 const form = document.getForm();
                 //get fields for the user:
 
-                const userFields = await this.fieldRolesRepository.find({where:{process_role_id:this.userRole.process_role_id}});
+                const userFields = await this.fieldRolesRepository.find({where:{process_role_id:this.userRole.workflowRoleID}});
 
                 let fields:fields[];
                 for(const userField of userFields){
@@ -143,22 +253,65 @@ export class ProcessService {
                     }
                 }
 
-                // Save the modified document
-                const userProStep = new user_step();
-                userProStep.data = await document.saveAsBase64();
-                userProStep.stepID = step.id;
-                userProStep.done = true;
-                userProStep.up_id = up_id;
 
-                // Save user process step
-                userProSteps.push(await this.userProStepRepo.save(userProStep));
+                //check if workflowElement has another 'phase'
+
+                //increment phase and save data changes
+                const processElem = await this.proElemRepo.findOne({where:{workflowElementID: workflowElement.id, processID: this.curProcess.id }})
+                processElem.data = await document.saveAsBase64();
+                processElem.phase +=1;
+
+                await this.proElemRepo.save(processElem);
+                /*
+                 are there other persons who need to fill out something?
+
+                     - send notification
+                     - state => waiting
+
+                     no: done = true
+                 */
+                const workflowRole = await this.workflowElementRolesRepository.findOne({where:{workflowElementID:workflowElement.id,position: processElem.phase}});
+                const processRole = await this.userProcessRolesRepository.findOne({where:{processID: this.curProcess.id,workflowRoleID:workflowRole.workflowRoleID}});
+                if(processRole){
+                    //there is another step
+
+                }
+
+
             }
-            //return an array of all steps. will be used to display the pdf check
+
+
+
+
+
+
+            /*
+            who's turn is it?
+                - send notification
+                - set state => todo
+             */
+
+            /*
+            is over?
+                - set state => done
+                - send notification to all Roles
+             */
+
+
+
+            //return an array of all user_process_steps(including PDFS). will be used to display the pdf check
             return userProSteps;
 
         } catch (error) {
             console.error(`Error processing steps: ${error.message}`);
         }
+    }
+
+
+    async changeState(userProID: number, state: string){
+        const userProcess = await this.userProRepo.findOne({where:{id:userProID}})
+        userProcess.state = state;
+        return await this.userProRepo.update(userProID,userProcess);
     }
 
     async saveMissingData(filledDataDto: filledDataDto) {
@@ -171,82 +324,44 @@ export class ProcessService {
     }
 
 
-    async startProcess(startProcessDto: StartProcessDto) {
-        this.processID = startProcessDto.processID;
-        this.userID = startProcessDto.userID;
-
-        // Abrufen des aktuellen Workflows
-        const currentWorkflow = await this.processRepository.findOne({ where: { id: this.processID } });
-
-        if (!currentWorkflow) {
-            throw new Error("Workflow not found");
-        }
-
-        // Überprüfen, ob der Workflow offen ist
-        if (!currentWorkflow.isOpen) {
-            throw new Error("The Workflow is not open. You'll have to apply for it.");
-        }
-
-
-        // Erstellen eines neuen Benutzerprozesses
-        const userPro = new user_process();
-        userPro.processID = this.processID;
-        userPro.state = 'missing data';
-        userPro.userID = this.userID;
-        userPro.done = false;
-        await this.userProRepo.save(userPro);
-
-        //get the all Roles in Process
-        const processRoles = await this.processRolesRepository.find({where:{processID:this.processID}});
-        //check for each process-role if user has it
-        for(const processRole of processRoles){
-            const isUserRole= await this.userProcessRolesRepository.exists({where:{userID: this.userID, process_role_id: processRole.id}});
-            if(isUserRole){
-                this.userRole = await this.userProcessRolesRepository.findOne({
-                    where: {
-                        userID: this.userID,
-                        process_role_id: processRole.id
-                    }
-                });
-            }
-        }
-        if(this.userRole == null){
-            throw new Error("User is not part of the process");
-        }
-
-
-        this.stepRoles = await this.stepRolesRepository.find({where:{process_role_id: this.userRole.process_role_id}});
-        return this.stepRoles;
+    async nextStep(){
 
     }
 
+
+
+
     async saveProcessRole(sendProcessRoleDto: SendProcessRoleDto) {
-        if(await this.userProcessRolesRepository.exists({where:{process_role_id: sendProcessRoleDto.processRoleID}})){
+        if(await this.userProcessRolesRepository.exists({where:{workflowRoleID: sendProcessRoleDto.processRoleID}})){
             console.error("A User for the given processRole already exists");
             return null;
         }
         const processRole = new user_process_roles();
-        processRole.process_role_id= sendProcessRoleDto.processRoleID;
+        processRole.workflowRoleID= sendProcessRoleDto.processRoleID;
         processRole.userID = sendProcessRoleDto.userID;
         return await this.userProcessRolesRepository.save(processRole);
     }
 
     async getAllCurByUser(id:number) {
-        return await this.userProRepo.find({where:{userID:id, done:false}});
+        return await this.userProRepo.find({where:{userID:id, state:'todo'}});
     }
 
     async getAllDoneByUser(userID: number) {
-        return await this.userProRepo.find({where:{userID:userID,done:true}});
+        return await this.userProRepo.find({where:{userID:userID,state: 'done'}});
+    }
+
+    async getAllPublic(){
+        return await this.workflowRepository.find();
     }
 
     async getUserProcessRole(userProcessID: number) {
-        return await this.processRolesRepository.findOne({where:{id:userProcessID}});
-
+        return await this.workflowRolesRepository.findOne({where:{id:userProcessID}});
     }
 
     async getRole(process_role_id: number) {
-        const proRole= await this.processRolesRepository.findOne({where:{id:process_role_id}});
-        const role= await this.roleRepo.findOne({where:{id:proRole.roleID}});
-        return role;
+        const proRole= await this.workflowRolesRepository.findOne({where:{id:process_role_id}});
+        return await this.roleRepo.findOne({where: {id: proRole.roleID}});
     }
+
+
 }

@@ -38,8 +38,8 @@ export class WorkflowController {
     async getAllSteps(@Param('id', ParseIntPipe) processID:number){
         return await this.workflowService.getAllSteps(processID);
     }
-    //get step by id
-    @Get('step/:id')
+    //get workflowElement by id
+    @Get('workflowElement/:id')
     async getStepById(@Param('id',ParseIntPipe)stepID:number){
         return await this.workflowService.getStepById(stepID);
     }

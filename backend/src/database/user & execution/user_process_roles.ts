@@ -4,8 +4,10 @@ import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 export class user_process_roles {
     @PrimaryGeneratedColumn()
     id:number;
+    @PrimaryGeneratedColumn()
+    processID:number;
     @Column()
-    process_role_id:number;
+    workflowRoleID:number;
     @Column()
     userID: number
 }

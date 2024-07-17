@@ -1,7 +1,7 @@
 import { PDFDocument } from 'pdf-lib'
 import {Field} from "./Field";
 import {roles} from "../database/workflow/roles";
-import {step} from "../database/workflow/step";
+import {workflowElement} from "../database/workflow/WorkflowElement";
 export class WorkflowElement{
     id: number;
     document: PDFDocument;

@@ -1,11 +1,11 @@
 import {Injectable, NotFoundException} from '@nestjs/common';
-import {process} from "../database/workflow/process";
+import {workflow} from "../database/workflow/Workflow";
 import {Repository} from "typeorm";
 import {InjectRepository} from "@nestjs/typeorm";
 
-import {step} from "../database/workflow/step";
-import {step_roles} from "../database/workflow/step-roles";
-import {process_roles} from "../database/workflow/process_roles";
+import {workflowElement} from "../database/workflow/WorkflowElement";
+import {workflowElement_roles} from "../database/workflow/WorkflowElement_roles";
+import {workflow_roles} from "../database/workflow/Workflow_roles";
 import {AddProcessRoleDto} from "./dto/addProcessRoleDto";
 import {roles} from "../database/workflow/roles";
 import {UpdateWorkflowDto} from "./dto/update-workflow-dto";
@@ -21,21 +21,21 @@ export class WorkflowService {
 
 
     constructor(
-        @InjectRepository(process)
-        private processRepository: Repository<process>,
-        @InjectRepository(step)
-        private stepRepository: Repository<step>,
-        @InjectRepository(step_roles)
-        private stepRolesRepository: Repository<step_roles>,
+        @InjectRepository(workflow)
+        private processRepository: Repository<workflow>,
+        @InjectRepository(workflowElement)
+        private stepRepository: Repository<workflowElement>,
+        @InjectRepository(workflowElement_roles)
+        private stepRolesRepository: Repository<workflowElement_roles>,
         @InjectRepository(roles)
         private roleRepo: Repository<roles>,
-        @InjectRepository(process_roles)
-        private processRoleRepo: Repository<process_roles>,
+        @InjectRepository(workflow_roles)
+        private processRoleRepo: Repository<workflow_roles>,
 
     ) {}
 
-    async createWorkflow(title: string, description: string, platform_id: number, isOpen: boolean): Promise<process> {
-        const newWorkflow = new process();
+    async createWorkflow(title: string, description: string, platform_id: number, isOpen: boolean): Promise<workflow> {
+        const newWorkflow = new workflow();
         newWorkflow.title = title;
         newWorkflow.description = description;
         newWorkflow.platform_id = platform_id;
@@ -43,7 +43,7 @@ export class WorkflowService {
         return await this.processRepository.save(newWorkflow);
     }
 
-    async getAllWorkflows():Promise<process[]> {
+    async getAllWorkflows():Promise<workflow[]> {
         return await this.processRepository.find();
     }
     async getAllOpenWorkflows(){
@@ -55,7 +55,7 @@ export class WorkflowService {
 
     async deleteWorkflow(id: number){
 
-        const stepDeleteResult = await this.stepRepository.delete({process_id: id});
+        const stepDeleteResult = await this.stepRepository.delete({workflowID: id});
         const processRolesDeleteResult = await this.processRoleRepo.delete({processID: id})
         const processDeleteResult =await this.processRepository.delete(id);
 
@@ -82,13 +82,13 @@ export class WorkflowService {
 
 
     async getStepsByProcessId(process_id: number) {
-        return await this.stepRepository.find({ where: { process_id } });
+        return await this.stepRepository.find({ where: { workflowID: process_id } });
     }
 
     async addStep(process_id: number, title: string, document: string, step_number: number) {
         console.log(process_id +" "+title+" "+document+ " "+step_number)
-        const newStep = new step();
-        newStep.process_id = process_id;
+        const newStep = new workflowElement();
+        newStep.workflowID = process_id;
         newStep.title = title;
         newStep.data = document;
         newStep.stepNumber = step_number;
@@ -97,7 +97,7 @@ export class WorkflowService {
     }
 
     async addRole(addProcessRoleDto: AddProcessRoleDto){
-        const role = new process_roles();
+        const role = new workflow_roles();
         // if role exists
         if(await this.roleRepo.find({where:{id: addProcessRoleDto.roleID}})){
             role.roleID = addProcessRoleDto.roleID;
@@ -105,7 +105,7 @@ export class WorkflowService {
         else{
             throw new Error("Role with ID:"+addProcessRoleDto.roleID+" doesnt exist")
         }
-        //if process exists
+        //if workflow exists
         if(await this.processRepository.find({where:{id: addProcessRoleDto.roleID}})){
             role.processID = addProcessRoleDto.processID;
         }
@@ -113,14 +113,14 @@ export class WorkflowService {
             throw new Error("Process with ID: " + addProcessRoleDto.roleID + " doesnt exist!")
         }
         role.selectable = addProcessRoleDto.selectable;
-        role.process_role_name = addProcessRoleDto.process_role_name;
+        role.workflowRoleName = addProcessRoleDto.process_role_name;
         role.isApplicant= addProcessRoleDto.isApplicant;
         console.log(role.selectable)
         return await this.processRoleRepo.save(role);
     }
 
     async deleteStep(id: number){
-        await this.stepRolesRepository.delete({step_id: id})
+        await this.stepRolesRepository.delete({workflowElementID: id})
         return await this.stepRepository.delete({ id: id});
     }
 
@@ -143,7 +143,7 @@ export class WorkflowService {
     }
 
     async getSteps(process_id: number) {
-        return await this.stepRepository.find({ where: { process_id } });
+        return await this.stepRepository.find({ where: { workflowID: process_id } });
     }
 
 
@@ -152,13 +152,13 @@ export class WorkflowService {
     }
 
     async getAllSteps(processID: number) {
-        return await this.stepRepository.find({where:{process_id: processID}});
+        return await this.stepRepository.find({where:{workflowID: processID}});
     }
 
     async updateRole(updateRoleDto: UpdateProcessRoleDto) {
         const updatedRole = await this.processRoleRepo.findOne({where:{id: updateRoleDto.roleID}});
         updatedRole.selectable = updateRoleDto.selectable;
-        updatedRole.process_role_name = updateRoleDto.process_role_name;
+        updatedRole.workflowRoleName = updateRoleDto.process_role_name;
         return await this.processRoleRepo.update(updateRoleDto.roleID,updateRoleDto)
     }
 
@@ -175,9 +175,9 @@ export class WorkflowService {
 
 
     async assignRole(assignRoleDto: AssignRoleDto) {
-        const newStepRole = new step_roles();
-        newStepRole.process_role_id = assignRoleDto.process_role_id;
-        newStepRole.step_id = assignRoleDto.step_id;
+        const newStepRole = new workflowElement_roles();
+        newStepRole.workflowRoleID = assignRoleDto.process_role_id;
+        newStepRole.workflowElementID = assignRoleDto.step_id;
         return await this.stepRolesRepository.save(newStepRole);
     }
 
