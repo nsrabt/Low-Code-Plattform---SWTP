@@ -1,3 +1,4 @@
+
 <template>
     <div class="min-h-screen bg-cover bg-center" style="background-image: url('/bg.jpg')">
         <nav class="bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700">
@@ -89,58 +90,60 @@ export default {
         // Simulate fetching field types from the backend
         this.getFieldTypes();
     },
-    // DIESE METHODE IST FALLS MAN ES TESTEN WILL *Einfach auskommentieren und ersetzen mit der unten*
-    // methods: {
-    //     getFieldTypes() {
-    //         // Hardcoded array of field types for testing
-    //         const fieldTypes = ['student', 'kandidat', 'dekanat'];
-    //         this.fields = fieldTypes.map(type => ({
-    //             type,
-    //             userId: '',
-    //             suggestions: []
-    //         }));
-    //     },
-    //     fetchSuggestions(field) {
-    //         // Simulate fetching user suggestions from the backend based on field type and userId
-    //         if (field.userId.length > 1) {
-    //             // Hardcoded suggestions for testing
-    //             const users = [
-    //                 { id: 1, name: 'Nasser' },
-    //                 { id: 2, name: 'Nami' },
-    //                 { id: 3, name: 'Natalia' },
-    //                 { id: 4, name: 'Luca' }
-    //             ];
-    //             field.suggestions = users.filter(user => user.name.toLowerCase().includes(field.userId.toLowerCase()));
-    //         } else {
-    //             field.suggestions = [];
-    //         }
-    //     },
-    methods: {
-        async getFieldTypes() {
-            // Simulate fetching from backend
-            const response = await fetch('/api/get-field-types');
-            const data = await response.json();
-            this.fields = data.fieldTypes.map(type => ({
-                type,
-                userId: '',
-                suggestions: []
-            }));
-        },
-        async fetchSuggestions(field) {
-            // Simulate fetching user suggestions from the backend based on field type and userId
-            if (field.userId.length > 1) {
-                const response = await fetch(`/api/search-users?type=${field.type}&query=${field.userId}`);
-                const data = await response.json();
-                field.suggestions = data.users; // Assuming `users` is an array of user objects
-            } else {
-                field.suggestions = [];
-            }
-        },
-        selectUser(field, user) {
-            field.userId = user.name;
-            field.suggestions = [];
-        }
-    }
+/*
+   methods: {
+       getFieldTypes() {
+           // Hardcoded array of field types for testing
+           const fieldTypes = ['student', 'kandidat', 'dekanat'];
+           this.fields = fieldTypes.map(type => ({
+               type,
+               userId: '',
+               suggestions: []
+           }));
+       },
+       fetchSuggestions(field) {
+           // Simulate fetching user suggestions from the backend based on field type and userId
+           if (field.userId.length > 1) {
+               // Hardcoded suggestions for testing
+               const users = [
+                   { id: 1, name: 'Nasser' },
+                   { id: 2, name: 'Nami' },
+                   { id: 3, name: 'Natalia' },
+                   { id: 4, name: 'Luca' }
+               ];
+               field.suggestions = users.filter(user => user.name.toLowerCase().includes(field.userId.toLowerCase()));
+           } else {
+               field.suggestions = [];
+           }
+       },
+
+ */
+  methods: {
+      async getFieldTypes() {
+          // Simulate fetching from backend
+          const response = await fetch('/api/get-field-types');
+          const data = await response.json();
+          this.fields = data.fieldTypes.map(type => ({
+              type,
+              userId: '',
+              suggestions: []
+          }));
+      },
+      async fetchSuggestions(field) {
+          // Simulate fetching user suggestions from the backend based on field type and userId
+          if (field.userId.length > 1) {
+              const response = await fetch(`/api/search-users?type=${field.type}&query=${field.userId}`);
+              const data = await response.json();
+              field.suggestions = data.users; // Assuming `users` is an array of user objects
+          } else {
+              field.suggestions = [];
+          }
+      },
+      selectUser(field, user) {
+          field.userId = user.name;
+          field.suggestions = [];
+      },
+  },
 };
 </script>
 

@@ -146,42 +146,37 @@
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
 import "vue-router/dist/vue-router";
+import {useRoute} from "vue-router";
 
-export let workflowID: number;
 
 export default {
-  name: 'App',
-
-  async createWorkflowAPI(title, description, platform_id, isOpen) {
-    try {
-      const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
-        title: title,
-        description: description,
-        isOpen: isOpen,
-        platform_id: platform_id
-      });
-      console.log("response.data.id", response.data.id);
-      workflowID = response.data.id;
-      console.log('Workflow created:', response.data.title);
-    } catch (error) {
-      console.error('Error creating workflow:', error);
-    }
-  },
-
-  async created() {
-    if (this.$route.name == "EditWorkflow") {
-      workflowID = this.$route.params.id;
-    }
-    else {
-      console.log("new!")
-      await this.createWorkflowAPI('Default Title', 'Default Description', 1, true); // Beispielwerte für title, description, platform_id und isOpen
-    }
-  },
   setup() {
+    const route = useRoute();
+    const workflowID = ref(null);
+
+    onMounted(async () => {
+      if (route.name === "EditWorkflow") {
+        workflowID.value = route.params.id;
+      } else {
+        console.log("new!");
+        try {
+          const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
+            title: "test",
+            description: "description",
+            isOpen: true,
+            platform_id: 1
+          });
+          console.log("response.data.id", response.data.id);
+          workflowID.value = response.data.id;
+          console.log('Workflow created:', workflowID.value);
+        } catch (error) {
+          console.error('Error creating workflow:', error);
+        }
+      }
+    });
 
 
-
-    const workflows = ref([
+const workflows = ref([
       {
         id: 0,
         categories: [],
@@ -205,11 +200,11 @@ export default {
 
     async function loadWorkflowData() {
       try {
-        if (!workflowID) {
+        if (!workflowID.value) {
           console.error('Error: Workflow ID is not defined.');
         } else {
-          const response = await axios.get(`http://localhost:3000/workflow/allSteps/${workflowID}`);
-          console.log('Steps loaded for Workflow ID:', workflowID);
+          const response = await axios.get(`http://localhost:3000/workflow/allSteps/${workflowID.value}`);
+          console.log('Steps loaded for Workflow ID:', workflowID.value);
 
           console.log(response.data);
           const allSteps = response.data.map(step => ({
@@ -268,14 +263,17 @@ export default {
       const newId = workflows.value[workflowIndex].items.length > 0
         ? Math.max(...workflows.value[workflowIndex].items.map(item => item.id)) + 1
         : 0;
+
+
       const stepData = {
-        id: workflowID,
+        process_id: workflowID.value,
         title: `WorkflowElement ${newId + 1}`,
         document: "null",
         step_number: 1,
-        role_ids: []
       };
+      console.log(stepData);
       try {
+
         const response = await axios.post('http://localhost:3000/workflow/addStep', stepData);
         workflows.value[workflowIndex].items.push({
           id: newId,
@@ -436,7 +434,7 @@ export default {
 
     async function saveRoleInDatabase(rolename: string, roleID: number, selectable: boolean, applicant: boolean) {
       const response = await axios.post('http://localhost:3000/workflow/addRole', {
-        processID: workflowID,
+        processID: workflowID.value,
         roleID: roleID,
         process_role_name: rolename,
         selectable: selectable,

@@ -6,7 +6,6 @@ import {InjectRepository} from "@nestjs/typeorm";
 import {step} from "../database/workflow/step";
 import {step_roles} from "../database/workflow/step-roles";
 import {process_roles} from "../database/workflow/process_roles";
-import {AddRoleDto} from "../role/dto/add-role-dto";
 import {AddProcessRoleDto} from "./dto/addProcessRoleDto";
 import {roles} from "../database/workflow/roles";
 import {UpdateWorkflowDto} from "./dto/update-workflow-dto";
@@ -14,7 +13,6 @@ import {UpdateStepDto} from "./dto/update-step-dto";
 import {UpdateProcessRoleDto} from "./dto/update-process-role-dto";
 import {ChangeOrderDto} from "./dto/change-order-dto";
 import {AssignRoleDto} from './dto/assign-role-dto'
-
 
 
 @Injectable()
@@ -88,15 +86,14 @@ export class WorkflowService {
     }
 
     async addStep(process_id: number, title: string, document: string, step_number: number) {
+        console.log(process_id +" "+title+" "+document+ " "+step_number)
         const newStep = new step();
         newStep.process_id = process_id;
         newStep.title = title;
         newStep.data = document;
         newStep.stepNumber = step_number;
 
-        const savedStep = await this.stepRepository.save(newStep);
-
-        return savedStep;
+        return await this.stepRepository.save(newStep);
     }
 
     async addRole(addProcessRoleDto: AddProcessRoleDto){
