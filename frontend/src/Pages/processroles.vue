@@ -103,7 +103,7 @@ export default {
        },
        fetchSuggestions(field) {
            // Simulate fetching user suggestions from the backend based on field type and userId
-           if (field.userId.length > 1) {
+           if (field.userId.length > 0) {
                // Hardcoded suggestions for testing
                const users = [
                    { id: 1, name: 'Nasser' },
@@ -111,7 +111,8 @@ export default {
                    { id: 3, name: 'Natalia' },
                    { id: 4, name: 'Luca' }
                ];
-               field.suggestions = users.filter(user => user.name.toLowerCase().includes(field.userId.toLowerCase()));
+               field.suggestions = users.filter(user => user.name.toLowerCase().startsWith(field.userId.toLowerCase()));
+
            } else {
                field.suggestions = [];
            }
