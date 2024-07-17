@@ -10,6 +10,9 @@ import settings from "../Pages/settings.vue"
 import pdfworkflow from "../Pages/pdfworkflow.vue"
 import process from "../Pages/process.vue"
 import fillingdata from "@/Pages/fillingdata.vue";
+import pdfcontrol from "../Pages/pdfcontrol.vue"
+import processroles from "../Pages/processroles.vue"
+
 
 
 
@@ -24,6 +27,16 @@ const routes = [
         name: 'Home',
         path: '/home',
         component:home
+    },
+    {
+        name: 'processroles',
+        path: '/processroles',
+        component:processroles
+    },
+    {
+        name: 'Pdfcontrol',
+        path: '/pdfcontrol',
+        component:pdfcontrol
     },
     {
         name: 'fillingdata',
