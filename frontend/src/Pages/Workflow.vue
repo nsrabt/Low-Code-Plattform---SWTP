@@ -203,14 +203,14 @@ const workflows = ref([
 
           console.log(response.data);
           const allSteps = response.data.map(workflowElement => ({
-            id: step.id,
-            title: step.title,
-            document: step.data,
-            step_number: step.stepNumber,
-            role_ids: step.role_ids || []
+            id: workflowElement.id,
+            title: workflowElement.title,
+            document: workflowElement.data,
+            step_number: workflowElement.stepNumber,
+            role_ids: workflowElement.role_ids || []
           }));
           console.log("all", allSteps);
-          const maxStepNumber = Math.max(...allSteps.map(workflowElement => step.step_number));
+          const maxStepNumber = Math.max(...allSteps.map(workflowElement => workflowElement.step_number));
           for (let i = 1; i <= maxStepNumber; i++) {
             createCategory(0);
           }
@@ -218,12 +218,12 @@ const workflows = ref([
           for (const workflowElement of allSteps) {
             workflows.value[0].items.push({
               id: newIndex,
-              title: step.title,
-              categoryId: step.step_number - 1,
+              title: workflowElement.title,
+              categoryId: workflowElement.step_number - 1,
               pdfLink: '',
               objects: [],
               workflowId: 0,
-              step_id: step.id
+              step_id: workflowElement.id
             });
             newIndex++;
           }
@@ -340,8 +340,8 @@ const workflows = ref([
           if (itemIndex !== -1) {
             const stepId = e.target.closest('.draggable').getAttribute('data-workflowElement-id');
             const workflowElement = workflows.value[workflowIndex].items.find(item => item.id == stepId);
-            if (step) {
-              step.objects.push(newObject);
+            if (workflowElement) {
+              workflowElement.objects.push(newObject);
             }
           }
         }

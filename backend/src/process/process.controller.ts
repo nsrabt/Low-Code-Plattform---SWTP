@@ -74,7 +74,17 @@ export class ProcessController {
         return await this.processService.getAllDoneByUser(userID);
     }
 
-    //Accept application
+    @Get('waiting/:id')
+    async getAllWaitingByUser(@Param('id',ParseIntPipe)userID:number){
+
+    }
+
+    //Get process role by ID
+    @Get('processRole/:id')
+    async getProcessRole(@Param('id',ParseIntPipe) roleID:number) {
+
+    }
+        //Accept application
 
     //Apply
 

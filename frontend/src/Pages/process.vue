@@ -140,8 +140,9 @@ export default {
 
                 this.todoProcesses = processes.filter(process => process.status === 'To do');
                 this.waitingProcesses = processes.filter(process => process.status === 'Waiting');
-                this.publicProcesses = processes.filter(process => process.status === 'Public');
-                this.doneProcesses = processes.filter(process => process.status === 'Done');
+                this.doneProcesses = await axios.get('/process/done/',);
+                this.publicProcesses = await axios.get('/process/allPublic');
+
             } catch (error) {
                 console.error('Error fetching processes:', error);
             }

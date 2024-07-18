@@ -3,6 +3,7 @@ import {user_notifications} from "../database/user & execution/user_notificatío
 import {InjectRepository} from "@nestjs/typeorm";
 import {workflow} from "../database/workflow/Workflow";
 import {Repository} from "typeorm";
+import {not} from "rxjs/internal/util/not";
 
 @Injectable()
 export class NotificationService {
@@ -11,12 +12,17 @@ export class NotificationService {
         private notificationRepo: Repository<user_notifications>,
     ){}
 
-        async sendNotification(userID:number ){
-
+    async sendNotification(userID:number, message: string, link:string){
+        const newNotification = new user_notifications();
+        newNotification.link=link;
+        newNotification.message=message;
+        newNotification.userID;
+        return await this.notificationRepo.save(newNotification);
     }
 
-    async getNotifications(userID:number){
 
+    async getNotifications(userID:number){
+        return await this.notificationRepo.find({where:{userID:userID}});
     }
 
 }

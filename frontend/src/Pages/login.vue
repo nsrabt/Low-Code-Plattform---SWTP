@@ -148,7 +148,8 @@
 
 <script lang="ts">
 import { ref, onMounted } from 'vue';
-import axios from 'axios'; // Stelle sicher, dass axios installiert ist: npm install axios
+import axios from 'axios';
+import {useStore} from "vuex"; // Stelle sicher, dass axios installiert ist: npm install axios
 export let userID: number;
 
 export default {
@@ -159,6 +160,10 @@ export default {
       rememberMe: false,
       showPassword: false
     };
+  },
+  setup() {
+    const store = useStore();
+    return { store };
   },
   methods: {
     async login() {
@@ -180,6 +185,8 @@ export default {
         const user = response.data;
         userID = user.id;
 
+        this.store.commit('setUser', user);
+        console.log(this.store.getters.getUser.username)
         if (user) {
           this.$router.push('/home');
         } else {

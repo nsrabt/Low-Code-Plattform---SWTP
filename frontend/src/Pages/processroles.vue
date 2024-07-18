@@ -69,21 +69,38 @@
 </template>
 
 <script>
+import axios from "axios";
+import store from "@/store/store.js";
+import {useStore} from "vuex";
+
 export default {
+
+  setup(){
+    const store = useStore();
+    return { store };
+
+  },
+
     data() {
         return {
             fields: [], // Array to hold field objects { type: String, userId: String, suggestions: Array }
             showDropDown: false,
         };
     },
-    created() {
+    async created() {
         // Simulate fetching field types from the backend
-        this.getFieldTypes();
+
+      console.log(store.getters.getUser.id);
+
+      const response = await axios.put('/process/startProcess');
+
+      await this.getFieldTypes(response);
     },
     methods: {
-        async getFieldTypes() {
+        async getFieldTypes(response) {
             // Simulate fetching from backend
-            const response = await fetch('/api/get-field-types');
+
+          const getUsersofRole = await axios.get('/user/allUsersOfRole/',response.roleID)
             const data = await response.json();
             this.fields = data.fieldTypes.map(type => ({
                 type,

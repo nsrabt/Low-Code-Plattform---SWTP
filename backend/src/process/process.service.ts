@@ -19,7 +19,11 @@ import {field_roles} from "../database/workflow/field_roles";
 import {roles} from "../database/workflow/roles";
 import {process} from "../database/user & execution/process"
 import {process_element} from "../database/user & execution/process_element";
-
+import {user_notifications} from "../database/user & execution/user_notificatíons";
+import {NotificationService} from "../notification/notification.service"
+import {users} from "../database/user & execution/users";
+import {join} from "path";
+import {not} from "rxjs/internal/util/not";
 
 @Injectable()
 export class ProcessService {
@@ -52,26 +56,55 @@ export class ProcessService {
             @InjectRepository(process)
             private processRepo: Repository<process>,
             @InjectRepository(process_element)
-            private proElemRepo: Repository<process_element>
+            private proElemRepo: Repository<process_element>,
+            @InjectRepository(users)
+            private userRepo: Repository<users>,
 
+            private notificationService: NotificationService
 ) {}
 
 
-    userID:number;
-    workflowID:number
-    workflowElements: workflowElement[];
-    workflowElementRoles: workflowElement_roles[];
-    userRole: user_process_roles;
-    processRoles: workflow_roles[];
-    curStep:number;
-    curProcess:process;
+    private userID:number;
+    private workflowID:number
+    private workflowElements: workflowElement[] = [];
+    private workflowElementRoles: workflowElement_roles[] = [];
+    private userRole: user_process_roles = new user_process_roles();
+    private curStep:number;
+    private curProcess:process;
+
+    private notificationList: user_notifications[] = [];
+    private todoList: user_process[] = [];
+    private doneList: user_process[] = [];
+    private waitList: user_process[] = [];
 
 
-    async continueProcess(){
+    //This method will be called, if someone runs, but not creates a process
+    async continueProcess(startProcessDto: StartProcessDto){
+
+        this.workflowID = startProcessDto.workflowID;
+        this.userID = startProcessDto.userID;
+
+
+        // Erstellen eines neuen Benutzerprozesses + BenutzerProzessElemente
+
+        const userPro = new user_process();
+            userPro.processID = this.workflowID;
+            userPro.state = 'missing data';
+            userPro.userID = this.userID;
+            await this.userProRepo.save(userPro);
+
+        const workflowElements = await this.workflowElementRepository.find({where:{workflowID:this.workflowID}});
+
+        for(const workflowelem of workflowElements) {
+            const userProElem = new user_process_element();
+            userProElem.workflow_element_id = userPro.id;
+            userProElem.done=false;
+            userProElem.workflow_element_id = workflowelem.id;
+        }
 
     }
 
-
+    //This method will be called when the process runs for the first time
     async startProcess(startProcessDto: StartProcessDto) {
 
         this.workflowID = startProcessDto.workflowID;
@@ -106,13 +139,12 @@ export class ProcessService {
         }
 
 
-        // Erstellen eines neuen Benutzerprozesses
+        // Erstellen eines neuen Benutzerprozesses + BenutzerProzessElemente
         const userPro = new user_process();
         userPro.processID = this.workflowID;
         userPro.state = 'missing data';
         userPro.userID = this.userID;
         await this.userProRepo.save(userPro);
-
 
         for(const workflowelem of workflowElements) {
             const userProElem = new user_process_element();
@@ -122,7 +154,7 @@ export class ProcessService {
         }
 
 
-            //Save Applicant in his role
+        //Save Applicant in his role
         const applicantRole =await this.workflowRolesRepository.findOne({where:{isApplicant:true}});
         this.userRole.workflowRoleID = applicantRole.id;
         this.userRole.userID = this.userID;
@@ -187,11 +219,15 @@ export class ProcessService {
 
             // Welche Rolle hat user in dem prozess
             const workflowElementRole = await this.workflowElementRolesRepository.find({where:{workflowRoleID: this.userRole.workflowRoleID}});
+            let isOver:boolean = true;
+
             for(const role of workflowElementRole){
                 const workflowElement = await this.proElemRepo.findOne({where:{workflowElementID:role.workflowElementID}});
+
                 if(role.position == workflowElement.phase){
                     toFill.push(await this.userProElemRepo.findOne({where:{workflow_element_id: workflowElement.id}}));
                 }
+
             }
 
             //get all steps wo User an der Reihe ist
@@ -262,20 +298,33 @@ export class ProcessService {
                 processElem.phase +=1;
 
                 await this.proElemRepo.save(processElem);
-                /*
-                 are there other persons who need to fill out something?
 
-                     - send notification
-                     - state => waiting
-
-                     no: done = true
-                 */
+                //workflow Role of current phase
                 const workflowRole = await this.workflowElementRolesRepository.findOne({where:{workflowElementID:workflowElement.id,position: processElem.phase}});
+                //user_process_role of current phase
                 const processRole = await this.userProcessRolesRepository.findOne({where:{processID: this.curProcess.id,workflowRoleID:workflowRole.workflowRoleID}});
-                if(processRole){
-                    //there is another step
+                //The user object of the person who's turn is now
+                const newPerson = await this.userRepo.findOne({where:{id: processRole.userID}});
+                //user Process of new person: needed to change state to: todo
+                const userProcess = await this.userProRepo.findOne({where:{processID: processRole.processID, userID: newPerson.id}});
 
+                //some data for notification
+                const workflow = await this.workflowRepository.findOne({where:{}})
+                const applicant = await this.workflowRolesRepository.findOne({where:{isApplicant:true}});
+                const applicantuserpro = await this.userProcessRolesRepository.findOne({where:{workflowRoleID: applicant.id}})
+                const applicantUser = await this.userRepo.findOne({where:{id: applicantuserpro.userID}});
+
+
+                //if there's another role who has to fill out stuff in the current workflow element
+                if(processRole){
+                    isOver=false;
+                    //there is another phase
+
+                    this.todoList.push(userProcess);
+                    //todo: select correct link
+                    await this.pushNotification(newPerson.id, "Sie sind nun an der Reihe, den Prozess "+workflow.title+" von "+applicantUser.username+" zu bearbeiten!", '')
                 }
+
 
 
             }
@@ -283,19 +332,25 @@ export class ProcessService {
 
 
 
-
-
             /*
-            who's turn is it?
-                - send notification
-                - set state => todo
-             */
+               is over?
+                   - set state => done
+                   - send notification to all Roles
+            */
 
-            /*
-            is over?
-                - set state => done
-                - send notification to all Roles
-             */
+            if(isOver){
+                const processID =this.curProcess.id;
+                const users =await this.userProRepo.find({where:{processID:processID}});
+                for(const user of users){
+                    this.doneList.push(user);
+                }
+
+            }
+
+            await this.endFilling();
+
+
+
 
 
 
@@ -307,6 +362,23 @@ export class ProcessService {
         }
     }
 
+
+
+    async endFilling(){
+
+        //walk through todolist
+        for(const todo of this.todoList){
+            await this.changeState(todo.id,'todo');
+        }
+
+        for(const done of this.doneList){
+            await this.changeState(done.id, 'done');
+        }
+
+        for(const wait of this.waitList){
+            await this.changeState(wait.id, 'wait');
+        }
+    }
 
     async changeState(userProID: number, state: string){
         const userProcess = await this.userProRepo.findOne({where:{id:userProID}})
@@ -332,14 +404,46 @@ export class ProcessService {
 
 
     async saveProcessRole(sendProcessRoleDto: SendProcessRoleDto) {
-        if(await this.userProcessRolesRepository.exists({where:{workflowRoleID: sendProcessRoleDto.processRoleID}})){
-            console.error("A User for the given processRole already exists");
-            return null;
+
+        try {
+            await this.userProcessRolesRepository.exists({where: {workflowRoleID: sendProcessRoleDto.processRoleID}});
+        }catch(err){
+            throw new Error("Process-role has already a user assigned\n"+err);
         }
+
+
         const processRole = new user_process_roles();
         processRole.workflowRoleID= sendProcessRoleDto.processRoleID;
         processRole.userID = sendProcessRoleDto.userID;
+
+
+        const user = await this.userRepo.findOne({where:{id:this.userID}});
+        const workflow = await this.workflowRepository.findOne({where:{id:this.workflowID}});
+        const workflowRole = await this.workflowRolesRepository.findOne({where:{id: sendProcessRoleDto.processRoleID}});
+
+        //todo select correct link
+        await this.pushNotification(processRole.userID,user.username + "selected you in "+workflow.title+" as "+ workflowRole.workflowRoleName, '')
+
+        //push notification to NotificationList. will be sent out at the end of the process
+
         return await this.userProcessRolesRepository.save(processRole);
+    }
+
+
+    async pushNotification(userID:number, message:string, link:string){
+        const joinNotification = new user_notifications();
+        joinNotification.userID= userID
+        joinNotification.message= message
+        // todo: joinNotification.link = link to start Process
+
+        const notificationExists = this.notificationList.some(
+            notification => notification.userID === joinNotification.userID && notification.message === joinNotification.message
+        );
+        //Wenn noch keine notification bekommen, wird gepushed
+        if (!notificationExists) {
+            this.notificationList.push(joinNotification);
+        }
+
     }
 
     async getAllCurByUser(id:number) {
