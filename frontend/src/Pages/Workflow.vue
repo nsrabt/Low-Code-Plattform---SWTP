@@ -85,6 +85,10 @@
           <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
             @click="createCategory(workflowIndex)"> Add workflow-workflowElement </button>
         </div>
+        <div class="save-button-container my-4">
+          <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full"
+                  @click="checkWorkflows(workflowIndex)">Speichern</button>
+        </div>
       </div>
 
       <div v-if="isEditModalOpen" class="modal">
@@ -431,7 +435,19 @@ const workflows = ref([
 
     function addObject() {
       // Check if the custom ID already exists in the objects list
+      if (!newObject.value.role || newObject.value.id === null || newObject.value.id === '') {
+        alert("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du das Objekt hinzufügst.");
+        return; // Verhindert das Hinzufügen, wenn nicht alle Felder gesetzt sind
+      }
 
+      if (newObject.value.applicant && newObject.value.selectable) {
+        alert("Entweder 'Applicant' oder 'Selectable' kann gesetzt werden, aber nicht beide.");
+        return;
+      }
+      if (newObject.value.applicant && objects.value.some(obj => obj.applicant)) {
+        alert("Es kann nur einen 'Applicant' geben. Bitte wähle einen anderen Status für dieses Objekt.");
+        return;
+      }
       objects.value.push({ ...newObject.value });
       saveRoleInDatabase(newObject.value.role, newObject.value.id, newObject.value.selectable, newObject.value.applicant);
       newObject.value = { role: '', id: null, applicant: false, selectable: false };
@@ -491,6 +507,57 @@ const workflows = ref([
         console.error('Error adding workflowElement:', error);
       }
     }
+    function checkWorkflows(workflowIndex) {
+
+      const workflow = this.workflows[workflowIndex];
+      if (workflow.categories.length === 0 || workflow.items.length === 0) {
+        alert("Jeder Workflow muss mindestens eine Kategorie enthalten.");
+        return;
+      }
+      const categoryIds = workflow.items.map(item => item.categoryId).sort((a, b) => a - b);
+      let expectedCategoryId = 0;
+      for (let i = 0; i < categoryIds.length; i++) {
+        if (categoryIds[i] !== expectedCategoryId) {
+          alert(`Inkonsistente Kategorie-Reihenfolge: Es wird erwartet, dass die Kategorie mit ID ${expectedCategoryId} existiert, gefunden wurde aber ID ${categoryIds[i]}.`);
+          return;
+        }
+        if (i < categoryIds.length - 1 && categoryIds[i] !== categoryIds[i + 1]) {
+          expectedCategoryId++;
+        }
+      }
+      console.log("workflow: check",workflow);
+      let allValuesSet = true;
+      let pdfMissing = false;
+      let objectsMissing = false;
+      for (const category of workflow.categories) {
+        for (const item of workflow.items.filter(x => x.categoryId === category.id)) {
+          if (!item.title || !item.pdfLink) {
+            allValuesSet = false;
+            if (!item.pdfLink) {
+              pdfMissing = true;
+            }
+          }
+          if (item.objects.length === 0) {
+            objectsMissing = true;
+          }
+        }
+        if (!allValuesSet) break;
+      }
+
+      if (!allValuesSet) {
+        if (pdfMissing) {
+          alert("Mindestens ein Item benötigt einen PDF-Link. Bitte lade ein PDF hoch.");
+        }
+        if (objectsMissing) {
+          alert("Jedes Workflowelement muss mindestens eine Rolle haben");
+        } else {
+          alert("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du speicherst.");
+        }
+      } else {
+        alert("Alle Werte sind korrekt gesetzt und mindestens eine Kategorie ist vorhanden. Daten werden gespeichert...");
+        // Logik zum Speichern der Daten könnte hier platziert werden
+      }
+    }
 
     return {
       workflows,
@@ -517,6 +584,7 @@ const workflows = ref([
       addObject,
       toggleSideBar,
       toggleDrop,
+      checkWorkflows,
       handleFileUpload,
       platformRoles,
       selectedRole
