@@ -1,7 +1,7 @@
 <template>
-    <div class="main-container}">
+    <div class="main-container relative">
         <!-- Navigation -->
-        <nav class="bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+        <nav class="bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700 relative z-50">
             <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
                 <a href="#" class="flex items-center space-x-3 rtl:space-x-reverse">
                     <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="50" height="40"
@@ -23,13 +23,9 @@
 
                 <!-- User login -->
                 <div
-                    class="relative w-[200px] rounded-md hover:bg-gray-700 hover:text-gray-800 transition duration-400 ease-in-out">
+                    class="relative w-[200px] rounded-md hover:bg-gray-700 hover:text-gray-800 transition duration-400 ease-in-out z-50">
                     <div class="flex items-center justify-start space-x-4 cursor-pointer" @click="toggleDrop">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white"
-                            stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
+                        <img src="/pb.jpeg" alt="Profile Picture" class="w-10 h-10 rounded-full object-cover" />
                         <div class="font-semibold text-white text-left">
                             <div>Admin</div>
                             <div class="text-xs text-white dark:text-white">Admin</div>
@@ -37,18 +33,13 @@
                     </div>
                     <!-- Drop down -->
                     <div v-show="showDropDown"
-                        class="absolute mt-2 w-56 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                        class="absolute mt-2 w-56 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
                         role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
                         <div class="py-1 text-left" role="none">
                             <a href="#"
                                 class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
                                 role="menuitem" tabindex="-1" id="menu-item-0">Account settings</a>
-                            <a href="#"
-                                class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                                role="menuitem" tabindex="-1" id="menu-item-1">Support</a>
-                            <a href="#"
-                                class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                                role="menuitem" tabindex="-1" id="menu-item-2">License</a>
+
                             <form method="POST" action="#" role="none">
                                 <button type="submit"
                                     class="text-gray-700 block w-full px-4 py-2 text-left text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
@@ -61,7 +52,7 @@
         </nav>
         <div class="flex justify-center items-center min-h-screen bg-gray-100"
             :style="{ backgroundImage: 'url(/bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }">
-            <div class=" bg-white rounded-lg shadow-lg w-3/4 md:w-1/2">
+            <div class="bg-white rounded-lg shadow-lg w-3/4 md:w-1/2">
                 <div class="flex border-b">
                     <button v-for="(tab, index) in tabs" :key="index" @click="selectedTab = tab" :class="{
                         'bg-blue-500 text-white': selectedTab === tab,
@@ -81,10 +72,22 @@
                         <tbody class="block md:table-row-group">
                             <tr v-for="(workflow, index) in currentProcesses" :key="index"
                                 class="bg-gray-100 border border-grey-500 md:border-none block md:table-row">
-                                <td class="p-2 block md:table-cell text-left">{{ workflow }}</td>
+                                <td class="p-2 block md:table-cell text-left">{{ workflow.name }}</td>
                                 <td class="p-2 block md:table-cell">
-                                    <button class="bg-blue-600 text-white p-1 rounded mr-2">Open</button>
-                                    <button class="bg-red-700 text-white p-1 rounded">Delete</button>
+                                    <template v-if="selectedTab === 'To do'">
+                                        <button class="bg-blue-600 text-white p-1 rounded mr-2">Open</button>
+                                        <button class="bg-red-700 text-white p-1 rounded">Delete</button>
+                                    </template>
+                                    <template v-if="selectedTab === 'Waiting'">
+                                        <div class="bg-yellow-500 text-white p-1 rounded">In Progress</div>
+                                    </template>
+                                    <template v-if="selectedTab === 'Public'">
+                                        <button class="bg-green-600 text-white p-1 rounded">Submit</button>
+                                    </template>
+                                    <template v-if="selectedTab === 'Done'">
+                                        <button class="bg-blue-600 text-white p-1 rounded mr-2">Open</button>
+                                        <button class="bg-purple-600 text-white p-1 rounded">Download</button>
+                                    </template>
                                 </td>
                             </tr>
                         </tbody>
@@ -96,15 +99,18 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
     data() {
         return {
             tabs: ['To do', 'Waiting', 'Public', 'Done'],
             selectedTab: 'To do',
-            todoProcesses: ['Process 1', 'Process 2', 'Process 3'],
-            waitingProcesses: ['Process A', 'Process B', 'Process C'],
-            publicProcesses: ['Process X', 'Process Y', 'Process Z'],
-            doneProcesses: ['Process Alpha', 'Process Beta', 'Process Gamma'],
+            todoProcesses: [],
+            waitingProcesses: [],
+            publicProcesses: [],
+            doneProcesses: [],
+            showDropDown: false,
         };
     },
     computed: {
@@ -123,9 +129,51 @@ export default {
             }
         },
     },
+    mounted() {
+        this.fetchProcesses();
+    },
+    methods: {
+        async fetchProcesses() {
+            try {
+                const response = await axios.get('/api/processes');
+                const processes = response.data;
+
+                this.todoProcesses = processes.filter(process => process.status === 'To do');
+                this.waitingProcesses = processes.filter(process => process.status === 'Waiting');
+                this.publicProcesses = processes.filter(process => process.status === 'Public');
+                this.doneProcesses = processes.filter(process => process.status === 'Done');
+            } catch (error) {
+                console.error('Error fetching processes:', error);
+            }
+        },
+        toggleDrop() {
+            this.showDropDown = !this.showDropDown;
+        }
+    }
 };
 </script>
 
-<style>
-/* Add any additional styling if needed */
+<style scoped>
+.main-container {
+    min-height: 100vh;
+    background: url('/bg.jpg') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
+
+nav {
+    background-color: #1a202c;
+    border-bottom: 1px solid #2d3748;
+    position: relative;
+    z-index: 50;
+}
+
+a {
+    color: #63b3ed;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #3182ce;
+}
 </style>

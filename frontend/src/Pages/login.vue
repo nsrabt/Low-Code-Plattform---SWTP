@@ -1,6 +1,4 @@
 <template>
-
-
   <nav class="bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700">
     <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
       <a href="#" class="flex items-center space-x-3 rtl:space-x-reverse">
@@ -107,10 +105,10 @@
             <div class="mt-8">
               <label class="text-xs block mb-2">Password</label>
               <div class="relative flex items-center">
-                <input v-model="password" type="password" required
+                <input :type="showPassword ? 'text' : 'password'" v-model="password" required
                   class="w-full text-sm border-b border-gray-300 focus:border-[#333] px-2 py-3 outline-none"
                   placeholder="Passwort eingeben" />
-                <svg xmlns="http://www.w3.org/2000/svg" fill="#bbb" stroke="#bbb"
+                <svg @click="togglePasswordVisibility" xmlns="http://www.w3.org/2000/svg" fill="#bbb" stroke="#bbb"
                   class="w-[18px] h-[18px] absolute right-2 cursor-pointer" viewBox="0 0 128 128">
                   <path
                     d="M64 104C22.127 104 1.367 67.496.504 65.943a4 4 0 0 1 0-3.887C1.367 60.504 22.127 24 64 24s62.633 36.504 63.496 38.057a4 4 0 0 1 0 3.887C126.633 67.496 105.873 104 64 104zM8.707 63.994C13.465 71.205 32.146 96 64 96c31.955 0 50.553-24.775 55.293-31.994C114.535 56.795 95.854 32 64 32 32.045 32 13.447 56.775 8.707 63.994zM64 88c-13.234 0-24-10.766-24-24s10.766-24 24-24 24 10.766 24 24-10.766 24-24 24zm0-40c-8.822 0-16 7.178-16 16s7.178 16 16 16 16-7.178 16-16-7.178-16-16-16z"
@@ -120,26 +118,24 @@
             </div>
             <div class="flex items-center justify-between gap-2 mt-5">
               <div class="flex items-center">
-                <input id="remember-me" name="remember-me" type="checkbox"
+                <input id="remember-me" name="remember-me" type="checkbox" v-model="rememberMe"
                   class="h-4 w-4 shrink-0 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
                 <label for="remember-me" class="ml-3 block text-sm">
                   Eingaben speichern
                 </label>
               </div>
               <div>
-                <a href="jajvascript:void(0);" class="text-blue-600 font-semibold text-sm hover:underline">
+                <a href="javascript:void(0);" class="text-blue-600 font-semibold text-sm hover:underline">
                   Passwort vergessen?
                 </a>
               </div>
             </div>
             <div class="mt-12">
-              <button type="button"
-                class="w-full shadow-xl py-2.5 px-4 text-sm font-semibold rounded-full text-blue-700 bg-wihte hover:bg-blue-200 hover:text-blue 500 focus:outline-none"
-                @click="login">
+              <button type="submit"
+                class="w-full shadow-xl py-2.5 px-4 text-sm font-semibold rounded-full text-blue-700 bg-white hover:bg-blue-200 hover:text-blue 500 focus:outline-none">
                 LDAP Login
               </button>
             </div>
-
           </form>
         </div>
         <div class="md:h-full max-md:mt-10 bg-[#000842] rounded-xl lg:p-12 p-8">
@@ -149,44 +145,68 @@
     </div>
   </div>
 </template>
+
 <script lang="ts">
+import { ref, onMounted } from 'vue';
 import axios from 'axios'; // Stelle sicher, dass axios installiert ist: npm install axios
 export let userID: number;
 
 export default {
   data() {
     return {
-      email: '', // Hier werden die Eingabefelder für Benutzername und Passwort gespeichert
-      password: ''
+      email: '',
+      password: '',
+      rememberMe: false,
+      showPassword: false
     };
   },
   methods: {
     async login() {
       try {
-        console.log("from user", this.email);
-        console.log("from user", this.password);
-        // Hier wird ein HTTP-POST-Request an deine NestJS-Route gesendet
+        // Save to local storage if remember me is checked
+        if (this.rememberMe) {
+          localStorage.setItem('email', this.email);
+          localStorage.setItem('password', this.password);
+        } else {
+          localStorage.removeItem('email');
+          localStorage.removeItem('password');
+        }
+
         const response = await axios.post('http://localhost:3000/auth/login', {
-          username: this.email,  // Benutzername und Passwort aus den Vue-Daten
+          username: this.email,
           password: this.password,
         });
 
-        // Hier kannst du die Antwort des Servers verarbeiten
         const user = response.data;
         userID = user.id;
-        console.log("user id",userID);
 
         if (user) {
-          // Beispiel: Weiterleitung zur Dashboard-Seite
           this.$router.push('/home');
         } else {
-          // Handle Fehlerfallpa
-          console.error('Authentication failed front');
+          console.error('Authentication failed');
         }
       } catch (error) {
         console.error('Error during login:', error);
       }
+    },
+    togglePasswordVisibility() {
+      this.showPassword = !this.showPassword;
+    },
+  },
+  mounted() {
+    // Check local storage for saved credentials
+    const savedEmail = localStorage.getItem('email');
+    const savedPassword = localStorage.getItem('password');
+
+    if (savedEmail && savedPassword) {
+      this.email = savedEmail;
+      this.password = savedPassword;
+      this.rememberMe = true;
     }
-  }
+  },
 };
 </script>
+
+<style scoped>
+/* Add any additional styling if needed */
+</style>

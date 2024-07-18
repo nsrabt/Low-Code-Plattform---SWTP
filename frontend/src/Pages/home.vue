@@ -1,7 +1,7 @@
 <template>
-    <div class="main-container">
+    <div class="main-container relative">
         <!-- Navigation -->
-        <nav class="bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+        <nav class="bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700 relative z-50">
             <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
                 <a href="#" class="flex items-center space-x-3 rtl:space-x-reverse">
                     <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="50" height="40"
@@ -23,13 +23,10 @@
 
                 <!-- User login -->
                 <div
-                    class="relative w-[200px] rounded-md hover:bg-gray-700 hover:text-gray-800 transition duration-400 ease-in-out">
+                    class="relative w-[200px] rounded-md hover:bg-gray-700 hover:text-gray-800 transition duration-400 ease-in-out z-50">
                     <div class="flex items-center justify-start space-x-4 cursor-pointer" @click="toggleDrop">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white"
-                            stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
+                        <img src="/pb.jpeg" alt="Profile Picture"
+                            class="w-10 h-10 rounded-full object-cover" />
                         <div class="font-semibold text-white text-left">
                             <div>Admin</div>
                             <div class="text-xs text-white dark:text-white">Admin</div>
@@ -37,7 +34,7 @@
                     </div>
                     <!-- Drop down -->
                     <div v-show="showDropDown"
-                        class="absolute mt-2 w-56 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                        class="absolute mt-2 w-56 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
                         role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
                         <div class="py-1 text-left" role="none">
                             <a href="#"
@@ -46,13 +43,10 @@
                             <a href="#"
                                 class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
                                 role="menuitem" tabindex="-1" id="menu-item-1">Support</a>
-                            <a href="#"
-                                class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                                role="menuitem" tabindex="-1" id="menu-item-2">License</a>
                             <form method="POST" action="#" role="none">
                                 <button type="submit"
                                     class="text-gray-700 block w-full px-4 py-2 text-left text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                                    role="menuitem" tabindex="-1" id="menu-item-3">Sign out</button>
+                                    role="menuitem" tabindex="-1" id="menu-item-4">Logout</button>
                             </form>
                         </div>
                     </div>
@@ -61,9 +55,9 @@
         </nav>
 
         <!-- Landing Page Content -->
-        <div class="max-w-screen-xl mx-auto p-4 flex flex-col lg:flex-row items-center lg:items-start">
+        <div class="max-w-screen-xl mx-auto p-4 flex flex-col lg:flex-row items-center lg:items-start relative z-10">
             <div class="lg:w-1/2 p-4">
-                <h1 class="text-7xl text-blue-900 ostrich-sans -lefttext">Willkommen auf unserer
+                <h1 class="text-7xl text-blue-900 ostrich-sans text-left">Willkommen auf unserer
                     Simple-Form Plattform</h1>
                 <p class="mt-4 text-2xl bold-text text-gray-700 text-left">Wir bieten eine benutzerfreundliche Lösung
                     zur Automatisierung und Optimierung
@@ -92,7 +86,7 @@ const toggleDrop = () => {
 };
 
 const boxes = ref([
-    { name: 'Prozess-Übersicht', description: 'Übersicht der Prozesse', link: '/processOverview', photo: '/workflow.png' },
+    { name: 'Prozess-Übersicht', description: 'Übersicht der Prozesse', link: '/processOverview', photo: '/Workflow.png' },
     { name: 'Workflow Management', description: 'Koordination und Automatisierung von Arbeitsabläufen zur Steigerung der Effizienz.', link: '/createWorkflow', photo: '/Workflow.png' },
     { name: 'Plattform Manager', description: 'Verwaltung und Bearbeitung von den Plattformen', link: '/page3', photo: '/Plattform.png' },
     { name: 'Ausfülldaten Verwaltung', description: 'Verwaltung und Speicherung von den Benutzerdaten.', link: '/settings', photo: '/einstellung.png' },
@@ -113,11 +107,14 @@ const boxes = ref([
     min-height: 100vh;
     background: url('/bg.jpg') no-repeat center center fixed;
     background-size: cover;
+    position: relative;
 }
 
 nav {
     background-color: #1a202c;
     border-bottom: 1px solid #2d3748;
+    position: relative;
+    z-index: 50;
 }
 
 a {

@@ -26,11 +26,7 @@
                 class="relative w-[200px] rounded-md hover:bg-gray-700 hover:text-gray-800 transition duration-400 ease-in-out">
                 <div class="flex items-center justify-start space-x-4 cursor-pointer" @click="toggleDrop">
                     <!-- User Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white"
-                        stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
+                    <img src="/pb.jpeg" alt="Profile Picture" class="w-10 h-10 rounded-full object-cover" />
                     <div class="font-semibold text-white text-left">
                         <div>Admin</div>
                         <div class="text-xs text-white dark:text-white">Admin</div>
@@ -45,12 +41,7 @@
                         <a href="#"
                             class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
                             role="menuitem" tabindex="-1" id="menu-item-0">Account settings</a>
-                        <a href="#"
-                            class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                            role="menuitem" tabindex="-1" id="menu-item-1">Support</a>
-                        <a href="#"
-                            class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                            role="menuitem" tabindex="-1" id="menu-item-2">License</a>
+
                         <form method="POST" action="#" role="none">
                             <button type="submit"
                                 class="text-gray-700 block w-full px-4 py-2 text-left text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
@@ -61,7 +52,7 @@
             </div>
         </div>
     </nav>
-    <div>
+    <div class="flex" >
         <aside id="sidebar-multi-level-sidebar"
             class="fixed top-14 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
             aria-label="Sidebar">

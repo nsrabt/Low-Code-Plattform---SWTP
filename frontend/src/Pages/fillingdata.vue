@@ -1,6 +1,7 @@
 <template>
+
     <!-- Navigation -->
-    <nav class="bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+    <nav class="bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700 relative z-50">
         <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
             <a href="#" class="flex items-center space-x-3 rtl:space-x-reverse">
                 <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="50" height="40"
@@ -21,13 +22,9 @@
 
             <!-- User login -->
             <div
-                class="relative w-[200px] rounded-md hover:bg-gray-700 hover:text-gray-800 transition duration-400 ease-in-out">
+                class="relative w-[200px] rounded-md hover:bg-gray-700 hover:text-gray-800 transition duration-400 ease-in-out z-50">
                 <div class="flex items-center justify-start space-x-4 cursor-pointer" @click="toggleDrop">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white"
-                        stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
+                    <img src="/pb.jpeg" alt="Profile Picture" class="w-10 h-10 rounded-full object-cover" />
                     <div class="font-semibold text-white text-left">
                         <div>Admin</div>
                         <div class="text-xs text-white dark:text-white">Admin</div>
@@ -35,22 +32,16 @@
                 </div>
                 <!-- Drop down -->
                 <div v-show="showDropDown"
-                    class="absolute mt-2 w-56 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                    class="absolute mt-2 w-56 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
                     role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
                     <div class="py-1 text-left" role="none">
                         <a href="#"
                             class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
                             role="menuitem" tabindex="-1" id="menu-item-0">Account settings</a>
-                        <a href="#"
-                            class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                            role="menuitem" tabindex="-1" id="menu-item-1">Support</a>
-                        <a href="#"
-                            class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                            role="menuitem" tabindex="-1" id="menu-item-2">License</a>
                         <form method="POST" action="#" role="none">
                             <button type="submit"
                                 class="text-gray-700 block w-full px-4 py-2 text-left text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                                role="menuitem" tabindex="-1" id="menu-item-3">Sign out</button>
+                                role="menuitem" tabindex="-1" id="menu-item-4">Logout</button>
                         </form>
                     </div>
                 </div>
@@ -61,10 +52,12 @@
 
         <!-- Form Section -->
         <div class="form-container">
-            <h1 class="text-center text-3xl font-bold my-6">Bevor es los geht, müssen sie ein paar Daten ausfüllen</h1>
+            <h1 class="text-center text-3xl font-bold my-6">Bevor es los geht, müssen sie ein paar Daten ausfüllen
+            </h1>
             <form @submit.prevent="handleSubmit">
                 <div v-for="(field, index) in fields" :key="index" class="mb-4">
-                    <label :for="field.key" class="block text-sm font-medium text-gray-700">{{ field.label }}</label>
+                    <label :for="field.key" class="block text-sm font-medium text-gray-700">{{ field.label
+                        }}</label>
                     <input :id="field.key" v-model="field.value" type="text"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
                 </div>

@@ -22,11 +22,7 @@
         <div
           class="relative w-[200px] rounded-md hover:bg-gray-700 hover:text-gray-800 transition duration-400 ease-in-out">
           <div class="flex items-center justify-start space-x-4 cursor-pointer" @click="toggleDrop">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white"
-              stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
+            <img src="/pb.jpeg" alt="Profile Picture" class="w-10 h-10 rounded-full object-cover" />
             <div class="font-semibold text-white text-left">
               <div>Admin</div>
               <div class="text-xs text-white dark:text-white">Admin</div>
@@ -40,12 +36,7 @@
               <a href="#"
                 class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
                 role="menuitem" tabindex="-1" id="menu-item-0">Account settings</a>
-              <a href="#"
-                class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                role="menuitem" tabindex="-1" id="menu-item-1">Support</a>
-              <a href="#"
-                class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                role="menuitem" tabindex="-1" id="menu-item-2">License</a>
+
               <form method="POST" action="#" role="none">
                 <button type="submit"
                   class="text-gray-700 block w-full px-4 py-2 text-left text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
@@ -56,18 +47,22 @@
         </div>
       </div>
     </nav>
+
+
     <div>
-      <div class="object-container">
-        <h2>Available Objects</h2>
-        <div class="controls">
+      <div class="object-container bg-gray-900 p-4 shadow-md">
+        <h2 class="text-lg text-white font-semibold mb-4">Available Objects</h2>
+        <div class="controls mb-4">
           <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
             @click="openObjectModal">Role hinzufügen</button>
         </div>
-        <div v-for="object in objects" :key="object.id" class="draggable object-item rounded-xl"
+        <div v-for="object in objects" :key="object.id"
+          class="draggable object-item bg-white p-3 mb-2 rounded-lg shadow-sm"
           @dragstart="onDragStartObject($event, object)" draggable="true">
           {{ object.role }} - {{ platformRoles.find(role => role.id === object.id).roleName }}
         </div>
       </div>
+
 
       <div v-for="(workflow, workflowIndex) in workflows" :key="workflowIndex" class="workflow-container">
         <h2>Workflow {{ workflowIndex + 1 }}</h2>
@@ -526,12 +521,6 @@ const workflows = ref([
   gap: 10px;
 }
 
-.object-container {
-  margin-bottom: 20px;
-  padding: 20px;
-  background: #f4f4f4;
-  border-radius: 5px;
-}
 
 .categories-container {
   display: flex;
