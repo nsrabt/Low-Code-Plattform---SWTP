@@ -72,21 +72,23 @@
                         <tbody class="block md:table-row-group">
                             <tr v-for="(workflow, index) in currentProcesses" :key="index"
                                 class="bg-gray-100 border border-grey-500 md:border-none block md:table-row">
-                                <td class="p-2 block md:table-cell text-left">{{ workflow.name }}</td>
+                                <td class="p-2 block md:table-cell text-left">{{ workflow.title }}</td>
                                 <td class="p-2 block md:table-cell">
                                     <template v-if="selectedTab === 'To do'">
-                                        <button class="bg-blue-600 text-white p-1 rounded mr-2">Open</button>
-                                        <button class="bg-red-700 text-white p-1 rounded">Delete</button>
+                                        <button class="bg-blue-600 text-white p-1 rounded mr-2" @click="openProcess('todo', workflow)">Open</button>
+                                          <button class="bg-red-700 text-white p-1 rounded" @click="openProcess('delete', workflow)">Delete</button>
                                     </template>
                                     <template v-if="selectedTab === 'Waiting'">
                                         <div class="bg-yellow-500 text-white p-1 rounded">In Progress</div>
                                     </template>
                                     <template v-if="selectedTab === 'Public'">
-                                        <button class="bg-green-600 text-white p-1 rounded">Submit</button>
+                                        <button v-if="workflow.isOpen" class="bg-green-600 text-white p-1 rounded" @click="openProcess('start', workflow)">Start</button>
+                                        <button v-if="!workflow.isOpen" class="bg-red-600 text-white p-1 rounded" @click="openProcess('apply', workflow)">Apply</button>
+
                                     </template>
                                     <template v-if="selectedTab === 'Done'">
-                                        <button class="bg-blue-600 text-white p-1 rounded mr-2">Open</button>
-                                        <button class="bg-purple-600 text-white p-1 rounded">Download</button>
+                                        <button class="bg-blue-600 text-white p-1 rounded mr-2" @click="openProcess('open', workflow)">Open</button>
+                                        <button class="bg-purple-600 text-white p-1 rounded" @click="openProcess('download', workflow)">Download</button>
                                     </template>
                                 </td>
                             </tr>
@@ -100,6 +102,9 @@
 
 <script>
 import axios from 'axios';
+import {useStore} from "vuex";
+import store from "@/store/store.js";
+import router from "@/router/index.js";
 
 export default {
     data() {
@@ -113,6 +118,12 @@ export default {
             showDropDown: false,
         };
     },
+
+  setup(){
+    const store = useStore();
+    return { store };
+
+  },
     computed: {
         currentProcesses() {
             switch (this.selectedTab) {
@@ -133,15 +144,55 @@ export default {
         this.fetchProcesses();
     },
     methods: {
+
+      async openProcess(command, workflow){
+        switch (command) {
+          case 'todo':
+            console.log("todo pressed");
+            break;
+          case 'delete':
+            await axios.put('http://localhost:3000/process/deleteProcess/',workflow);
+            console.log("delete pressed");
+            break;
+          case 'apply':
+            //todo apply functionality
+            console.log("apply pressed");
+            break;
+          case 'open':
+            //todo open done process
+            console.log("open pressed");
+            break;
+          case 'download':
+            //todo download function
+            console.log("download pressed");
+            break;
+          case 'start':
+            console.log("start workflow "+ workflow.id)
+            this.store.commit('setWorkflow', workflow);
+            await router.push('/processroles')
+            console.log("start pressed");
+            break;
+          default:
+            console.log("Unknown command");
+        }
+
+
+      },
         async fetchProcesses() {
             try {
-                const response = await axios.get('/api/processes');
-                const processes = response.data;
+              const userID = store.getters.getUser.id;
+              const todoResponse = await axios.get(`http://localhost:3000/process/todo/${userID}`);
+              this.todoProcesses = todoResponse.data;
 
-                this.todoProcesses = processes.filter(process => process.status === 'To do');
-                this.waitingProcesses = processes.filter(process => process.status === 'Waiting');
-                this.doneProcesses = await axios.get('/process/done/',);
-                this.publicProcesses = await axios.get('/process/allPublic');
+              const waitingResponse = await axios.get(`http://localhost:3000/process/waiting/${userID}`);
+              this.waitingProcesses = waitingResponse.data;
+
+              const doneResponse = await axios.get(`http://localhost:3000/process/done/${userID}`);
+              this.doneProcesses = doneResponse.data;
+
+              const publicResponse = await axios.get('http://localhost:3000/process/allPublic');
+              this.publicProcesses = publicResponse.data;
+
 
             } catch (error) {
                 console.error('Error fetching processes:', error);

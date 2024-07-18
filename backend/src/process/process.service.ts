@@ -135,6 +135,7 @@ export class ProcessService {
             proElem.data = workflowelem.data;
             proElem.workflowElementID = workflowelem.id;
             proElem.phase=1;
+            proElem.processID = this.curProcess.id;
             await this.proElemRepo.save(proElem);
         }
 
@@ -455,7 +456,19 @@ export class ProcessService {
     }
 
     async getAllPublic(){
-        return await this.workflowRepository.find();
+        console.log("test");
+        try {
+            const allPublic = await this.workflowRepository.find();
+            if (allPublic.length > 0) {
+                console.log(allPublic[0].title);
+            } else {
+                console.log('Array "allPublic" is empty.');
+            }
+            return allPublic;
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            return []; // oder anderen angemessenen Rückgabewert für Fehlerbehandlung
+        }
     }
 
     async getUserProcessRole(userProcessID: number) {
@@ -468,4 +481,39 @@ export class ProcessService {
     }
 
 
+    async getAllWaiting(userID: number) {
+        const userPros = await this.userProRepo.find({where:{state: 'waiting'}});
+        const workflowList: workflow[] = [];
+        for(const userPro of userPros){
+            const process = await this.processRepo.findOne({where:{id: userPro.processID}});
+            const workflow = await this.workflowRepository.findOne({where:{id: process.workflowID}});
+            workflowList.push(workflow);
+        }
+        return workflowList;
+    }
+
+    async deleteProcess(process_id: number){
+        try {
+            await this.processRepo.delete({id: process_id});
+            await this.proElemRepo.delete({processID: process_id});
+            return true;
+        }
+        catch(err){
+            throw new Error("failed to delete Process\n"+err)
+        }
+
+    }
+
+
+
+    async getAllTodo(userID: number) {
+        const userPros = await this.userProRepo.find({where:{state: 'todo'}});
+        const workflowList: workflow[] = [];
+        for(const userPro of userPros){
+            const process = await this.processRepo.findOne({where:{id: userPro.processID}});
+            const workflow = await this.workflowRepository.findOne({where:{id: process.workflowID}});
+            workflowList.push(workflow);
+        }
+        return workflowList;
+    }
 }

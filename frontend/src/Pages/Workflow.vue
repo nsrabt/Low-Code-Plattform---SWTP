@@ -65,14 +65,13 @@
 
 
       <div v-for="(workflow, workflowIndex) in workflows" :key="workflowIndex" class="workflow-container">
-        <h2>Workflow {{ workflowIndex + 1 }}</h2>
         <div class="categories-container">
           <div v-for="category in workflow.categories" :key="category.id"
             @drop="onDrop($event, category.id, workflowIndex)" class="droppable category" @dragover.prevent
             @dragenter.prevent>
             <div v-for="item in workflow.items.filter((x) => x.categoryId === category.id)" :key="item.id"
-              @dragstart="onDragStart($event, item, workflowIndex)" class="draggable rounded-xl" draggable="true"
-              :data-step-id="item.id">
+              @dragstart="onDragStart($event, item, workflowIndex)"  class="draggable rounded-xl" draggable="true"
+              :data-workflowElement-id="item.id">
               <input v-model="item.title" @blur="updateItem(item, workflowIndex)" class="item-title-input" />
               <div v-for="obj in item.objects" :key="obj.id">{{ obj.role }} - {{ obj.id }}</div>
               <button class="edit-button" @click="openEditModal(item, workflowIndex)">Bearbeiten</button>
@@ -255,6 +254,7 @@ const workflows = ref([
     }
 
     async function createItem(workflowIndex) {
+
       const newId = workflows.value[workflowIndex].items.length > 0
         ? Math.max(...workflows.value[workflowIndex].items.map(item => item.id)) + 1
         : 0;
@@ -328,6 +328,14 @@ const workflows = ref([
     }
 
     function onDrop(e: DragEvent, categoryId, workflowIndex) {
+
+      for(const workflow of workflows.value){
+        console.log(workflow.id);
+      }
+
+
+
+
       const itemId = parseInt(e.dataTransfer.getData('itemId'));
       const sourceWorkflowIndex = parseInt(e.dataTransfer.getData('workflowId'));
 
@@ -338,11 +346,14 @@ const workflows = ref([
           const newObject = { ...object };
           const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.categoryId === categoryId);
           if (itemIndex !== -1) {
-            const stepId = e.target.closest('.draggable').getAttribute('data-workflowElement-id');
+            const targetElement = e.target as HTMLElement;
+            const stepId = targetElement.closest('.draggable').getAttribute('data-workflowElement-id');
+            console.log(stepId);
             const workflowElement = workflows.value[workflowIndex].items.find(item => item.id == stepId);
             if (workflowElement) {
               workflowElement.objects.push(newObject);
             }
+            else console.log("hier haben wir den salat")
           }
         }
       } else {

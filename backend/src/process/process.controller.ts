@@ -63,6 +63,11 @@ export class ProcessController {
         return await this.processService.getRole(process_role_id);
     }
 
+    @Put('deleteProcess/:id')
+    async deleteProcess(@Param('id',ParseIntPipe) process_id:number){
+        return await this.processService.deleteProcess(process_id)
+    }
+
     //Get all the running processes
     @Get(':id')
     async getAllCurByUser(@Param('id',ParseIntPipe) userID:number){
@@ -76,8 +81,14 @@ export class ProcessController {
 
     @Get('waiting/:id')
     async getAllWaitingByUser(@Param('id',ParseIntPipe)userID:number){
-
+        return await this.processService.getAllWaiting(userID);
     }
+
+    @Get('todo/:id')
+    async getAllTodoByUser(@Param('id',ParseIntPipe)userID:number){
+        return await this.processService.getAllTodo(userID);
+    }
+
 
     //Get process role by ID
     @Get('processRole/:id')

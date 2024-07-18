@@ -90,9 +90,13 @@ export default {
     async created() {
         // Simulate fetching field types from the backend
 
-      console.log(store.getters.getUser.id);
+      console.log(store.getters.getWorkflow.id);
+      const startProcessDto = {
+        userID: store.getters.getUser.id,
+        workflowID: store.getters.getWorkflow.id
+      }
 
-      const response = await axios.put('/process/startProcess');
+      const response = await axios.put('http://localhost:3000/process/startProcess',startProcessDto);
 
       await this.getFieldTypes(response);
     },
@@ -100,8 +104,9 @@ export default {
         async getFieldTypes(response) {
             // Simulate fetching from backend
 
-          const getUsersofRole = await axios.get('/user/allUsersOfRole/',response.roleID)
-            const data = await response.json();
+          const usersOfRole = await axios.get('http://localhost:3000/user/allUsersOfRole/',response.roleID)
+          const usersOfRoleData = usersOfRole.data;
+
             this.fields = data.fieldTypes.map(type => ({
                 type,
                 userId: '',
