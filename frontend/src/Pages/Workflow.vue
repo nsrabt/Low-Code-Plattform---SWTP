@@ -59,7 +59,7 @@
         <div v-for="object in objects" :key="object.id"
           class="draggable object-item bg-white p-3 mb-2 rounded-lg shadow-sm"
           @dragstart="onDragStartObject($event, object)" draggable="true">
-          {{ object.role }} - {{ platformRoles.find(role => role.id === object.id).roleName }}
+          {{ object.roleName }} - {{ platformRoles.find(role => role.id === object.id).roleName }}
         </div>
       </div>
 
@@ -73,7 +73,7 @@
               @dragstart="onDragStart($event, item, workflowIndex)"  class="draggable rounded-xl" draggable="true"
               :data-workflowElement-id="item.id">
               <input v-model="item.title" @blur="updateItem(item, workflowIndex)" class="item-title-input" />
-              <div v-for="obj in item.objects" :key="obj.id">{{ obj.role }} - {{ obj.id }}</div>
+              <div v-for="obj in item.objects" :key="obj.id">{{ obj.roleName }} - {{ obj.id }}</div>
               <button class="edit-button" @click="openEditModal(item, workflowIndex)">Bearbeiten</button>
               <button class="delete-button" @click="deleteItem(workflowIndex, item.id)">Löschen</button>
             </div>
@@ -97,13 +97,17 @@
           <label for="item-title">Name: </label>
           <input id="item-title" v-model="currentItem.title" />
 
+          <h2><strong>Roles:</strong></h2>
+
           <div v-for="(obj, index) in currentItem.objects" :key="index">
-            <label for="item-role">Role:</label>
-            <input id="item-role" v-model="obj.role" />
-            <label for="item-id">ID:</label>
-            <input id="item-id" v-model="obj.id" />
-            <input id="pdf-id" type="file" accept="application/pdf">
+            <ul>
+              <li>
+                {{ obj.roleName }}
+              </li>
+            </ul>
           </div>
+          <input id="pdf-id" type="file" accept="application/pdf">
+
 
           <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
             @click="saveItem">Save</button>
@@ -116,7 +120,7 @@
         <div class="modal-content">
           <h3>Add Object</h3>
           <label for="object-role">Role:</label>
-          <input id="object-role" v-model="newObject.role" />
+          <input id="object-role" v-model="newObject.roleName" />
           <label for="object-id">ID:</label>
           <select name="PlatformRole" id="object-id" v-model="newObject.id">
             <option v-for="role in platformRoles" :key="role.id" :value="role.id">{{ role.roleName }}</option>
@@ -190,11 +194,12 @@ const workflows = ref([
     const isObjectModalOpen = ref(false);
     const currentItem = ref(null);
     const currentWorkflowIndex = ref(null);
-    const newObject = ref({ role: '', id: null, applicant: false, selectable: false });
+    const newObject = ref({ roleName: '', roleID:1, id: null, applicant: false, selectable: false });
     const selectedRole = ref(null);
     const showDropDown = ref(false);
     const showSide = ref(true);
     const platformRoles = ref([]); // Example values
+
 
     async function loadWorkflowData() {
       try {
@@ -324,7 +329,8 @@ const workflows = ref([
 
     function onDragStartObject(e: DragEvent, object) {
       e.dataTransfer.effectAllowed = 'copy';
-      e.dataTransfer.setData('objectId', object.id.toString());
+      console.log("drag start "+object.roleID)
+      e.dataTransfer.setData('objectId', object.roleID.toString());
     }
 
     function countItemsInCategory(workflowIndex, categoryId) {
@@ -345,7 +351,8 @@ const workflows = ref([
 
       if (isNaN(itemId)) {
         const objectId = parseInt(e.dataTransfer.getData('objectId'));
-        const object = objects.value.find(obj => obj.id === objectId);
+        const object = objects.value.find(obj => obj.roleID === objectId);
+        console.log("object id:" +objectId);
         if (object) {
           const newObject = { ...object };
           const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.categoryId === categoryId);
@@ -411,6 +418,7 @@ const workflows = ref([
           };
           reader.readAsDataURL(file);
         }
+
         updateItem(currentItem.value, currentWorkflowIndex.value);
         closeEditModal();
       }
@@ -449,8 +457,9 @@ const workflows = ref([
         return;
       }
       objects.value.push({ ...newObject.value });
-      saveRoleInDatabase(newObject.value.role, newObject.value.id, newObject.value.selectable, newObject.value.applicant);
-      newObject.value = { role: '', id: null, applicant: false, selectable: false };
+      saveRoleInDatabase(newObject.value.roleName, newObject.value.id, newObject.value.selectable, newObject.value.applicant);
+
+      newObject.value = { roleName: '',roleID:newObject.value.roleID+1, id: null, applicant: false, selectable: false };
       closeObjectModal();
     }
 
