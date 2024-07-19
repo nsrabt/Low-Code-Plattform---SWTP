@@ -176,8 +176,9 @@ export class WorkflowService {
 
     async assignRole(assignRoleDto: AssignRoleDto) {
         const newStepRole = new workflowElement_roles();
-        newStepRole.workflowRoleID = assignRoleDto.process_role_id;
+        newStepRole.workflowRoleID = assignRoleDto.workflowRoleID;
         newStepRole.workflowElementID = assignRoleDto.step_id;
+
         return await this.stepRolesRepository.save(newStepRole);
     }
 

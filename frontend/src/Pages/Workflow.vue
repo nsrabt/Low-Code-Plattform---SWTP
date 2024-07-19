@@ -99,20 +99,20 @@
 
           <h2><strong>Roles:</strong></h2>
 
-          <div v-for="(obj, index) in currentItem.objects" :key="index">
-            <ul>
-              <li>
-                {{ obj.roleName }}
-              </li>
-            </ul>
-          </div>
+            <div v-for="(obj, index) in currentItem.objects" :key="index" >
+              <span class="handle">::</span>
+
+                <div class="draggable">>
+                  {{ obj.roleName }}
+                </div>
+            </div>
+
           <input id="pdf-id" type="file" accept="application/pdf">
 
-
           <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-            @click="saveItem">Save</button>
+                  @click="saveItem">Save</button>
           <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-            @click="closeEditModal">Cancel</button>
+                  @click="closeEditModal">Cancel</button>
         </div>
       </div>
 
@@ -194,7 +194,7 @@ const workflows = ref([
     const isObjectModalOpen = ref(false);
     const currentItem = ref(null);
     const currentWorkflowIndex = ref(null);
-    const newObject = ref({ roleName: '', roleID:1, id: null, applicant: false, selectable: false });
+    const newObject = ref({ roleName: '', roleID:1, id: null, applicant: false, selectable: false, workflowRoleID:null});
     const selectedRole = ref(null);
     const showDropDown = ref(false);
     const showSide = ref(true);
@@ -252,6 +252,11 @@ const workflows = ref([
       showDropDown.value = !showDropDown.value;
     }
 
+
+
+
+
+
     function createCategory(workflowIndex) {
       const newId = workflows.value[workflowIndex].categories.length;
       workflows.value[workflowIndex].categories.push({
@@ -285,7 +290,7 @@ const workflows = ref([
           categoryId: 0,
           pdfLink: '',
           objects: [],
-          workflowId: workflowIndex,
+          workflowId: response.data.id,
           step_id: response.data.id
         });
       } catch (error) {
@@ -363,8 +368,15 @@ const workflows = ref([
             const workflowElement = workflows.value[workflowIndex].items.find(item => item.id == stepId);
             if (workflowElement) {
               workflowElement.objects.push(newObject);
+
+              console.log(newObject)
+              const response = axios.post("http://localhost:3000/workflow/assignRole",{
+                step_id: workflowElement.workflowID,
+                workflowRoleID:newObject.workflowRoleID
+              });
+
+
             }
-            else console.log("hier haben wir den salat")
           }
         }
       } else {
@@ -441,9 +453,9 @@ const workflows = ref([
       isObjectModalOpen.value = false;
     }
 
-    function addObject() {
+    async function addObject() {
       // Check if the custom ID already exists in the objects list
-      if (!newObject.value.role || newObject.value.id === null || newObject.value.id === '') {
+      if (!newObject.value.roleName || newObject.value.id === null || newObject.value.id === '') {
         alert("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du das Objekt hinzufügst.");
         return; // Verhindert das Hinzufügen, wenn nicht alle Felder gesetzt sind
       }
@@ -456,22 +468,27 @@ const workflows = ref([
         alert("Es kann nur einen 'Applicant' geben. Bitte wähle einen anderen Status für dieses Objekt.");
         return;
       }
+
+      await saveRoleInDatabase(newObject.value.roleID, newObject.value.roleName, newObject.value.selectable, newObject.value.applicant);
       objects.value.push({ ...newObject.value });
-      saveRoleInDatabase(newObject.value.roleName, newObject.value.id, newObject.value.selectable, newObject.value.applicant);
 
       newObject.value = { roleName: '',roleID:newObject.value.roleID+1, id: null, applicant: false, selectable: false };
       closeObjectModal();
     }
 
-    async function saveRoleInDatabase(rolename: string, roleID: number, selectable: boolean, applicant: boolean) {
+    async function saveRoleInDatabase(roleID:number, roleName:string, selectable:boolean, isApplicant:boolean) {
       const response = await axios.post('http://localhost:3000/workflow/addRole', {
         processID: workflowID.value,
         roleID: roleID,
-        process_role_name: rolename,
+        process_role_name: roleName,
         selectable: selectable,
-        isApplicant: applicant
+        isApplicant: isApplicant
       });
+
+
       if (response) {
+        newObject.value.workflowRoleID = response.data.id;
+
         console.log(response.data.process_role_name);
       }
     }

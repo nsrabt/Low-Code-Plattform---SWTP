@@ -5,5 +5,5 @@ export class AssignRoleDto{
     step_id: number;
 
     @IsNumber()
-    process_role_id: number;
+    workflowRoleID: number;
 }
