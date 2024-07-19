@@ -91,7 +91,7 @@
         </div>
       </div>
 
-      <div v-if="isEditModalOpen" class="modal">
+      <div v-if="isEditModalOpen" class="modal" >
         <div class="modal-content">
           <h3>Schritt bearbeiten</h3>
           <label for="item-title">Name: </label>
@@ -106,7 +106,7 @@
               </li>
             </ul>
           </div>
-          <input id="pdf-id" type="file" accept="application/pdf">
+          <input id="pdf-id" type="file" accept="application/pdf" @change="handleFileUpload">
 
 
           <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
@@ -189,10 +189,9 @@ const workflows = ref([
 
 
     const objects = ref([]);
-
+    const currentItem = ref()
     const isEditModalOpen = ref(false);
     const isObjectModalOpen = ref(false);
-    const currentItem = ref(null);
     const currentWorkflowIndex = ref(null);
     const newObject = ref({ roleName: '', roleID:1, id: null, applicant: false, selectable: false });
     const selectedRole = ref(null);
@@ -228,7 +227,7 @@ const workflows = ref([
               id: newIndex,
               title: workflowElement.title,
               categoryId: workflowElement.step_number - 1,
-              pdfLink: '',
+              pdf: '',
               objects: [],
               workflowId: 0,
               step_id: workflowElement.id
@@ -283,7 +282,7 @@ const workflows = ref([
           id: newId,
           title: `Schritt ${newId + 1}`,
           categoryId: 0,
-          pdfLink: '',
+          pdf: '',
           objects: [],
           workflowId: workflowIndex,
           step_id: response.data.id
@@ -295,12 +294,13 @@ const workflows = ref([
 
     async function updateItem(updatedItem, workflowIndex) {
       const index = workflows.value[workflowIndex].items.findIndex(item => item.id === updatedItem.id);
+      //workflows.value[workflowIndex].items[index] = currentItem.value;
       if (index !== -1) {
         workflows.value[workflowIndex].items[index] = { ...updatedItem };
         const updateStepDto = {
           id: updatedItem.step_id,
           title: updatedItem.title,
-          data: updatedItem.pdfLink || "null"
+          data: updatedItem.pdf
         };
         try {
           const response = await axios.post(`http://localhost:3000/workflow/updateStep`, updateStepDto);
@@ -363,8 +363,10 @@ const workflows = ref([
             const workflowElement = workflows.value[workflowIndex].items.find(item => item.id == stepId);
             if (workflowElement) {
               workflowElement.objects.push(newObject);
+              console.log("new Object "+newObject.roleID)
+              const response = axios.post('http://localhost/3000/workflow/assignRole')
+
             }
-            else console.log("hier haben wir den salat")
           }
         }
       } else {
@@ -387,9 +389,17 @@ const workflows = ref([
     }
 
     function openEditModal(item, workflowIndex) {
+
+      const pdf = (document.getElementById("pdf-id") as HTMLInputElement);
+
       currentItem.value = { ...item };
+      
+      if(currentItem.value.pdf){
+        pdf.value = item.pdf;
+      }
       currentWorkflowIndex.value = workflowIndex;
       isEditModalOpen.value = true;
+
     }
 
     function closeEditModal() {
@@ -398,29 +408,38 @@ const workflows = ref([
       currentWorkflowIndex.value = null;
     }
 
-    function saveItem() {
+    function saveItem(event) {
       if (currentItem.value && currentWorkflowIndex.value !== null) {
-        //readPDF
+        // readPDF
         const pdfInput = document.getElementById('pdf-id') as HTMLInputElement;
         const file = pdfInput?.files?.[0];
 
         if (file) {
           const reader = new FileReader();
 
-          reader.onload = function (event) {
-            const result = event.target?.result;
+          reader.onload = (e) => {
+            const result = e.target?.result;
+
             if (typeof result === 'string') {
               const pdf = result.split(',')[1]; // Verwende 'split' auf dem string
-              console.log('Base64 String: ', pdf);
+              currentItem.value.pdf = pdf;
+
+
+              console.log('Base64 String: ', currentItem.value.pdf);
             } else {
               console.error('FileReader result is not a string');
             }
+            // Update the item and close the modal only after reading the file
+            updateItem(currentItem.value, currentWorkflowIndex.value);
+            closeEditModal();
           };
-          reader.readAsDataURL(file);
-        }
 
-        updateItem(currentItem.value, currentWorkflowIndex.value);
-        closeEditModal();
+          reader.readAsDataURL(file);
+        } else {
+          // Update the item and close the modal if no file is selected
+          updateItem(currentItem.value, currentWorkflowIndex.value);
+          closeEditModal();
+        }
       }
     }
 
@@ -443,7 +462,7 @@ const workflows = ref([
 
     function addObject() {
       // Check if the custom ID already exists in the objects list
-      if (!newObject.value.role || newObject.value.id === null || newObject.value.id === '') {
+      if (!newObject.value.roleName || newObject.value.id === null || newObject.value.id === '') {
         alert("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du das Objekt hinzufügst.");
         return; // Verhindert das Hinzufügen, wenn nicht alle Felder gesetzt sind
       }
@@ -476,16 +495,19 @@ const workflows = ref([
       }
     }
 
-    function handleFileUpload(event) {
+   function handleFileUpload(event) {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          currentItem.value.pdfLink = e.target.result;
+          this.currentItem.value.pdfLink = e.target.result;
         };
         reader.readAsDataURL(file);
       }
     }
+
+
+
 
     async function changeStepOrder(stepId, stepNumber) {
       try {
@@ -555,7 +577,7 @@ const workflows = ref([
 
       if (!allValuesSet) {
         if (pdfMissing) {
-          alert("Mindestens ein Item benötigt einen PDF-Link. Bitte lade ein PDF hoch.");
+          alert("Alle Workflow-Elemente benötigen einen PDF-Link. Bitte laden sie fehlende PDF's hoch.");
         }
         if (objectsMissing) {
           alert("Jedes Workflowelement muss mindestens eine Rolle haben");

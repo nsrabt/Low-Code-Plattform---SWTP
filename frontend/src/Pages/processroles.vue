@@ -103,21 +103,21 @@ export default {
     methods: {
         async getFieldTypes(response) {
             // Simulate fetching from backend
-
-          const usersOfRole = await axios.get('http://localhost:3000/user/allUsersOfRole/',response.roleID)
-          const usersOfRoleData = usersOfRole.data;
-
             this.fields = data.fieldTypes.map(type => ({
-                type,
-                userId: '',
-                suggestions: []
+              type,
+              userId: '',
+              suggestions: []
             }));
-        },
+          },
+
+
         async fetchSuggestions(field) {
             // Simulate fetching user suggestions from the backend based on field type and userId
             if (field.userId.length > 1) {
-                const response = await fetch(`/api/search-users?type=${field.type}&query=${field.userId}`);
-                const data = await response.json();
+              console.log("field type: "+field.type)
+              const usersOfRole = await axios.get('http://localhost:3000/user/allUsersOfRole/', field.roleID);
+              console.log(usersOfRole.data);
+                const data = await usersOfRole.json();
                 field.suggestions = data.users; // Assuming `users` is an array of user objects
             } else {
                 field.suggestions = [];

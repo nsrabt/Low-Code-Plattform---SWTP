@@ -14,6 +14,6 @@ export class workflowElement {
     @Column()
     stepNumber: number;
 
-    @Column()
+    @Column({type:"text"})
     data:string;
 }
