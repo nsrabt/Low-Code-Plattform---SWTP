@@ -6,4 +6,7 @@ export class AssignRoleDto{
 
     @IsNumber()
     process_role_id: number;
+
+    @IsNumber()
+    position: number;
 }

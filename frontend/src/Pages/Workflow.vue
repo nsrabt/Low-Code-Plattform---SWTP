@@ -276,7 +276,7 @@ const workflows = ref([
       };
       console.log(stepData);
       try {
-
+        console.log(workflowID.value);
         const response = await axios.post('http://localhost:3000/workflow/addStep', stepData);
         workflows.value[workflowIndex].items.push({
           id: newId,
@@ -339,10 +339,6 @@ const workflows = ref([
 
     function onDrop(e: DragEvent, categoryId, workflowIndex) {
 
-      for(const workflow of workflows.value){
-        console.log(workflow.id);
-      }
-
 
 
 
@@ -364,7 +360,12 @@ const workflows = ref([
             if (workflowElement) {
               workflowElement.objects.push(newObject);
               console.log("new Object "+newObject.roleID)
-              const response = axios.post('http://localhost/3000/workflow/assignRole')
+
+              const response=axios.post('http://localhost:3000/workflow/assignRole',{
+                step_id:workflowElement.id,
+                process_role_id: newObject.roleID
+              })
+
 
             }
           }
