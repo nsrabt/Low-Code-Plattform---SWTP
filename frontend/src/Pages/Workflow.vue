@@ -106,6 +106,7 @@
               </li>
             </ul>
           </div>
+
           <input id="pdf-id" type="file" accept="application/pdf" @change="handleFileUpload">
 
 
@@ -145,7 +146,7 @@
 </template>
 
 <script lang="ts">
-import { onMounted, ref } from 'vue';
+import {nextTick, onMounted, ref} from 'vue';
 import axios from 'axios';
 import "vue-router/dist/vue-router";
 import {useRoute} from "vue-router";
@@ -159,6 +160,7 @@ export default {
     onMounted(async () => {
       if (route.name === "EditWorkflow") {
         workflowID.value = route.params.id;
+        await loadWorkflowData();
       } else {
         console.log("new!");
         try {
@@ -227,7 +229,7 @@ const workflows = ref([
               id: newIndex,
               title: workflowElement.title,
               categoryId: workflowElement.step_number - 1,
-              pdf: '',
+              pdf: workflowElement.data,
               objects: [],
               workflowId: 0,
               step_id: workflowElement.id
@@ -262,12 +264,14 @@ const workflows = ref([
     }
 
     async function createItem(workflowIndex) {
-
+      if (workflows.value[workflowIndex].categories.length === 0) {
+        alert("Es muss mindestens eine workflow erstellt werden, bevor ein workflow-Element hinzugefügt werden kann.");
+        return;
+      }
       const newId = workflows.value[workflowIndex].items.length > 0
         ? Math.max(...workflows.value[workflowIndex].items.map(item => item.id)) + 1
         : 0;
-
-
+      console.log("newID", newId);
       const stepData = {
         process_id: workflowID.value,
         title: `WorkflowElement ${newId + 1}`,
@@ -280,7 +284,7 @@ const workflows = ref([
         const response = await axios.post('http://localhost:3000/workflow/addStep', stepData);
         workflows.value[workflowIndex].items.push({
           id: newId,
-          title: `Schritt ${newId + 1}`,
+          title: `WorkflowElement ${newId + 1}`,
           categoryId: 0,
           pdf: '',
           objects: [],
@@ -339,9 +343,6 @@ const workflows = ref([
 
     function onDrop(e: DragEvent, categoryId, workflowIndex) {
 
-
-
-
       const itemId = parseInt(e.dataTransfer.getData('itemId'));
       const sourceWorkflowIndex = parseInt(e.dataTransfer.getData('workflowId'));
 
@@ -358,6 +359,10 @@ const workflows = ref([
             console.log(stepId);
             const workflowElement = workflows.value[workflowIndex].items.find(item => item.id == stepId);
             if (workflowElement) {
+              if (workflowElement.objects.some(obj => obj.roleID === object.roleID)) {
+                alert("Dieses Objekt wurde bereits diesem Workflow-Element hinzugefügt.");
+                return;
+              }
               workflowElement.objects.push(newObject);
               console.log("new Object "+newObject.roleID)
 
@@ -390,17 +395,17 @@ const workflows = ref([
     }
 
     function openEditModal(item, workflowIndex) {
-
-      const pdf = (document.getElementById("pdf-id") as HTMLInputElement);
-
+      console.log("editing");
       currentItem.value = { ...item };
-      
-      if(currentItem.value.pdf){
-        pdf.value = item.pdf;
-      }
       currentWorkflowIndex.value = workflowIndex;
       isEditModalOpen.value = true;
 
+      nextTick(() => {
+        const pdf = document.getElementById("pdf-id");
+        if (pdf) {
+          pdf.value = '';
+        }
+      });
     }
 
     function closeEditModal() {
@@ -462,10 +467,15 @@ const workflows = ref([
     }
 
     function addObject() {
+
       // Check if the custom ID already exists in the objects list
       if (!newObject.value.roleName || newObject.value.id === null || newObject.value.id === '') {
         alert("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du das Objekt hinzufügst.");
         return; // Verhindert das Hinzufügen, wenn nicht alle Felder gesetzt sind
+      }
+      if (objects.value.some(obj => obj.roleName.toLowerCase() === newObject.value.roleName.toLowerCase())) {
+        alert("dieser Rollenname existiert bereits. Bitte wähle einen anderen Namen.");
+        return;
       }
 
       if (newObject.value.applicant && newObject.value.selectable) {
@@ -499,9 +509,12 @@ const workflows = ref([
    function handleFileUpload(event) {
       const file = event.target.files[0];
       if (file) {
+
         const reader = new FileReader();
         reader.onload = (e) => {
-          this.currentItem.value.pdfLink = e.target.result;
+          console.log("bevor", currentItem.value.pdf);
+          currentItem.value.pdf = e.target.result;
+          console.log("after", currentItem.value.pdf);
         };
         reader.readAsDataURL(file);
       }
@@ -546,6 +559,7 @@ const workflows = ref([
         alert("Jeder Workflow muss mindestens eine Kategorie enthalten.");
         return;
       }
+
       const categoryIds = workflow.items.map(item => item.categoryId).sort((a, b) => a - b);
       let expectedCategoryId = 0;
       for (let i = 0; i < categoryIds.length; i++) {
@@ -561,16 +575,21 @@ const workflows = ref([
       let allValuesSet = true;
       let pdfMissing = false;
       let objectsMissing = false;
+      let applicantFound = false;
       for (const category of workflow.categories) {
         for (const item of workflow.items.filter(x => x.categoryId === category.id)) {
-          if (!item.title || !item.pdfLink) {
+          console.log("pdfLink", item.pdf);
+          if (!item.title || !item.pdf) {
             allValuesSet = false;
-            if (!item.pdfLink) {
+            if (!item.pdf) {
               pdfMissing = true;
             }
           }
           if (item.objects.length === 0) {
             objectsMissing = true;
+          }
+          if (item.objects.some(obj => obj.applicant)) {
+            applicantFound = true;
           }
         }
         if (!allValuesSet) break;
@@ -585,6 +604,8 @@ const workflows = ref([
         } else {
           alert("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du speicherst.");
         }
+      } else if (!applicantFound) { // Überprüfung, ob ein Applicant vorhanden ist
+        alert("Mindestens ein Objekt muss als 'Applicant' markiert sein.");
       } else {
         alert("Alle Werte sind korrekt gesetzt und mindestens eine Kategorie ist vorhanden. Daten werden gespeichert...");
         // Logik zum Speichern der Daten könnte hier platziert werden
