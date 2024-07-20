@@ -55,12 +55,22 @@
             <h1 class="text-center text-3xl font-bold my-6">Bevor es los geht, müssen sie ein paar Daten ausfüllen
             </h1>
             <form @submit.prevent="handleSubmit">
-                <div v-for="(field, index) in fields" :key="index" class="mb-4">
-                    <label :for="field.key" class="block text-sm font-medium text-gray-700">{{ field.label
-                        }}</label>
-                    <input :id="field.key" v-model="field.value" type="text"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
-                </div>
+              <div v-for="(field, index) in fields" :key="index" class="mb-4">
+                <label :for="field.key" class="block text-sm font-medium text-gray-700">{{ field.label }}</label>
+                <template v-if="field.datatype === 'boolean'">
+                  <input :id="field.key" v-model="field.value" type="checkbox"
+                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+                </template>
+                <template v-else-if="field.datatype === 'string'">
+                  <input :id="field.key" v-model="field.value" type="text"
+                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+                </template>
+                <template v-else-if="field.datatype === 'picture'">
+                  <input :id="field.key" @change="onFileChange($event, field)" type="file"
+                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+                  <img v-if="field.value" :src="field.value" alt="Uploaded Image" class="mt-2 max-h-64" />
+                </template>
+              </div>
                 <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded">Save</button>
             </form>
         </div>
@@ -89,22 +99,18 @@ export default {
         },
       async fetchMissingData() {
         try {
-          const response = await axios.put('http://localhost:3000/process/check');
+          const response = await axios.put('http://localhost:3000/process/check',);
+          for(const res of response.data){
+            console.log(res.name);
+          }
           this.fields = response.data.map(item => ({
             key: item.key,
-            label: item.label,
+            label: item,
             value: '',
+            datatype: item.type
           }));
         } catch (error) {
           console.error('Error fetching missing data:', error);
-        }
-      },
-      async startProcess() {
-        try {
-          const response = await axios.put('http://localhost:3000/process/startProcess', this.startProcessDto);
-          this.processResponse = response.data;
-        } catch (error) {
-          console.error('Error starting workflow:', error);
         }
       },
         handleSubmit() {

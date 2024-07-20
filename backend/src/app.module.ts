@@ -70,5 +70,6 @@ import {user_notifications} from "./database/user & execution/user_notificatíon
   ],
   controllers: [AppController, WorkflowController, UserController, RoleController, FillingDataController, WorkflowController, UserFillingDataController, ProcessController, NotificationController],
   providers: [AppService, WorkflowService, UserService, RoleService, FillingDataService, WorkflowService, UserFillingDataService, ProcessService, NotificationService],
+
 })
 export class AppModule {}
