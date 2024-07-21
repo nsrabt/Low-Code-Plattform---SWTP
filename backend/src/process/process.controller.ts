@@ -20,7 +20,7 @@ export class ProcessController {
     This allows displaying the form for the missing input data.
 */
     @Put('check')
-    async getMissingData(@Body()startProcessDto: StartProcessDto){
+    async getMissingData(){
         return await this.processService.getMissingData();
     }
 

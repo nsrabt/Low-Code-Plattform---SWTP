@@ -93,9 +93,7 @@ export class AuthService {
                     username: username,
                     eMail: addUser.eMail
                 });
-                // Ich habe etwas geändert. Nasser braucht das User Objekt
-                console.log("b");
-                console.log("a");
+
                 return newUser;
             }
         } else {

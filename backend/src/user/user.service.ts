@@ -46,10 +46,15 @@ export class UserService {
 
 
     async getUserById(id: number){
-        const searchedUser =  this.userRepository.findOne({where: {id: id}});
-        if(searchedUser==null){
-            throw new NotFoundException();
+        const searchedUser =  await this.userRepository.findOne({where: {id: id}});
+        if(searchedUser){
+            console.log("gefunden: "+searchedUser)
         }
+        else{
+            throw new NotFoundException();
+
+        }
+
         return searchedUser;
     }
 
@@ -98,10 +103,10 @@ export class UserService {
         try{
             const userPlatform = new user_platform();
             userPlatform.userID = userID;
-            userPlatform.platformID = platformID;
+            userPlatform.platformID=1;
             await this.userPlatformRepository.save(userPlatform);
         }catch(error){
-            console.error("failed to add User "+userID+" to platform "+platformID);
+            console.error("failed to add User "+userID+" to platform "+platformID+ "\n"+error);
         }
     }
 
@@ -114,15 +119,18 @@ export class UserService {
                     platformID: platformID,
                 },
             });
-
+            console.log("found "+defaultRole.roleName);
             defaultRole.id = await this.rolesRepository.getId(defaultRole);
             const userPlatformRole = new user_platform_roles();
             userPlatformRole.roleID = defaultRole.id;
             userPlatformRole.userID = userID;
+            userPlatformRole.platformID=1;
+            console.log(userPlatformRole.roleID +" assigned to "+userPlatformRole.userID + "on platform "+userPlatformRole.platformID );
+
             const savedUserPlatformRole = await this.userPlatformRolesRepository.save(userPlatformRole);
 
         }catch(error){
-            console.error("failed to assigned the default role of platform "+platformID+" to user"+userID);
+            console.error("failed to assigned the default role of platform "+platformID+" to user"+userID+"\n"+error);
         }
     }
 
@@ -174,10 +182,14 @@ export class UserService {
         console.log("roleID: "+roleID)
         const userRoles =  await this.userPlatformRolesRepository.find({where:{roleID:roleID, platformID:1}});
         let users:users[] = [];
+        console.log("anfang")
         for(const ur of userRoles){
-            users.push(await this.getUserById(ur.userID))
-            console.log(ur.userID)
+            console.log(ur.userID);
+            const user = await this.getUserById(ur.userID)
+            users.push(user)
         }
+
+        console.log("ende")
         return users;
     }
 }

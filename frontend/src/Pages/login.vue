@@ -131,13 +131,11 @@
               </div>
             </div>
             <div class="mt-12">
-              <button type="submit" @click="login('auth')"
-                      class="w-full shadow-xl py-2.5 px-4 text-sm font-semibold rounded-full text-blue-700 bg-white hover:bg-blue-200 hover:text-blue-500 focus:outline-none">
+              <button type="button" @click="login('auth')" class="w-full shadow-xl py-2.5 px-4 text-sm font-semibold rounded-full text-blue-700 bg-white hover:bg-blue-200 hover:text-blue-500 focus:outline-none">
                 LDAP Login
               </button>
-              <button type="submit" @click="login('auth2')"
-              class="mt-2 w-full shadow-xl py-2.5 px-4 text-sm font-semibold rounded-full text-green-700 bg-white hover:bg-green-200 hover:text-green-500 focus:outline-none">
-              Auth2 Login
+              <button type="button" @click="login('auth2')" class="mt-2 w-full shadow-xl py-2.5 px-4 text-sm font-semibold rounded-full text-green-700 bg-white hover:bg-green-200 hover:text-green-500 focus:outline-none">
+                Auth2 Login
               </button>
             </div>
           </form>
@@ -192,14 +190,13 @@ export default {
 
         const user = response.data;
         userID = user.id;
-        console.log("hallo",response.status);
         if (response.status === 201) {
           this.$store.commit('setUser', user);
-          console.log(this.$store.getters.getUser.username);
           this.$router.push('/home');
         } else {
           console.error('Authentication failed');
         }
+        return response;
       } catch (error) {
         console.error('Error during login:', error.response ? error.response.data : error);
       }

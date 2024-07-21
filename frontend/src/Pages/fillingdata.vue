@@ -55,23 +55,38 @@
             <h1 class="text-center text-3xl font-bold my-6">Bevor es los geht, müssen sie ein paar Daten ausfüllen
             </h1>
             <form @submit.prevent="handleSubmit">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
               <div v-for="(field, index) in fields" :key="index" class="mb-4">
-                <label :for="field.key" class="block text-sm font-medium text-gray-700">{{ field.label }}</label>
-                <template v-if="field.datatype === 'boolean'">
+
+                <label :for="field.key" class="block text-sm font-medium text-gray-700" >{{ field.name }}</label>
+
+                <template v-if="field.datatype.trim() === 'boolean'">
                   <input :id="field.key" v-model="field.value" type="checkbox"
                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
                 </template>
-                <template v-else-if="field.datatype === 'string'">
+                <template v-else-if="field.datatype.trim() === 'string'">
                   <input :id="field.key" v-model="field.value" type="text"
                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
                 </template>
-                <template v-else-if="field.datatype === 'picture'">
+                <template v-else-if="field.datatype.trim() === 'picture'">
                   <input :id="field.key" @change="onFileChange($event, field)" type="file"
                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
                   <img v-if="field.value" :src="field.value" alt="Uploaded Image" class="mt-2 max-h-64" />
                 </template>
+                <template v-else-if="field.datatype.trim() === 'date'">
+                  <input :id="field.key" v-model="field.value" type="date"
+                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+                </template>
+                <template v-else-if="field.datatype.trim() === 'number'">
+                  <input :id="field.key" v-model="field.value" type="number"
+                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+                </template>
+
               </div>
-                <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded">Save</button>
+              </div>
+              <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded">Save</button>
+
             </form>
         </div>
     </div>
@@ -79,6 +94,7 @@
 
 <script>
 import axios from "axios";
+import store from "@/store/store.js";
 
 export default {
     data() {
@@ -99,23 +115,35 @@ export default {
         },
       async fetchMissingData() {
         try {
-          const response = await axios.put('http://localhost:3000/process/check',);
+          const response = await axios.put('http://localhost:3000/process/check');
           for(const res of response.data){
-            console.log(res.name);
+            console.log(res.datatype);
           }
+
           this.fields = response.data.map(item => ({
-            key: item.key,
-            label: item,
+            key: item.id,
+            label: item.name,
             value: '',
-            datatype: item.type
+            datatype: item.datatype,
+            name: item.name,
           }));
+
+
         } catch (error) {
           console.error('Error fetching missing data:', error);
         }
       },
-        handleSubmit() {
+        async handleSubmit() {
             console.log("fields ",this.fields);
             // Handle form submission logic here
+          for(const field of this.fields){
+            const response = await axios.put('http://localhost:3000/user-filling-data',{
+              dataID:field.key,
+              userID: store.getters.getUser.id,
+              value: field.value
+            })
+          }
+          this.$router.push('/pdfcontrol')
         }
     },
     mounted() {

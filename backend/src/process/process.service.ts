@@ -113,7 +113,6 @@ export class ProcessService {
         this.workflowID = startProcessDto.workflowID;
         this.userID = startProcessDto.userID;
         this.curStep=1;
-
         // Abrufen des aktuellen Workflows
         const currentWorkflow = await this.workflowRepository.findOne({ where: { id: this.workflowID } });
 
@@ -181,16 +180,22 @@ export class ProcessService {
         All Filling Data of the first phase will be collected. even if other users have to fill out a form before you do
      */
     async getMissingData() {
-
+        console.log("getmissingdata   "+ this.userRole.workflowRoleID)
         // Initialisieren der Liste für fehlende Felder
         const notDefined: fields[] = [];
-
         this.workflowElementRoles = await this.workflowElementRolesRepository.find({where:{workflowRoleID: this.userRole.workflowRoleID}});
 
         //finde alle felder die zur userRolle gehören
-        const steps :workflowElement[]= []
-        for(const workflowElementRole of this.workflowElementRoles){
-            steps.push(await this.workflowElementRepository.findOne({where: {id : workflowElementRole.workflowElementID, stepNumber : this.curStep}}));
+        const steps: workflowElement[] = [];
+        const stepIds = new Set<number>(); // Set to track added step IDs
+        console.log(this.curStep + " " + this.workflowElementRoles.length);
+
+        for (const workflowElementRole of this.workflowElementRoles) {
+            const step = await this.workflowElementRepository.findOne({ where: { id: workflowElementRole.workflowElementID, stepNumber: this.curStep } });
+            if (step && !stepIds.has(step.id)) {
+                steps.push(step);
+                stepIds.add(step.id);
+            }
         }
         this.workflowElements=steps;
 
@@ -198,9 +203,8 @@ export class ProcessService {
 
         // Durchlaufen der Schritte und Felder
         for (const step of steps) {
-            console.log("step_id: "+step.id)
-            const curFields = await this.stepFieldRepo.find({ where: { workflowElementID: step.id }});
-
+            const curFields = await this.stepFieldRepo.find({ where: { workflowElementID: this.workflowElementRepository.getId(step) }});
+            console.log("new Step");
             for (const field of curFields) {
 
                 const userField = await this.userFillingRepo.findOne({ where: { pi_id: field.dataID, userID: this.userID } });
@@ -210,9 +214,13 @@ export class ProcessService {
                 }
             }
         }
+
         const notDefinedData: filling_data[] = [];
         for(const field of notDefined){
-            notDefinedData.push(await this.fillingDataService.getDataById(field.dataID));
+            console.log("a")
+            const fillingdata = await this.fillingDataService.getDataById(field.dataID);
+            console.log(fillingdata.name)
+            notDefinedData.push(fillingdata);
         }
         // Rückgabe der Liste der fehlenden Felder
         return notDefinedData;

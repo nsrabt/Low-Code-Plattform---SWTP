@@ -107,7 +107,7 @@ export class WorkflowService {
         }
         //if workflow exists
         if(await this.processRepository.find({where:{id: addProcessRoleDto.roleID}})){
-            role.processID = addProcessRoleDto.processID;
+            role.processID = addProcessRoleDto.workflowID;
         }
         else{
             throw new Error("Process with ID: " + addProcessRoleDto.roleID + " doesnt exist!")
@@ -178,7 +178,7 @@ export class WorkflowService {
         const newStepRole = new workflowElement_roles();
         newStepRole.workflowRoleID = assignRoleDto.workflowRoleID;
         newStepRole.workflowElementID = assignRoleDto.step_id;
-
+        newStepRole.position = assignRoleDto.position;
         return await this.stepRolesRepository.save(newStepRole);
     }
 

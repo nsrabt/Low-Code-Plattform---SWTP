@@ -150,12 +150,17 @@ import {nextTick, onMounted, ref} from 'vue';
 import axios from 'axios';
 import "vue-router/dist/vue-router";
 import {useRoute} from "vue-router";
+import {useStore} from "vuex";
+import {assertWarning} from "vite-plugin-ssr/dist/esm/utils/assert";
 
 
 export default {
   setup() {
     const route = useRoute();
     const workflowID = ref(null);
+
+    const store = useStore();
+
 
     onMounted(async () => {
       if (route.name === "EditWorkflow") {
@@ -201,7 +206,6 @@ const workflows = ref([
     const showSide = ref(true);
     const platformRoles = ref([]); // Example values
 
-
     async function loadWorkflowData() {
       try {
         if (!workflowID.value) {
@@ -232,7 +236,7 @@ const workflows = ref([
               pdf: workflowElement.data,
               objects: [],
               workflowId: 0,
-              step_id: workflowElement.id
+              step_id: null
             });
             newIndex++;
           }
@@ -282,6 +286,8 @@ const workflows = ref([
       try {
         console.log(workflowID.value);
         const response = await axios.post('http://localhost:3000/workflow/addStep', stepData);
+        console.log("old = "+workflows.value[workflowIndex].step_id +"   new = " +response.data.id)
+
         workflows.value[workflowIndex].items.push({
           id: newId,
           title: `WorkflowElement ${newId + 1}`,
@@ -291,6 +297,7 @@ const workflows = ref([
           workflowId: workflowIndex,
           step_id: response.data.id
         });
+
       } catch (error) {
         console.error('Error adding workflowElement:', error);
       }
@@ -364,11 +371,12 @@ const workflows = ref([
                 return;
               }
               workflowElement.objects.push(newObject);
-              console.log("new Object "+newObject.roleID)
+              console.log("new Object "+workflowElement.objects.length)
 
               const response=axios.post('http://localhost:3000/workflow/assignRole',{
-                step_id:workflowElement.id,
-                process_role_id: newObject.roleID
+                step_id:workflowElement.step_id,
+                workflowRoleID: newObject.workflowRoleID,
+                position: workflowElement.objects.length
               })
 
 
@@ -466,7 +474,7 @@ const workflows = ref([
       isObjectModalOpen.value = false;
     }
 
-    function addObject() {
+   async function addObject() {
 
       // Check if the custom ID already exists in the objects list
       if (!newObject.value.roleName || newObject.value.id === null || newObject.value.id === '') {
@@ -486,24 +494,25 @@ const workflows = ref([
         alert("Es kann nur einen 'Applicant' geben. Bitte wähle einen anderen Status für dieses Objekt.");
         return;
       }
-      objects.value.push({ ...newObject.value });
-      saveRoleInDatabase(newObject.value.roleName, newObject.value.id, newObject.value.selectable, newObject.value.applicant);
 
-      newObject.value = { roleName: '',roleID:newObject.value.roleID+1, id: null, applicant: false, selectable: false };
+      const workflowRole =await saveRoleInDatabase(newObject.value.roleName, newObject.value.id, newObject.value.selectable, newObject.value.applicant);
+      newObject.value.workflowRoleID = workflowRole.data.id;
+      objects.value.push({ ...newObject.value });
+
+      newObject.value = { roleName: '',roleID:newObject.value.roleID+1, id: null, applicant: false, selectable: false,workflowRoleID:0};
       closeObjectModal();
     }
 
     async function saveRoleInDatabase(rolename: string, roleID: number, selectable: boolean, applicant: boolean) {
+      console.log("workflowID: "+workflowID.value+"\nroleID: "+roleID+"\nprocessRoleName: "+rolename+"\nselectable: "+selectable+"\nisApplicant"+applicant)
       const response = await axios.post('http://localhost:3000/workflow/addRole', {
-        processID: workflowID.value,
+        workflowID: workflowID.value,
         roleID: roleID,
         process_role_name: rolename,
         selectable: selectable,
         isApplicant: applicant
       });
-      if (response) {
-        console.log(response.data.process_role_name);
-      }
+      return response;
     }
 
    function handleFileUpload(event) {
@@ -607,8 +616,7 @@ const workflows = ref([
       } else if (!applicantFound) { // Überprüfung, ob ein Applicant vorhanden ist
         alert("Mindestens ein Objekt muss als 'Applicant' markiert sein.");
       } else {
-        alert("Alle Werte sind korrekt gesetzt und mindestens eine Kategorie ist vorhanden. Daten werden gespeichert...");
-        // Logik zum Speichern der Daten könnte hier platziert werden
+        //=> Formularzuweisung
       }
     }
 

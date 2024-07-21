@@ -3,7 +3,7 @@ import {Column, PrimaryGeneratedColumn} from "typeorm";
 
 export class AddProcessRoleDto {
     @IsNumber()
-    processID: number;
+    workflowID: number;
 
     @IsNumber()
     roleID: number;

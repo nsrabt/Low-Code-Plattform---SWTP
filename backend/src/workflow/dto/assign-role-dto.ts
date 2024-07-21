@@ -6,4 +6,7 @@ export class AssignRoleDto{
 
     @IsNumber()
     workflowRoleID: number;
+
+    @IsNumber()
+    position:number
 }

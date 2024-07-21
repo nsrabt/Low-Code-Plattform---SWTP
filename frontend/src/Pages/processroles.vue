@@ -142,8 +142,10 @@ export default {
               console.log("searching for: "+field.roleID)
               const usersOfRole = await axios.get('http://localhost:3000/user/allUsersOfRole/'+field.roleID);
               const data = await usersOfRole.data;
-              console.log(data[0].username)
 
+              for(const d of data){
+                console.log(d.id);
+              }
 
               const searchTerm = field.curSearch.toLowerCase();
               field.suggestions = data.filter(user => user.username.toLowerCase().startsWith(searchTerm));
