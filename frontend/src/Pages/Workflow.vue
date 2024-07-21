@@ -91,7 +91,7 @@
         </div>
       </div>
 
-      <div v-if="isEditModalOpen" class="modal">
+      <div v-if="isEditModalOpen" class="modal" >
         <div class="modal-content">
           <h3>Schritt bearbeiten</h3>
           <label for="item-title">Name: </label>
@@ -99,20 +99,21 @@
 
           <h2><strong>Roles:</strong></h2>
 
-            <div v-for="(obj, index) in currentItem.objects" :key="index" >
-              <span class="handle">::</span>
+          <div v-for="(obj, index) in currentItem.objects" :key="index">
+            <ul>
+              <li>
+                {{ obj.roleName }}
+              </li>
+            </ul>
+          </div>
 
-                <div class="draggable">>
-                  {{ obj.roleName }}
-                </div>
-            </div>
+          <input id="pdf-id" type="file" accept="application/pdf" @change="handleFileUpload">
 
-          <input id="pdf-id" type="file" accept="application/pdf">
 
           <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-                  @click="saveItem">Save</button>
+            @click="saveItem">Save</button>
           <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-                  @click="closeEditModal">Cancel</button>
+            @click="closeEditModal">Cancel</button>
         </div>
       </div>
 
@@ -145,7 +146,7 @@
 </template>
 
 <script lang="ts">
-import { onMounted, ref } from 'vue';
+import {nextTick, onMounted, ref} from 'vue';
 import axios from 'axios';
 import "vue-router/dist/vue-router";
 import {useRoute} from "vue-router";
@@ -159,6 +160,7 @@ export default {
     onMounted(async () => {
       if (route.name === "EditWorkflow") {
         workflowID.value = route.params.id;
+        await loadWorkflowData();
       } else {
         console.log("new!");
         try {
@@ -189,12 +191,11 @@ const workflows = ref([
 
 
     const objects = ref([]);
-
+    const currentItem = ref()
     const isEditModalOpen = ref(false);
     const isObjectModalOpen = ref(false);
-    const currentItem = ref(null);
     const currentWorkflowIndex = ref(null);
-    const newObject = ref({ roleName: '', roleID:1, id: null, applicant: false, selectable: false, workflowRoleID:null});
+    const newObject = ref({ roleName: '', roleID:1, id: null, applicant: false, selectable: false });
     const selectedRole = ref(null);
     const showDropDown = ref(false);
     const showSide = ref(true);
@@ -228,7 +229,7 @@ const workflows = ref([
               id: newIndex,
               title: workflowElement.title,
               categoryId: workflowElement.step_number - 1,
-              pdfLink: '',
+              pdf: workflowElement.data,
               objects: [],
               workflowId: 0,
               step_id: workflowElement.id
@@ -252,11 +253,6 @@ const workflows = ref([
       showDropDown.value = !showDropDown.value;
     }
 
-
-
-
-
-
     function createCategory(workflowIndex) {
       const newId = workflows.value[workflowIndex].categories.length;
       workflows.value[workflowIndex].categories.push({
@@ -268,12 +264,14 @@ const workflows = ref([
     }
 
     async function createItem(workflowIndex) {
-
+      if (workflows.value[workflowIndex].categories.length === 0) {
+        alert("Es muss mindestens eine workflow erstellt werden, bevor ein workflow-Element hinzugefügt werden kann.");
+        return;
+      }
       const newId = workflows.value[workflowIndex].items.length > 0
         ? Math.max(...workflows.value[workflowIndex].items.map(item => item.id)) + 1
         : 0;
-
-
+      console.log("newID", newId);
       const stepData = {
         process_id: workflowID.value,
         title: `WorkflowElement ${newId + 1}`,
@@ -282,15 +280,15 @@ const workflows = ref([
       };
       console.log(stepData);
       try {
-
+        console.log(workflowID.value);
         const response = await axios.post('http://localhost:3000/workflow/addStep', stepData);
         workflows.value[workflowIndex].items.push({
           id: newId,
-          title: `Schritt ${newId + 1}`,
+          title: `WorkflowElement ${newId + 1}`,
           categoryId: 0,
-          pdfLink: '',
+          pdf: '',
           objects: [],
-          workflowId: response.data.id,
+          workflowId: workflowIndex,
           step_id: response.data.id
         });
       } catch (error) {
@@ -300,12 +298,13 @@ const workflows = ref([
 
     async function updateItem(updatedItem, workflowIndex) {
       const index = workflows.value[workflowIndex].items.findIndex(item => item.id === updatedItem.id);
+      //workflows.value[workflowIndex].items[index] = currentItem.value;
       if (index !== -1) {
         workflows.value[workflowIndex].items[index] = { ...updatedItem };
         const updateStepDto = {
           id: updatedItem.step_id,
           title: updatedItem.title,
-          data: updatedItem.pdfLink || "null"
+          data: updatedItem.pdf
         };
         try {
           const response = await axios.post(`http://localhost:3000/workflow/updateStep`, updateStepDto);
@@ -344,13 +343,6 @@ const workflows = ref([
 
     function onDrop(e: DragEvent, categoryId, workflowIndex) {
 
-      for(const workflow of workflows.value){
-        console.log(workflow.id);
-      }
-
-
-
-
       const itemId = parseInt(e.dataTransfer.getData('itemId'));
       const sourceWorkflowIndex = parseInt(e.dataTransfer.getData('workflowId'));
 
@@ -367,13 +359,17 @@ const workflows = ref([
             console.log(stepId);
             const workflowElement = workflows.value[workflowIndex].items.find(item => item.id == stepId);
             if (workflowElement) {
+              if (workflowElement.objects.some(obj => obj.roleID === object.roleID)) {
+                alert("Dieses Objekt wurde bereits diesem Workflow-Element hinzugefügt.");
+                return;
+              }
               workflowElement.objects.push(newObject);
+              console.log("new Object "+newObject.roleID)
 
-              console.log(newObject)
-              const response = axios.post("http://localhost:3000/workflow/assignRole",{
-                step_id: workflowElement.workflowID,
-                workflowRoleID:newObject.workflowRoleID
-              });
+              const response=axios.post('http://localhost:3000/workflow/assignRole',{
+                step_id:workflowElement.id,
+                process_role_id: newObject.roleID
+              })
 
 
             }
@@ -399,9 +395,17 @@ const workflows = ref([
     }
 
     function openEditModal(item, workflowIndex) {
+      console.log("editing");
       currentItem.value = { ...item };
       currentWorkflowIndex.value = workflowIndex;
       isEditModalOpen.value = true;
+
+      nextTick(() => {
+        const pdf = document.getElementById("pdf-id");
+        if (pdf) {
+          pdf.value = '';
+        }
+      });
     }
 
     function closeEditModal() {
@@ -410,29 +414,38 @@ const workflows = ref([
       currentWorkflowIndex.value = null;
     }
 
-    function saveItem() {
+    function saveItem(event) {
       if (currentItem.value && currentWorkflowIndex.value !== null) {
-        //readPDF
+        // readPDF
         const pdfInput = document.getElementById('pdf-id') as HTMLInputElement;
         const file = pdfInput?.files?.[0];
 
         if (file) {
           const reader = new FileReader();
 
-          reader.onload = function (event) {
-            const result = event.target?.result;
+          reader.onload = (e) => {
+            const result = e.target?.result;
+
             if (typeof result === 'string') {
               const pdf = result.split(',')[1]; // Verwende 'split' auf dem string
-              console.log('Base64 String: ', pdf);
+              currentItem.value.pdf = pdf;
+
+
+              console.log('Base64 String: ', currentItem.value.pdf);
             } else {
               console.error('FileReader result is not a string');
             }
+            // Update the item and close the modal only after reading the file
+            updateItem(currentItem.value, currentWorkflowIndex.value);
+            closeEditModal();
           };
-          reader.readAsDataURL(file);
-        }
 
-        updateItem(currentItem.value, currentWorkflowIndex.value);
-        closeEditModal();
+          reader.readAsDataURL(file);
+        } else {
+          // Update the item and close the modal if no file is selected
+          updateItem(currentItem.value, currentWorkflowIndex.value);
+          closeEditModal();
+        }
       }
     }
 
@@ -453,11 +466,16 @@ const workflows = ref([
       isObjectModalOpen.value = false;
     }
 
-    async function addObject() {
+    function addObject() {
+
       // Check if the custom ID already exists in the objects list
       if (!newObject.value.roleName || newObject.value.id === null || newObject.value.id === '') {
         alert("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du das Objekt hinzufügst.");
         return; // Verhindert das Hinzufügen, wenn nicht alle Felder gesetzt sind
+      }
+      if (objects.value.some(obj => obj.roleName.toLowerCase() === newObject.value.roleName.toLowerCase())) {
+        alert("dieser Rollenname existiert bereits. Bitte wähle einen anderen Namen.");
+        return;
       }
 
       if (newObject.value.applicant && newObject.value.selectable) {
@@ -468,41 +486,42 @@ const workflows = ref([
         alert("Es kann nur einen 'Applicant' geben. Bitte wähle einen anderen Status für dieses Objekt.");
         return;
       }
-
-      await saveRoleInDatabase(newObject.value.roleID, newObject.value.roleName, newObject.value.selectable, newObject.value.applicant);
       objects.value.push({ ...newObject.value });
+      saveRoleInDatabase(newObject.value.roleName, newObject.value.id, newObject.value.selectable, newObject.value.applicant);
 
       newObject.value = { roleName: '',roleID:newObject.value.roleID+1, id: null, applicant: false, selectable: false };
       closeObjectModal();
     }
 
-    async function saveRoleInDatabase(roleID:number, roleName:string, selectable:boolean, isApplicant:boolean) {
+    async function saveRoleInDatabase(rolename: string, roleID: number, selectable: boolean, applicant: boolean) {
       const response = await axios.post('http://localhost:3000/workflow/addRole', {
         processID: workflowID.value,
         roleID: roleID,
-        process_role_name: roleName,
+        process_role_name: rolename,
         selectable: selectable,
-        isApplicant: isApplicant
+        isApplicant: applicant
       });
-
-
       if (response) {
-        newObject.value.workflowRoleID = response.data.id;
-
         console.log(response.data.process_role_name);
       }
     }
 
-    function handleFileUpload(event) {
+   function handleFileUpload(event) {
       const file = event.target.files[0];
       if (file) {
+
         const reader = new FileReader();
         reader.onload = (e) => {
-          currentItem.value.pdfLink = e.target.result;
+          console.log("bevor", currentItem.value.pdf);
+          currentItem.value.pdf = e.target.result;
+          console.log("after", currentItem.value.pdf);
         };
         reader.readAsDataURL(file);
       }
     }
+
+
+
 
     async function changeStepOrder(stepId, stepNumber) {
       try {
@@ -540,6 +559,7 @@ const workflows = ref([
         alert("Jeder Workflow muss mindestens eine Kategorie enthalten.");
         return;
       }
+
       const categoryIds = workflow.items.map(item => item.categoryId).sort((a, b) => a - b);
       let expectedCategoryId = 0;
       for (let i = 0; i < categoryIds.length; i++) {
@@ -555,16 +575,21 @@ const workflows = ref([
       let allValuesSet = true;
       let pdfMissing = false;
       let objectsMissing = false;
+      let applicantFound = false;
       for (const category of workflow.categories) {
         for (const item of workflow.items.filter(x => x.categoryId === category.id)) {
-          if (!item.title || !item.pdfLink) {
+          console.log("pdfLink", item.pdf);
+          if (!item.title || !item.pdf) {
             allValuesSet = false;
-            if (!item.pdfLink) {
+            if (!item.pdf) {
               pdfMissing = true;
             }
           }
           if (item.objects.length === 0) {
             objectsMissing = true;
+          }
+          if (item.objects.some(obj => obj.applicant)) {
+            applicantFound = true;
           }
         }
         if (!allValuesSet) break;
@@ -572,13 +597,15 @@ const workflows = ref([
 
       if (!allValuesSet) {
         if (pdfMissing) {
-          alert("Mindestens ein Item benötigt einen PDF-Link. Bitte lade ein PDF hoch.");
+          alert("Alle Workflow-Elemente benötigen einen PDF-Link. Bitte laden sie fehlende PDF's hoch.");
         }
         if (objectsMissing) {
           alert("Jedes Workflowelement muss mindestens eine Rolle haben");
         } else {
           alert("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du speicherst.");
         }
+      } else if (!applicantFound) { // Überprüfung, ob ein Applicant vorhanden ist
+        alert("Mindestens ein Objekt muss als 'Applicant' markiert sein.");
       } else {
         alert("Alle Werte sind korrekt gesetzt und mindestens eine Kategorie ist vorhanden. Daten werden gespeichert...");
         // Logik zum Speichern der Daten könnte hier platziert werden

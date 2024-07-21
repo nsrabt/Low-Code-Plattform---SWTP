@@ -21,7 +21,7 @@ export class ProcessController {
 */
     @Put('check')
     async getMissingData(@Body()startProcessDto: StartProcessDto){
-        return await this.processService.getMissingData(startProcessDto);
+        return await this.processService.getMissingData();
     }
 
 

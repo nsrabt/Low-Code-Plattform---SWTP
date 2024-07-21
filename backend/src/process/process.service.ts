@@ -24,11 +24,15 @@ import {NotificationService} from "../notification/notification.service"
 import {users} from "../database/user & execution/users";
 import {join} from "path";
 import {not} from "rxjs/internal/util/not";
+import {FillingDataController} from "../filling_data/filling_data.controller"
+import {FillingDataService} from "../filling_data/filling_data.service";
 
 @Injectable()
 export class ProcessService {
 
     constructor(
+
+            private readonly fillingDataService: FillingDataService,
             @InjectRepository(workflow)
             private workflowRepository: Repository<workflow>,
             @InjectRepository(workflowElement)
@@ -71,7 +75,6 @@ export class ProcessService {
     private userRole: user_process_roles = new user_process_roles();
     private curStep:number;
     private curProcess:process;
-
     private notificationList: user_notifications[] = [];
     private todoList: user_process[] = [];
     private doneList: user_process[] = [];
@@ -177,7 +180,7 @@ export class ProcessService {
     /*
         All Filling Data of the first phase will be collected. even if other users have to fill out a form before you do
      */
-    async getMissingData(startProcessDto: StartProcessDto) {
+    async getMissingData() {
 
         // Initialisieren der Liste für fehlende Felder
         const notDefined: fields[] = [];
@@ -191,24 +194,29 @@ export class ProcessService {
         }
         this.workflowElements=steps;
 
+        console.log("length: "+steps.length)
 
         // Durchlaufen der Schritte und Felder
         for (const step of steps) {
-
+            console.log("step_id: "+step.id)
             const curFields = await this.stepFieldRepo.find({ where: { workflowElementID: step.id }});
 
             for (const field of curFields) {
 
                 const userField = await this.userFillingRepo.findOne({ where: { pi_id: field.dataID, userID: this.userID } });
-
+                console.log(field.dataID)
                 if (!userField) {
                     notDefined.push(field);
                 }
             }
         }
-
+        const notDefinedData: filling_data[] = [];
+        for(const field of notDefined){
+            notDefinedData.push(await this.fillingDataService.getDataById(field.dataID));
+        }
         // Rückgabe der Liste der fehlenden Felder
-        return notDefined;
+        return notDefinedData;
+
     }
 
 
@@ -407,20 +415,21 @@ export class ProcessService {
     async saveProcessRole(sendProcessRoleDto: SendProcessRoleDto) {
 
         try {
-            await this.userProcessRolesRepository.exists({where: {workflowRoleID: sendProcessRoleDto.processRoleID}});
+            await this.userProcessRolesRepository.exists({where: {workflowRoleID: sendProcessRoleDto.workflowRoleID, processID: this.curProcess.id}});
         }catch(err){
             throw new Error("Process-role has already a user assigned\n"+err);
         }
 
 
         const processRole = new user_process_roles();
-        processRole.workflowRoleID= sendProcessRoleDto.processRoleID;
         processRole.userID = sendProcessRoleDto.userID;
+        processRole.processID = this.curProcess.id;
+        processRole.workflowRoleID = sendProcessRoleDto.workflowRoleID;
 
 
         const user = await this.userRepo.findOne({where:{id:this.userID}});
         const workflow = await this.workflowRepository.findOne({where:{id:this.workflowID}});
-        const workflowRole = await this.workflowRolesRepository.findOne({where:{id: sendProcessRoleDto.processRoleID}});
+        const workflowRole = await this.workflowRolesRepository.findOne({where:{id:  sendProcessRoleDto.workflowRoleID}});
 
         //todo select correct link
         await this.pushNotification(processRole.userID,user.username + "selected you in "+workflow.title+" as "+ workflowRole.workflowRoleName, '')

@@ -171,10 +171,13 @@ export class UserService {
     }
 
     async getUserOfRole(roleID: number) {
+        console.log("roleID: "+roleID)
         const userRoles =  await this.userPlatformRolesRepository.find({where:{roleID:roleID, platformID:1}});
-        let users:users[];
+        let users:users[] = [];
         for(const ur of userRoles){
-            users.push()
+            users.push(await this.getUserById(ur.userID))
+            console.log(ur.userID)
         }
+        return users;
     }
 }

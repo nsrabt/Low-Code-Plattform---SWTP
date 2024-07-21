@@ -2,7 +2,7 @@ import {IsNumber} from "class-validator";
 
 export class SendProcessRoleDto{
     @IsNumber()
-    processRoleID:number;
+    workflowRoleID:number;
 
     @IsNumber()
     userID:number;

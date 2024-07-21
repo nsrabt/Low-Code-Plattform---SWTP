@@ -44,7 +44,10 @@
                                     role="menuitem" tabindex="-1" id="menu-item-3">Sign out</button>
                             </form>
                         </div>
+
                     </div>
+
+
                 </div>
             </div>
         </nav>
@@ -52,18 +55,24 @@
         <!-- Dynamic Fields -->
         <div class="max-w-screen-xl mx-auto p-4 mt-4">
             <div v-for="(field, index) in fields" :key="index" class="mb-4">
-                <input v-model="field.userId" type="text" class="border border-gray-300 rounded-md p-2 w-80"
-                    :placeholder="'Search ' + field.type + ' ID...'" @input="fetchSuggestions(field)" />
+              <label for="roleinput" class="block text-gray-700 font-medium mb-2">
+                {{ field.type }}
+              </label>
+              <input id="roleinput" v-model="field.curSearch" type="text" class="border border-gray-300 rounded-md p-2 w-80"
+                    :placeholder="'Search ' + field.type" @input="fetchSuggestions(field)" />
                 <!-- Display suggestions -->
                 <div v-if="field.suggestions.length > 0" class="mt-2">
                     <ul class="border border-gray-300 rounded-md p-2 bg-white z-40">
                         <li v-for="user in field.suggestions" :key="user.id" class="cursor-pointer hover:bg-gray-100"
                             @click="selectUser(field, user)">
-                            {{ user.name }}
+                            {{ user.username }}
                         </li>
                     </ul>
                 </div>
             </div>
+          <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+                  @click="save">Save</button>
+
         </div>
     </div>
 </template>
@@ -72,6 +81,7 @@
 import axios from "axios";
 import store from "@/store/store.js";
 import {useStore} from "vuex";
+import router from "@/router/index.js";
 
 export default {
 
@@ -83,8 +93,9 @@ export default {
 
     data() {
         return {
-            fields: [], // Array to hold field objects { type: String, userId: String, suggestions: Array }
+            fields: [], // Array to hold field objects { type: String, curSearch: String, suggestions: Array }
             showDropDown: false,
+            processID: null
         };
     },
     async created() {
@@ -103,30 +114,62 @@ export default {
     methods: {
         async getFieldTypes(response) {
             // Simulate fetching from backend
+          for(const data of response.data){
+            this.fields.push({
+              type: data.workflowRoleName,
+              curSearch: '',
+              suggestions: [],
+              roleID: data.roleID,
+              workflowRoleID: data.id,
+              userID: '',
+            })
+          }
 
-          const usersOfRole = await axios.get('http://localhost:3000/user/allUsersOfRole/',response.roleID)
-          const usersOfRoleData = usersOfRole.data;
-
-            this.fields = data.fieldTypes.map(type => ({
-                type,
-                userId: '',
-                suggestions: []
+          /*
+            this.fields = response.map(type => ({
+              type,
+              curSearch: '',
+              suggestions: []
             }));
-        },
+
+ */
+          },
+
+
         async fetchSuggestions(field) {
-            // Simulate fetching user suggestions from the backend based on field type and userId
-            if (field.userId.length > 1) {
-                const response = await fetch(`/api/search-users?type=${field.type}&query=${field.userId}`);
-                const data = await response.json();
-                field.suggestions = data.users; // Assuming `users` is an array of user objects
+            // Simulate fetching user suggestions from the backend based on field type and curSearch
+            if (field.curSearch.length > 1) {
+              console.log("searching for: "+field.roleID)
+              const usersOfRole = await axios.get('http://localhost:3000/user/allUsersOfRole/'+field.roleID);
+              const data = await usersOfRole.data;
+              console.log(data[0].username)
+
+
+              const searchTerm = field.curSearch.toLowerCase();
+              field.suggestions = data.filter(user => user.username.toLowerCase().startsWith(searchTerm));
             } else {
                 field.suggestions = [];
             }
         },
-        selectUser(field, user) {
-            field.userId = user.name;
+        async selectUser(field, user) {
+            field.curSearch = user.username;
             field.suggestions = [];
+            field.userID = user.id;
+
         },
+      async save() {
+        for (const field of this.fields) {
+        const response = await axios.put('http://localhost:3000/process/sendProcessRole', {
+          workflowRoleID: field.workflowRoleID,
+          userID: field.userID
+        });
+        const processID = response.data.processID;
+        if (response) {
+          this.store.commit('setProcessID', processID);
+          await router.push('/fillingdata')
+        }
+      }
+      },
         toggleDrop() {
             this.showDropDown = !this.showDropDown;
         }
