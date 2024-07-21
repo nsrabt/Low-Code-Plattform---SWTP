@@ -43,6 +43,7 @@ import { NotificationService } from './notification/notification.service';
 import { NotificationController } from './notification/notification.controller';
 import {process_element} from "./database/user & execution/process_element";
 import {user_notifications} from "./database/user & execution/user_notificatíons";
+import { Auth2Controller } from './auth2/auth2.controller';
 
 
 
@@ -68,7 +69,7 @@ import {user_notifications} from "./database/user & execution/user_notificatíon
     }), // New
     TypeOrmModule.forFeature([users,user_platform,user_platform_roles,roles,filling_data, workflow,workflowElement,workflow,platform,workflowElement_roles,fields, user_fillingdata, user_process, user_process_element, user_process_roles, field_roles, workflow_roles,process,process_element, user_notifications]),
   ],
-  controllers: [AppController, WorkflowController, UserController, RoleController, FillingDataController, WorkflowController, UserFillingDataController, ProcessController, NotificationController],
+  controllers: [AppController, WorkflowController, UserController, RoleController, FillingDataController, WorkflowController, UserFillingDataController, ProcessController, NotificationController, Auth2Controller],
   providers: [AppService, WorkflowService, UserService, RoleService, FillingDataService, WorkflowService, UserFillingDataService, ProcessService, NotificationService],
 
 })

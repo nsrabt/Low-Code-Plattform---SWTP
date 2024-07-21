@@ -131,9 +131,13 @@
               </div>
             </div>
             <div class="mt-12">
-              <button type="submit"
-                class="w-full shadow-xl py-2.5 px-4 text-sm font-semibold rounded-full text-blue-700 bg-white hover:bg-blue-200 hover:text-blue 500 focus:outline-none">
+              <button type="submit" @click="login('auth')"
+                      class="w-full shadow-xl py-2.5 px-4 text-sm font-semibold rounded-full text-blue-700 bg-white hover:bg-blue-200 hover:text-blue-500 focus:outline-none">
                 LDAP Login
+              </button>
+              <button type="submit" @click="login('auth2')"
+              class="mt-2 w-full shadow-xl py-2.5 px-4 text-sm font-semibold rounded-full text-green-700 bg-white hover:bg-green-200 hover:text-green-500 focus:outline-none">
+              Auth2 Login
               </button>
             </div>
           </form>
@@ -158,7 +162,8 @@ export default {
       email: '',
       password: '',
       rememberMe: false,
-      showPassword: false
+      showPassword: false,
+      authRoute: 'auth' // Standardmäßig wird die 'auth' Route verwendet
     };
   },
   setup() {
@@ -166,8 +171,11 @@ export default {
     return { store };
   },
   methods: {
-    async login() {
+    async login(route) {
+      console.log("route", route);
+      const apiUrl = `http://localhost:3000/${route}/login`;// Route wird dynamisch basierend auf dem Button-Klick gesetzt
       try {
+        console.log("über route", route);
         // Save to local storage if remember me is checked
         if (this.rememberMe) {
           localStorage.setItem('email', this.email);
@@ -177,23 +185,23 @@ export default {
           localStorage.removeItem('password');
         }
 
-        const response = await axios.post('http://localhost:3000/auth/login', {
+        const response = await axios.post(`http://localhost:3000/auth2/login`, {
           username: this.email,
           password: this.password,
         });
 
         const user = response.data;
         userID = user.id;
-
-        this.store.commit('setUser', user);
-        console.log(this.store.getters.getUser.username)
-        if (user) {
+        console.log("hallo",response.status);
+        if (response.status === 201) {
+          this.$store.commit('setUser', user);
+          console.log(this.$store.getters.getUser.username);
           this.$router.push('/home');
         } else {
           console.error('Authentication failed');
         }
       } catch (error) {
-        console.error('Error during login:', error);
+        console.error('Error during login:', error.response ? error.response.data : error);
       }
     },
     togglePasswordVisibility() {
