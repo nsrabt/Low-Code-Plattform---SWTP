@@ -142,6 +142,7 @@
         </div>
       </div>
     </div>
+    <NotificationBox v-if="notificationVisible" :message="notificationMessage" :duration="notificationDuration" />
   </div>
 </template>
 
@@ -150,9 +151,11 @@ import {nextTick, onMounted, ref} from 'vue';
 import axios from 'axios';
 import "vue-router/dist/vue-router";
 import {useRoute} from "vue-router";
+import NotificationBox from "@/Pages/NotificationBox.vue";
 
 
 export default {
+  components: {NotificationBox},
   setup() {
     const route = useRoute();
     const workflowID = ref(null);
@@ -200,6 +203,10 @@ const workflows = ref([
     const showDropDown = ref(false);
     const showSide = ref(true);
     const platformRoles = ref([]); // Example values
+
+    const notificationVisible = ref(false);
+    const notificationMessage = ref('');
+    const notificationDuration = ref(5000);
 
 
     async function loadWorkflowData() {
@@ -265,7 +272,7 @@ const workflows = ref([
 
     async function createItem(workflowIndex) {
       if (workflows.value[workflowIndex].categories.length === 0) {
-        alert("Es muss mindestens eine workflow erstellt werden, bevor ein workflow-Element hinzugefügt werden kann.");
+        showNotification("Es muss mindestens eine workflow erstellt werden, bevor ein workflow-Element hinzugefügt werden kann.");
         return;
       }
       const newId = workflows.value[workflowIndex].items.length > 0
@@ -360,7 +367,7 @@ const workflows = ref([
             const workflowElement = workflows.value[workflowIndex].items.find(item => item.id == stepId);
             if (workflowElement) {
               if (workflowElement.objects.some(obj => obj.roleID === object.roleID)) {
-                alert("Dieses Objekt wurde bereits diesem Workflow-Element hinzugefügt.");
+                showNotification("Dieses Objekt wurde bereits diesem Workflow-Element hinzugefügt.");
                 return;
               }
               workflowElement.objects.push(newObject);
@@ -470,20 +477,20 @@ const workflows = ref([
 
       // Check if the custom ID already exists in the objects list
       if (!newObject.value.roleName || newObject.value.id === null || newObject.value.id === '') {
-        alert("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du das Objekt hinzufügst.");
+        showNotification("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du das Objekt hinzufügst.");
         return; // Verhindert das Hinzufügen, wenn nicht alle Felder gesetzt sind
       }
       if (objects.value.some(obj => obj.roleName.toLowerCase() === newObject.value.roleName.toLowerCase())) {
-        alert("dieser Rollenname existiert bereits. Bitte wähle einen anderen Namen.");
+        showNotification("dieser Rollenname existiert bereits. Bitte wähle einen anderen Namen.");
         return;
       }
 
       if (newObject.value.applicant && newObject.value.selectable) {
-        alert("Entweder 'Applicant' oder 'Selectable' kann gesetzt werden, aber nicht beide.");
+        showNotification("Entweder 'Applicant' oder 'Selectable' kann gesetzt werden, aber nicht beide.");
         return;
       }
       if (newObject.value.applicant && objects.value.some(obj => obj.applicant)) {
-        alert("Es kann nur einen 'Applicant' geben. Bitte wähle einen anderen Status für dieses Objekt.");
+        showNotification("Es kann nur einen 'Applicant' geben. Bitte wähle einen anderen Status für dieses Objekt.");
         return;
       }
       objects.value.push({ ...newObject.value });
@@ -552,11 +559,19 @@ const workflows = ref([
         console.error('Error adding workflowElement:', error);
       }
     }
+    function showNotification(message) {
+      notificationMessage.value = message;
+      notificationVisible.value = true;
+      setTimeout(() => {
+        notificationVisible.value = false;
+      }, notificationDuration.value);
+    }
+
     function checkWorkflows(workflowIndex) {
 
       const workflow = this.workflows[workflowIndex];
       if (workflow.categories.length === 0 || workflow.items.length === 0) {
-        alert("Jeder Workflow muss mindestens eine Kategorie enthalten.");
+        showNotification('kein Workflow wurde erstellt, erstlle ein workflow');
         return;
       }
 
@@ -564,7 +579,7 @@ const workflows = ref([
       let expectedCategoryId = 0;
       for (let i = 0; i < categoryIds.length; i++) {
         if (categoryIds[i] !== expectedCategoryId) {
-          alert(`Inkonsistente Kategorie-Reihenfolge: Es wird erwartet, dass die Kategorie mit ID ${expectedCategoryId} existiert, gefunden wurde aber ID ${categoryIds[i]}.`);
+          showNotification(`Inkonsistente Kategorie-Reihenfolge: Es wird erwartet, dass die Kategorie mit ID ${expectedCategoryId} existiert, gefunden wurde aber ID ${categoryIds[i]}.`);
           return;
         }
         if (i < categoryIds.length - 1 && categoryIds[i] !== categoryIds[i + 1]) {
@@ -596,16 +611,17 @@ const workflows = ref([
       }
 
       if (!allValuesSet) {
+
         if (pdfMissing) {
-          alert("Alle Workflow-Elemente benötigen einen PDF-Link. Bitte laden sie fehlende PDF's hoch.");
+          showNotification("Alle Workflow-Elemente benötigen einen PDF-Link. Bitte laden sie fehlende PDF's hoch.");
         }
         if (objectsMissing) {
-          alert("Jedes Workflowelement muss mindestens eine Rolle haben");
+          showNotification("Jedes Workflowelement muss mindestens eine Rolle haben");
         } else {
-          alert("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du speicherst.");
+          //showNotification("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du speicherst.");
         }
       } else if (!applicantFound) { // Überprüfung, ob ein Applicant vorhanden ist
-        alert("Mindestens ein Objekt muss als 'Applicant' markiert sein.");
+        showNotification("Mindestens ein Objekt muss als 'Applicant' markiert sein.");
       } else {
         alert("Alle Werte sind korrekt gesetzt und mindestens eine Kategorie ist vorhanden. Daten werden gespeichert...");
         // Logik zum Speichern der Daten könnte hier platziert werden
@@ -639,6 +655,10 @@ const workflows = ref([
       toggleDrop,
       checkWorkflows,
       handleFileUpload,
+      showNotification,
+      notificationVisible,
+      notificationMessage,
+      notificationDuration,
       platformRoles,
       selectedRole
     };
