@@ -533,4 +533,8 @@ export class ProcessService {
         }
         return workflowList;
     }
+
+    async getAllElements(processID: number) {
+        return this.proElemRepo.find({where:{processID:processID}})
+    }
 }

@@ -70,6 +70,9 @@
 // Import PDF.js
 import "pdfjs-dist/web/pdf_viewer.css";
 import "pdfjs-dist/build/pdf.worker.mjs";
+import axios from "axios";
+import * as pdfjsLib from "pdfjs-dist";
+import store from "@/store/store.js";
 
 export default {
     data() {
@@ -80,26 +83,36 @@ export default {
                     name: 'Sample PDF 1',
                     url: 'testblatt.pdf'
                 },
-                {
-                    id: 2,
-                    name: 'Sample PDF 2',
-                    url: 'https://example.com/sample2.pdf'
-                },
-                {
-                    id: 3,
-                    name: 'Sample PDF 3',
-                    url: 'https://example.com/sample3.pdf'
-                }
+
             ],
             showDropDown: false
         };
     },
+  async mounted() {
+
+    await axios.put('http://localhost:3000/process/startProcess',{
+      userID:store.getters.getUser.id,
+      workflowID: store.getters.getWorkflow.id
+    })
+
+
+    //show pdf's
+    const response = await axios.get('http://localhost:3000/process/allElements/'+store.getters.getProcessID)
+
+
+
+    for (const elem of response.data) {
+      console.log(elem.title)
+      //this.renderPDFThumbnail(pdf.url, `pdf-canvas-${pdf.id}`);
+    }
+  },
+
     methods: {
         toggleDrop() {
             this.showDropDown = !this.showDropDown;
         },
-        renderPDFThumbnail(pdfUrl, canvasId) {
-            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+        renderPDFThumbnail(pdfBits, canvasId) {
+            const loadingTask = pdfjsLib.getDocument(pdfBits);
             loadingTask.promise.then(pdf => {
                 pdf.getPage(1).then(page => {
                     const canvas = document.getElementById(canvasId);
@@ -117,13 +130,12 @@ export default {
             }).catch(function (error) {
                 console.error('Error: ' + error);
             });
-        }
+        },
+
     },
-    mounted() {
-        this.pdfFiles.forEach(pdf => {
-            this.renderPDFThumbnail(pdf.url, `pdf-canvas-${pdf.id}`);
-        });
-    }
+
+
+
 };
 </script>
 

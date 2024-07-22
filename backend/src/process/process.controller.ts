@@ -89,6 +89,10 @@ export class ProcessController {
         return await this.processService.getAllTodo(userID);
     }
 
+    @Get('allElements/:id')
+    async getAllElements(@Param('id',ParseIntPipe) processID:number) {
+        return await this.processService.getAllElements(processID);
+    }
 
     //Get process role by ID
     @Get('processRole/:id')

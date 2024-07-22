@@ -110,6 +110,7 @@ import "pdfjs-dist/web/pdf_viewer.css";
 import "pdfjs-dist/build/pdf.worker.mjs";
 import { PDFDocument } from "pdf-lib";
 import { toRaw, reactive } from "vue";
+import axios from "axios";
 
 // Specify the workerSrc path to the local copy
 GlobalWorkerOptions.workerSrc = "/pdf.worker.js";
@@ -118,10 +119,7 @@ export default {
     name: "Home",
     data() {
         return {
-            items: reactive([
-                { title: "Word1", isEditing: false, content: "Word1" },
-                { title: "Word2", isEditing: false, content: "Word2" },
-            ]),
+            items: reactive([]),
             pdfDoc: null,
             pdfFile: null,
             pdfFields: reactive([]),
@@ -131,7 +129,7 @@ export default {
         };
     },
     mounted() {
-        this.loadExistingPdf();
+      this.loadExistingPdf();
         window.addEventListener("resize", this.transformPdfFields);
     },
     beforeUnmount() {
@@ -350,5 +348,6 @@ export default {
             }
         },
     },
+
 };
 </script>
