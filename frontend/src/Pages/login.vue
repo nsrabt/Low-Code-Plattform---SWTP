@@ -138,6 +138,9 @@
                 Auth2 Login
               </button>
             </div>
+            <div v-if="showNotification" class="mt-4 notification-box bg-red-500 text-white px-4 py-2 rounded-md">
+              Authentication failed. Please try again.
+            </div>
           </form>
         </div>
         <div class="md:h-full max-md:mt-10 bg-[#000842] rounded-xl lg:p-12 p-8">
@@ -161,6 +164,7 @@ export default {
       password: '',
       rememberMe: false,
       showPassword: false,
+      showNotification: false,
       authRoute: 'auth' // Standardmäßig wird die 'auth' Route verwendet
     };
   },
@@ -198,7 +202,13 @@ export default {
         }
         return response;
       } catch (error) {
-        console.error('Error during login:', error.response ? error.response.data : error);
+        if (this.email && this.password) {
+          console.error('Error during login:', error.response ? error.response.data : error);
+          this.showNotification = true; // Show notification
+          setTimeout(() => {
+            this.showNotification = false; // Hide notification after 5 seconds
+          }, 5000);
+        }
       }
     },
     togglePasswordVisibility() {
@@ -220,5 +230,8 @@ export default {
 </script>
 
 <style scoped>
+.notification-box {
+  position: relative;
+}
 /* Add any additional styling if needed */
 </style>
