@@ -13,6 +13,8 @@ import {UpdateStepDto} from "./dto/update-step-dto";
 import {UpdateProcessRoleDto} from "./dto/update-process-role-dto";
 import {ChangeOrderDto} from "./dto/change-order-dto";
 import {AssignRoleDto} from './dto/assign-role-dto'
+import {AddFieldDto} from "./dto/add-field-dto";
+import {fields} from "../database/workflow/fields";
 
 
 @Injectable()
@@ -31,6 +33,8 @@ export class WorkflowService {
         private roleRepo: Repository<roles>,
         @InjectRepository(workflow_roles)
         private processRoleRepo: Repository<workflow_roles>,
+        @InjectRepository(fields)
+        private fieldRepository : Repository<fields>
 
     ) {}
 
@@ -148,7 +152,11 @@ export class WorkflowService {
 
 
     async getAllRoles(id: number) {
-        return await this.processRoleRepo.find({where:{processID:id}});
+        console.log(id)
+
+        const roles = await this.processRoleRepo.find({where:{processID:id}});
+        roles.forEach(role =>console.log(role))
+        return roles;
     }
 
     async getAllSteps(processID: number) {
@@ -191,4 +199,22 @@ export class WorkflowService {
     }
 
 
+    async addField(addFieldDto: AddFieldDto) {
+        let field: fields;
+        field.type=addFieldDto.type;
+        field.workflowElementID = addFieldDto.workflowElementID;
+        field.dataID = addFieldDto.dataID;
+        field.processRoleID = addFieldDto.processRoleID;
+
+        return await this.fieldRepository.save(field);
+    }
+
+    async getAllRolesOfWorkflowElement(workflowElementID: number) {
+        console.log("where workflowelementID = "+workflowElementID)
+        return await this.stepRolesRepository.find({where:{workflowElementID: workflowElementID}});
+    }
+
+    async getRoleByID(workflowRoleID: number) {
+        return await this.processRoleRepo.findOne({where:{id: workflowRoleID}});
+    }
 }

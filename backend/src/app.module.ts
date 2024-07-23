@@ -59,6 +59,7 @@ import { Auth2Controller } from './auth2/auth2.controller';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
+
       password: 'password',
       database: 'postgres',
       entities: [filling_data,platform,workflow,roles,workflowElement,fields,users,user_fillingdata,user_platform,user_platform_roles, user_process,user_process_element, workflow, user_process_roles, field_roles, workflow_roles, workflowElement_roles,process, process_element, user_process_element, user_notifications],

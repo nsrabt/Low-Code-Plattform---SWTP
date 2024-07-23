@@ -52,6 +52,8 @@
             </div>
         </div>
     </nav>
+  <p>{{curWorkflowRole.workflowRoleName}}</p>
+
     <div class="flex" >
         <aside id="sidebar-multi-level-sidebar"
             class="fixed top-14 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
@@ -96,9 +98,9 @@
                     </div>
                 </div>
             </div>
-            <button @click="savePdf"
+            <button @click="this.buttonPressed"
                 class="fixed bottom-4 right-4 p-2 bg-green-500 text-white rounded hover:bg-green-700">
-                Save PDF
+              {{ buttonValue }}
             </button>
         </div>
     </div>
@@ -109,8 +111,11 @@ import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/build/pdf";
 import "pdfjs-dist/web/pdf_viewer.css";
 import "pdfjs-dist/build/pdf.worker.mjs";
 import { PDFDocument } from "pdf-lib";
-import { toRaw, reactive } from "vue";
+import {toRaw, reactive, ref} from "vue";
 import axios from "axios";
+import store from "@/store/store.js";
+import {useStore} from "vuex";
+import * as pdfjsLib from "pdfjs-dist";
 
 // Specify the workerSrc path to the local copy
 GlobalWorkerOptions.workerSrc = "/pdf.worker.js";
@@ -126,39 +131,65 @@ export default {
             pdfPages: [],
             showDropDown: false,
             showSide: true,
+            workflowElements: [],
+            curWorkflowElement: null,
+            workflowElementRoles: [],
+            curWorkflowElementRole: null,
+            buttonValue: '',
+            curWorkflowRole : '',
+            workflowId:null
+
         };
     },
-    mounted() {
-      this.loadExistingPdf();
+  setup(){
+    const store = useStore();
+    return { store };
+
+  },
+   async mounted() {
+
+      await this.loadWorkflowElements();
+      await this.loadWorkflowRoles();
+      await this.loadPdf(this.curWorkflowElement.data);
+
+      this.checkState();
+
+
         window.addEventListener("resize", this.transformPdfFields);
+
     },
     beforeUnmount() {
         window.removeEventListener("resize", this.transformPdfFields);
     },
     methods: {
-        async loadExistingPdf() {
-            const existingPdfUrl = "/testblatt.pdf";
-            try {
-                const response = await fetch(existingPdfUrl);
-                const blob = await response.blob();
-                this.pdfFile = new File([blob], "testblatt.pdf", { type: blob.type });
 
-                const arrayBuffer = await blob.arrayBuffer();
-                const uint8Array = new Uint8Array(arrayBuffer);
-                const loadingTask = getDocument({ data: uint8Array });
-                this.pdfDoc = await loadingTask.promise;
-                this.pdfPages = Array.from(
-                    { length: toRaw(this.pdfDoc).numPages },
-                    (_, index) => index + 1
-                );
-                await this.renderPdfPages();
-                await this.extractFieldPositions();
-                this.transformPdfFields();
-            } catch (error) {
-                console.error("Error loading PDF:", error);
-            }
-        },
-        async renderPdfPages() {
+      async loadPdf(base64String) {
+        try {
+          // Decode base64 string into Uint8Array (optimized for large PDFs)
+          const byteArray = atob(base64String);
+          const uint8Array = new Uint8Array(byteArray.length);
+          for (let i = 0; i < byteArray.length; i++) {
+            uint8Array[i] = byteArray.charCodeAt(i);
+          }
+
+          // Load PDF document directly from Uint8Array
+          const loadingTask = getDocument({ data: uint8Array });
+          this.pdfDoc = await loadingTask.promise;
+
+          // Rest of the code remains the same for processing the PDF
+          this.pdfPages = Array.from(
+              { length: toRaw(this.pdfDoc).numPages },
+              (_, index) => index + 1
+          );
+          await this.renderPdfPages();
+          await this.extractFieldPositions();
+          this.transformPdfFields();
+        } catch (error) {
+          console.error("Error loading PDF:", error);
+        }
+      },
+
+      async renderPdfPages() {
             try {
                 for (let pageNumber of this.pdfPages) {
                     const page = await toRaw(this.pdfDoc).getPage(pageNumber);
@@ -181,7 +212,9 @@ export default {
         },
         async extractFieldPositions() {
             try {
-                const pdfDoc = toRaw(this.pdfDoc);
+              this.pdfFields = []
+
+              const pdfDoc = toRaw(this.pdfDoc);
                 for (let pageNumber of this.pdfPages) {
                     const page = await pdfDoc.getPage(pageNumber);
                     const annotations = await page.getAnnotations();
@@ -212,6 +245,8 @@ export default {
                                 value: "",
                                 checked: false,
                                 type: fieldType,
+                                dataID: 0,
+                                isFilled:false
                             });
 
                             this.pdfFields.push(field);
@@ -227,6 +262,7 @@ export default {
             return this.pdfFields.filter((field) => field.page === pageIndex + 1);
         },
         transformPdfFields() {
+
             this.pdfFields.forEach((field) => {
                 const canvas = document.getElementById(`pdf-canvas-${field.page - 1}`);
                 if (!canvas) return;
@@ -245,23 +281,31 @@ export default {
             event.preventDefault();
         },
         async onDropField(event, field) {
+            const datatypeFillingData = event.dataTransfer.getData('datatype');
+
             if (field.type === 'PDFCheckBox') {
                 console.log("Cannot drop text into a checkbox field.");
                 return;
             }
             const text = event.dataTransfer.getData("text");
+            const dataID = event.dataTransfer.getData('number');
+
             console.log("Dropped text:", text); // Debugging statement
             if (field.type !== 'PDFCheckBox' && field) {
                 field.value = text;
-                console.log("Field updated:", field); // Debugging statement
+                this.assignFillingData(field,dataID)
             } else {
                 console.error("Field not found for name:", field.name); // Debugging statement
             }
+
         },
         onDragStart(event, item) {
             console.log("Dragging item:", item); // Debugging statement
-            event.dataTransfer.setData("text", item.title); // Set the title as the data
-            event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text", item.title); // Set the title as the data
+          event.dataTransfer.setData("number", item.dataID); // Set the title as the data
+          event.dataTransfer.setData("datatype", item.datatype); // Set the title as the data
+
+          event.dataTransfer.effectAllowed = "move";
         },
         updateFieldContent(field) {
             console.log("Field content updated:", field); // Debugging statement
@@ -279,11 +323,25 @@ export default {
                 console.log("Field value updated on finish editing:", field); // Debugging statement
             }
         },
-        addItem() {
+        async addItem() {
+          const name =`Word${this.items.length + 1}`;
+          const datatype = "datatype";
+
+          const res = await axios.put('http://localhost:3000/filling-data',{
+            platformID: 1,
+            name: name,
+            datatype:datatype,
+            isPlatformInfo:true
+          });
+
+          const dataID = res.data.id;
+
+
             const newItem = {
-                title: `Word${this.items.length + 1}`,
+                title: name,
                 isEditing: false,
-                content: `Word${this.items.length + 1}`,
+                content: name,
+                dataID: dataID
             };
             this.items.push(newItem);
         },
@@ -347,7 +405,117 @@ export default {
                 console.error("Error saving PDF:", error);
             }
         },
+      async assignFillingData(field,dataID){
+        console.log(field.value +"  dropped onto   "+ field.name)
+        const response = await axios.put('field',{
+          workflowElementID:this.curWorkflowElement.id,
+          dataID: dataID,
+          type:field.datatype,
+
+        })
+      },
+      async loadWorkflowElements() {
+
+        this.workflowId = await store.getters.getWorkflow.id;
+
+
+        //set workflowElements & curWorkflowElement
+        if (this.workflowElements.length === 0) {
+          console.log('allSteps/' + this.workflowId);
+          const res = await axios.get('http://localhost:3000/workflow/allSteps/' + this.workflowId);
+          this.workflowElements = res.data;
+
+          console.log(this.workflowElements.length);
+
+          if (Array.isArray(this.workflowElements)) {
+            this.workflowElements.sort((a, b) => a.stepNumber - b.stepNumber);
+          }
+        }
+
+        if(this.curWorkflowElement==null){
+          console.log("is null")
+          this.curWorkflowElement = this.workflowElements[0];
+        }
+
+      },
+      async loadWorkflowRoles() {
+
+        //set workflow roles & curRole
+        if(this.workflowElementRoles.length === 0){
+          console.log("getRoles of "+this.curWorkflowElement.id)
+          const res = await axios.get('http://localhost:3000/workflow/rolesOfWorkflowElement/'+this.curWorkflowElement.id);
+          this.workflowElementRoles = res.data
+          if(Array.isArray(this.workflowElementRoles)) {
+            this.workflowElementRoles.sort((a, b) => a.position - b.position);
+          }
+          res.data.forEach(elem =>{console.log(elem)})
+
+          console.log("got roles")
+          if(this.curWorkflowElementRole==null){
+            this.curWorkflowElementRole = this.workflowElementRoles[0];
+
+            this.curWorkflowRole = (await axios.get('http://localhost:3000/workflow/role/'+this.curWorkflowElementRole.workflowRoleID)).data;
+          }
+
+        }
+      },
+      checkState() {
+
+        console.log("check")
+        for(const role of this.workflowElementRoles){
+          console.log("role "+role.id)
+        }
+        const lastIndex = this.workflowElementRoles.length-1;
+        //If current role is last role
+
+        if(this.curWorkflowElementRole === this.workflowElementRoles[lastIndex]){
+          const lastWorkflowElementIndex =this.workflowElements.length-1;
+          //Wenn auch letztes workflowElement
+          if(this.curWorkflowElement === this.workflowElements[lastWorkflowElementIndex]){
+            this.buttonValue = 'Save';
+          }
+          else{
+            this.buttonValue = 'Next workflow-element';
+          }
+        }
+        else{
+          this.buttonValue = 'Next role';
+        }
+      },
+
+      async buttonPressed(){
+        let lastIndex;
+        switch (this.buttonValue){
+          case 'Save':
+            this.savePdf();
+            break;
+          case 'Next role':
+            lastIndex = this.workflowElementRoles.indexOf(this.curWorkflowElementRole);
+            this.curWorkflowElementRole = this.workflowElementRoles[lastIndex+1];
+            this.curWorkflowRole = (await axios.get('http://localhost:3000/workflow/role/'+this.curWorkflowElementRole.workflowRoleID)).data;
+            console.log("name "+this.curWorkflowRole.workflowRoleName)
+            //todo: alle felder rot markieren welche schon zugewiesen wurden
+            this.checkState();
+            break;
+          case 'Next workflow-element':
+             lastIndex = this.workflowElements.indexOf(this.curWorkflowElement);
+              this.curWorkflowElement = this.workflowElements[lastIndex+1];
+              console.log(this.curWorkflowElement.id)
+            await this.loadPdf(this.curWorkflowElement.data);
+
+            this.workflowElementRoles=[];
+            await this.loadWorkflowRoles()
+
+            this.checkState();
+            break;
+
+
+
+
+        }
+      }
     },
+
 
 };
 </script>

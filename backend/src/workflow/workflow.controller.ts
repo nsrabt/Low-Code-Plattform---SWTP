@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Param, ParseIntPipe, Post} from '@nestjs/common';
+import {Body, Controller, Get, Param, ParseIntPipe, Post, Put} from '@nestjs/common';
 import {WorkflowService} from "./workflow.service";
 import {CreateWorkflowDto} from "./dto/create-workflow-dto";
 import {StepDto} from "./dto/step-dto";
@@ -8,6 +8,7 @@ import {UpdateStepDto} from "./dto/update-step-dto";
 import {UpdateProcessRoleDto} from "./dto/update-process-role-dto";
 import {ChangeOrderDto} from "./dto/change-order-dto";
 import {AssignRoleDto} from './dto/assign-role-dto'
+import {AddFieldDto} from "./dto/add-field-dto";
 
 @Controller('workflow')
 export class WorkflowController {
@@ -28,12 +29,23 @@ export class WorkflowController {
         return await this.workflowService.addRole(addProcessRoleDto);
     }
 
+    @Get('role/:id')
+    async getRole(@Param('id', ParseIntPipe) workflowRoleID:number){
+        return await this.workflowService.getRoleByID(workflowRoleID)
+    }
+
     //get all roles
     @Get('allRoles/:id')
     async getAllRoles(@Param('id', ParseIntPipe) processID:number){
+
         return await this.workflowService.getAllRoles(processID);
     }
-    //get all steps
+
+    @Get('rolesOfWorkflowElement/:id')
+    async getAllRolesOfWorkflowElement(@Param('id', ParseIntPipe) workflowElementID:number) {
+        return await this.workflowService.getAllRolesOfWorkflowElement(workflowElementID);
+    }
+        //get all steps
     @Get('allSteps/:id')
     async getAllSteps(@Param('id', ParseIntPipe) processID:number){
         return await this.workflowService.getAllSteps(processID);
@@ -91,6 +103,13 @@ export class WorkflowController {
     async deleteRole(@Param('id',ParseIntPipe)roleID){
         return await this.workflowService.deleteRole(roleID);
     }
+
+    @Put('field')
+    async addField(@Body()addFieldDto: AddFieldDto){
+        return await this.workflowService.addField(addFieldDto);
+    }
+
+
 }
 
 

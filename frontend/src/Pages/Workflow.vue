@@ -56,7 +56,7 @@
           <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
             @click="openObjectModal">Role hinzufügen</button>
         </div>
-        <div v-for="object in objects" :key="object.id"
+        <div v-for="object in this.objects" :key="object.id"
           class="draggable object-item bg-white p-3 mb-2 rounded-lg shadow-sm"
           @dragstart="onDragStartObject($event, object)" draggable="true">
           {{ object.roleName }} - {{ platformRoles.find(role => role.id === object.id).roleName }}
@@ -180,6 +180,7 @@ export default {
           });
           console.log("response.data.id", response.data.id);
           workflowID.value = response.data.id;
+          curWorkflow.value = response.data;
           console.log('Workflow created:', workflowID.value);
         } catch (error) {
           console.error('Error creating workflow:', error);
@@ -197,7 +198,7 @@ const workflows = ref([
       }
     ]);
 
-
+    const curWorkflow = ref();
     const objects = ref([]);
     const currentItem = ref()
     const isEditModalOpen = ref(false);
@@ -213,13 +214,27 @@ const workflows = ref([
     const notificationMessage = ref('');
     const notificationDuration = ref(5000);
 
-
+    function backHome(){
+      this.$router.push('/home')
+    }
     async function loadWorkflowData() {
       try {
         if (!workflowID.value) {
           console.error('Error: Workflow ID is not defined.');
         } else {
+          try{
+            await axios.get('http://localhost:3000/workflow/workflow/'+workflowID.value)
+          }catch (e){
+            showNotification("Workflow nicht gefunden");
+            router.push('/home')
+            return;
+
+          }
+
+
           const response = await axios.get(`http://localhost:3000/workflow/allSteps/${workflowID.value}`);
+          const allRoles = await axios.get('http://localhost:3000/workflow/allRoles/'+workflowID.value);
+
           console.log('Steps loaded for Workflow ID:', workflowID.value);
 
           console.log(response.data);
@@ -231,6 +246,12 @@ const workflows = ref([
             role_ids: workflowElement.role_ids || []
           }));
           console.log("all", allSteps);
+
+          for(const role of allRoles.data){
+            console.log(role.id + "   " + role.workflowRoleName)
+            objects.value.push({ roleName: role.workflowRoleName, roleID:role.roleID, id: role.id, applicant: role.isApplicant, selectable: role.selectable, workflowRoleID:role.id})
+          }
+
           const maxStepNumber = Math.max(...allSteps.map(workflowElement => workflowElement.step_number));
           for (let i = 1; i <= maxStepNumber; i++) {
             createCategory(0);
@@ -423,6 +444,8 @@ const workflows = ref([
         }
       });
     }
+
+
 
     function closeEditModal() {
       isEditModalOpen.value = false;
@@ -634,8 +657,11 @@ const workflows = ref([
         showNotification("Mindestens ein Objekt muss als 'Applicant' markiert sein.");
       } else {
         //=> Formularzuweisung
+        store.commit('setWorkflow',curWorkflow.value)
       }
     }
+
+
 
     return {
       workflows,
@@ -669,7 +695,9 @@ const workflows = ref([
       notificationMessage,
       notificationDuration,
       platformRoles,
-      selectedRole
+      selectedRole,
+      store
+
     };
   }
 }

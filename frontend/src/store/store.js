@@ -4,7 +4,8 @@ const store = createStore({
     state: {
         user: JSON.parse(localStorage.getItem('user')) || null,
         workflow: JSON.parse(localStorage.getItem('workflow')) || null,
-        processID: JSON.parse(localStorage.getItem('processID')) || null
+        processID: JSON.parse(localStorage.getItem('processID')) || null,
+        workflowElements: JSON.parse(localStorage.getItem('workflowElements'))||null
     },
 
     mutations: {
@@ -19,6 +20,10 @@ const store = createStore({
         setProcessID(state, processID) {
             state.processID = processID;
             localStorage.setItem('processID', JSON.stringify(processID));
+        },
+        setWorkflowElements(state, workflowElements) {
+            state.workflowElements = workflowElements;
+            localStorage.setItem('processID', JSON.stringify(workflowElements));
         },
         clearUser(state) {
             state.user = null;
@@ -59,6 +64,9 @@ const store = createStore({
         },
         getProcessID(state) {
             return state.processID;
+        },
+        getWorkflowElements(state) {
+            return state.workflowElements;
         }
     }
 });

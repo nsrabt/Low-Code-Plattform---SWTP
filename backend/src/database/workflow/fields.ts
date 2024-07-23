@@ -12,4 +12,6 @@ export class fields {
     dataID: number;
     @Column()
     type: string;
+    @Column()
+    processRoleID: number
 }
