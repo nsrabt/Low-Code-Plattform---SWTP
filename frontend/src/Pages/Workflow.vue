@@ -153,7 +153,6 @@ import "vue-router/dist/vue-router";
 import {useRoute} from "vue-router";
 import NotificationBox from "@/Pages/NotificationBox.vue";
 import {useStore} from "vuex";
-import {assertWarning} from "vite-plugin-ssr/dist/esm/utils/assert";
 
 
 export default {
