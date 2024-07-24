@@ -52,15 +52,20 @@
             </div>
         </div>
     </nav>
-  <p>{{curWorkflowRole.workflowRoleName}}</p>
+    <p>{{curWorkflowRole.workflowRoleName}}</p>
 
-    <div class="flex" >
+    <div class="flex">
         <aside id="sidebar-multi-level-sidebar"
             class="fixed top-14 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
             aria-label="Sidebar">
             <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+                <!-- Search bar -->
+                <div class="mb-4">
+                    <input type="text" v-model="searchQuery" @input="searchItems" class="p-2 w-full border rounded-md"
+                        placeholder="Search...">
+                </div>
+                <!-- Draggable Items -->
                 <ul class="space-y-2 font-medium">
-                    <!-- Draggable Items -->
                     <li v-for="(item, index) in items" :key="index" class="draggable" draggable="true"
                         @dragstart="onDragStart($event, item)">
                         <div @dblclick="editItem(item)" v-if="!item.isEditing">
@@ -78,31 +83,7 @@
                 </button>
             </div>
         </aside>
-        <div class="p-4 sm:ml-64 relative">
-            <div
-                class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 relative overflow-y-auto h-screen">
-                <div v-for="(page, index) in pdfPages" :key="index" class="relative mb-4">
-                    <canvas :id="'pdf-canvas-' + index" class="w-full h-auto" @dragover.prevent
-                        @drop="onDrop($event, index)"></canvas>
-                    <div v-for="field in getFieldsForPage(index)" :key="field.name" class="absolute" :style="{
-                        top: field.transformedTop + 'px',
-                        left: field.transformedLeft + 'px',
-                        width: field.transformedWidth + 'px',
-                        height: field.transformedHeight + 'px',
-                    }" @dragover.prevent @drop="onDropField($event, field)">
-                        <input type="text" v-if="field.type !== 'PDFCheckBox'" v-model="field.value"
-                            @input="updateFieldContent(field)"
-                            class="w-full h-full p-1 border border-gray-500 rounded" />
-                        <input type="checkbox" v-else v-model="field.checked" @change="updateFieldContent(field)"
-                            class="w-full h-full p-1 border border-gray-500 rounded" disabled />
-                    </div>
-                </div>
-            </div>
-            <button @click="this.buttonPressed"
-                class="fixed bottom-4 right-4 p-2 bg-green-500 text-white rounded hover:bg-green-700">
-              {{ buttonValue }}
-            </button>
-        </div>
+        <!-- Main content -->
     </div>
 </template>
 
@@ -125,6 +106,7 @@ export default {
     data() {
         return {
             items: reactive([]),
+            searchQuery: "",
             pdfDoc: null,
             pdfFile: null,
             pdfFields: reactive([]),
@@ -162,7 +144,18 @@ export default {
         window.removeEventListener("resize", this.transformPdfFields);
     },
     methods: {
-
+        async searchItems() {
+            try {
+                const response = await axios.get(`http://localhost:3000/search`, {
+                    params: {
+                        query: this.searchQuery
+                    }
+                });
+                this.items = response.data;
+            } catch (error) {
+                console.error("Error searching items:", error);
+            }
+        },
       async loadPdf(base64String) {
         try {
           // Decode base64 string into Uint8Array (optimized for large PDFs)
