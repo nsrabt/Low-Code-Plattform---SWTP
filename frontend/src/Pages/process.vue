@@ -156,7 +156,7 @@ export default {
             break;
           case 'apply':
             //todo apply functionality
-            console.log("apply pressed");
+            await router.push('/processroles')
             break;
           case 'open':
             //todo open done process

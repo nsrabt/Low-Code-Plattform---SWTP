@@ -3,6 +3,7 @@ import {AddFillingDataDto} from "./dto/addFillingDataDto";
 import { UpdateDataDto } from "./dto/UpdateDataDto";
 
 import {FillingDataService} from "./filling_data.service";
+import {SearchDto} from "./dto/SearchDto";
 
 @Controller('filling-data')
 export class FillingDataController {
@@ -35,6 +36,11 @@ export class FillingDataController {
         return await this.fillingDataService.updateData(id,updateDataDto);
     }
 
+    @Get('search/:query')
+    async search(@Param('query') query:string){
+        console.log(query)
+        return await this.fillingDataService.search(query);
+    }
 
 
 }

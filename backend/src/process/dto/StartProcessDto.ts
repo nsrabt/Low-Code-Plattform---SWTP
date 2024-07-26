@@ -1,4 +1,4 @@
-import {IsNumber} from "class-validator";
+import {IsBoolean, IsNumber} from "class-validator";
 
 export class StartProcessDto {
     @IsNumber()
@@ -7,5 +7,7 @@ export class StartProcessDto {
     @IsNumber()
     workflowID: number;
 
+    @IsBoolean()
+    isNew: boolean
 
 }

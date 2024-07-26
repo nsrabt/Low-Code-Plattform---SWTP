@@ -42,6 +42,11 @@ export class ProcessController {
         return await this.processService.saveMissingData(filledDataDto);
     }
 
+    @Put('acceptProcess/:id')
+    async acceptProcess(@Param('id',ParseIntPipe) processID:number){
+        return await this.processService.acceptProcess(processID);
+    }
+
     //creates the workflow in the database and returns the selectable workflow roles
     @Put('startProcess')
     async startProcess(@Body()startProcessDto: StartProcessDto){

@@ -51,7 +51,7 @@
 
     <div>
       <div class="object-container bg-gray-900 p-4 shadow-md">
-        <h2 class="text-lg text-white font-semibold mb-4">Available Objects</h2>
+        <h2 class="text-lg text-white font-semibold mb-4">Available Roles</h2>
         <div class="controls mb-4">
           <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
             @click="openObjectModal">Role hinzufügen</button>
@@ -59,7 +59,7 @@
         <div v-for="object in this.objects" :key="object.id"
           class="draggable object-item bg-white p-3 mb-2 rounded-lg shadow-sm"
           @dragstart="onDragStartObject($event, object)" draggable="true">
-          {{ object.roleName }} - {{ platformRoles.find(role => role.id === object.id).roleName }}
+          {{ object.roleName }}
         </div>
       </div>
 
@@ -73,7 +73,7 @@
               @dragstart="onDragStart($event, item, workflowIndex)"  class="draggable rounded-xl" draggable="true"
               :data-workflowElement-id="item.id">
               <input v-model="item.title" @blur="updateItem(item, workflowIndex)" class="item-title-input" />
-              <div v-for="obj in item.objects" :key="obj.id">{{ obj.roleName }} - {{ obj.id }}</div>
+              <div v-for="obj in item.objects" :key="obj.id">{{ obj.roleName }}}</div>
               <button class="edit-button" @click="openEditModal(item, workflowIndex)">Bearbeiten</button>
               <button class="delete-button" @click="deleteItem(workflowIndex, item.id)">Löschen</button>
             </div>
@@ -87,7 +87,7 @@
         </div>
         <div class="save-button-container my-4">
           <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full"
-                  @click="checkWorkflows(workflowIndex)">Speichern</button>
+                  @click="checkWorkflows(0)">Speichern</button>
         </div>
       </div>
 
@@ -146,177 +146,219 @@
   </div>
 </template>
 
-<script lang="ts">
-import {nextTick, onMounted, ref} from 'vue';
-import axios from 'axios';
+<script>
+import {nextTick, ref} from 'vue';
+import axios, {formToJSON} from 'axios';
 import "vue-router/dist/vue-router";
 import {useRoute} from "vue-router";
 import NotificationBox from "@/Pages/NotificationBox.vue";
 import {useStore} from "vuex";
+import store from "@/store/store.js";
 
 
 export default {
+  name:'workflow-manager',
   components: {NotificationBox},
-  setup() {
+
+  data(){
+    return{
+      route:null,
+      workflows : [{id: 0, categories: [], items: [], step_id: 0}],
+       curWorkflow : null,
+       objects : [],
+       currentItem : null,
+       isEditModalOpen : false,
+       isObjectModalOpen : false,
+       currentWorkflowIndex : ref(null),
+       newObject : ref({ roleName: '', roleID:1, id: null, applicant: false, selectable: false }),
+       selectedRole : ref(null),
+       showDropDown : ref(false),
+       showSide : ref(true),
+       platformRoles : ref([]), // Example values
+        newIndex:0,
+       notificationVisible : ref(false),
+       notificationMessage : ref(''),
+       notificationDuration : ref(5000),
+    };
+
+  },
+  async mounted() {
     const route = useRoute();
     const workflowID = ref(null);
 
     const store = useStore();
 
-
-    onMounted(async () => {
-      if (route.name === "EditWorkflow") {
-        workflowID.value = route.params.id;
-        await loadWorkflowData();
-      } else {
-        console.log("new!");
-        try {
-          const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
-            title: "test",
-            description: "description",
-            isOpen: true,
-            platform_id: 1
-          });
-          console.log("response.data.id", response.data.id);
-          workflowID.value = response.data.id;
-          curWorkflow.value = response.data;
-          console.log('Workflow created:', workflowID.value);
-        } catch (error) {
-          console.error('Error creating workflow:', error);
-        }
-      }
-    });
-
-
-const workflows = ref([
-      {
-        id: 0,
-        categories: [],
-        items: [],
-        step_id: 0
-      }
-    ]);
-
-    const curWorkflow = ref();
-    const objects = ref([]);
-    const currentItem = ref()
-    const isEditModalOpen = ref(false);
-    const isObjectModalOpen = ref(false);
-    const currentWorkflowIndex = ref(null);
-    const newObject = ref({ roleName: '', roleID:1, id: null, applicant: false, selectable: false });
-    const selectedRole = ref(null);
-    const showDropDown = ref(false);
-    const showSide = ref(true);
-    const platformRoles = ref([]); // Example values
-
-    const notificationVisible = ref(false);
-    const notificationMessage = ref('');
-    const notificationDuration = ref(5000);
-
-    function backHome(){
-      this.$router.push('/home')
-    }
-    async function loadWorkflowData() {
-      try {
-        if (!workflowID.value) {
-          console.error('Error: Workflow ID is not defined.');
+    if (route.name === "EditWorkflow") {
+          this.workflowID = route.params.id;
+          await this.loadWorkflowData();
         } else {
-          try{
-            await axios.get('http://localhost:3000/workflow/workflow/'+workflowID.value)
-          }catch (e){
-            showNotification("Workflow nicht gefunden");
-            router.push('/home')
-            return;
-
-          }
-
-
-          const response = await axios.get(`http://localhost:3000/workflow/allSteps/${workflowID.value}`);
-          const allRoles = await axios.get('http://localhost:3000/workflow/allRoles/'+workflowID.value);
-
-          console.log('Steps loaded for Workflow ID:', workflowID.value);
-
-          console.log(response.data);
-          const allSteps = response.data.map(workflowElement => ({
-            id: workflowElement.id,
-            title: workflowElement.title,
-            document: workflowElement.data,
-            step_number: workflowElement.stepNumber,
-            role_ids: workflowElement.role_ids || []
-          }));
-          console.log("all", allSteps);
-
-          for(const role of allRoles.data){
-            console.log(role.id + "   " + role.workflowRoleName)
-            objects.value.push({ roleName: role.workflowRoleName, roleID:role.roleID, id: role.id, applicant: role.isApplicant, selectable: role.selectable, workflowRoleID:role.id})
-          }
-
-          const maxStepNumber = Math.max(...allSteps.map(workflowElement => workflowElement.step_number));
-          for (let i = 1; i <= maxStepNumber; i++) {
-            createCategory(0);
-          }
-          let newIndex = 0;
-          for (const workflowElement of allSteps) {
-            workflows.value[0].items.push({
-              id: newIndex,
-              title: workflowElement.title,
-              categoryId: workflowElement.step_number - 1,
-              pdf: workflowElement.data,
-              objects: [],
-              workflowId: 0,
-              step_id: null
+          console.log("new!");
+          try {
+            const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
+              title: "test",
+              description: "description",
+              isOpen: true,
+              platform_id: 1
             });
-            newIndex++;
+            console.log("response.data.id", response.data.id);
+            this.workflowID = response.data.id;
+            this.curWorkflow = response.data;
+            console.log('Workflow created:', workflowID);
+          } catch (error) {
+            console.error('Error creating workflow:', error);
           }
         }
+    },
+
+  methods:{
+
+
+
+
+    async loadWorkflowData() {
+      try {
+
+
+        if (!this.workflowID) {
+          console.error('Error: Workflow ID is not defined.');
+          return; // Exit if no workflow ID
+        }
+
+        try {
+          console.log("workflowID: "+this.workflowID)
+         this.curWorkflow = (await axios.get('http://localhost:3000/workflow/workflow/' + this.workflowID)).data;
+        } catch (e) {
+          this.showNotification("Workflow nicht gefunden");
+          this.$router.push('/home');
+          return;
+        }
+
+        store.commit('setWorkflow',this.curWorkflow)
+
+        const platformRolesResponse = await axios.get('http://localhost:3000/role/allRoles/' + 1); // 1=THM
+        const data = platformRolesResponse.data;
+        if (data) {
+          this.platformRoles = data;
+        } else {
+          console.error("Failed to load roles");
+        }
+
+        const response = await axios.get(`http://localhost:3000/workflow/allSteps/${this.workflowID}`);
+        const allRoles = await axios.get('http://localhost:3000/workflow/allRoles/' + this.workflowID);
+
+        console.log('Steps loaded for Workflow ID:', this.workflowID);
+
+        this.newIndex = 0;
+        console.log(response.data);
+        const allSteps = response.data.map(workflowElement => ({
+          id: this.newIndex++,
+          title: workflowElement.title,
+          document: workflowElement.data,
+          step_number: workflowElement.stepNumber,
+          role_ids: workflowElement.role_ids || [],
+          step_id: workflowElement.id
+        }));
+
+        this.newIndex = 0;
+        for (const workflowElement of allSteps) {
+          this.workflows[0].items.push({
+            id: this.newIndex++,
+            title: workflowElement.title,
+            categoryId: workflowElement.step_number - 1,
+            pdf: workflowElement.document,
+            objects: [],
+            workflowId: 0,
+            step_id: workflowElement.step_id
+          });
+        }
+        console.log(this.workflows[0].items.length)
+
+
+        for (const role of allRoles.data) {
+          console.log("pushing \n" + role.workflowRoleName + "\n" + role.roleID + "\n" + role.id + "\n" + role.isApplicant + "\n" + role.selectable + "\n" + role.id);
+
+          this.objects.push({
+            roleName: role.workflowRoleName,
+            roleID: role.roleID,
+            id: role.id,
+            applicant: role.isApplicant,
+            selectable: role.selectable,
+            workflowRoleID: role.id
+          });
+          console.log("workflowRoleID: "+role.id)
+
+        }
+
+
+        const maxStepNumber = Math.max(...allSteps.map(workflowElement => workflowElement.step_number));
+        for (let i = 1; i <= maxStepNumber; i++) {
+          this.createCategory(0);
+        }
+
+
+
+
+        // Load workflow-element-roles
+        for (const item of this.workflows[0].items) {
+          const roles = await axios.get('http://localhost:3000/workflow/rolesOfWorkflowElement/' + item.step_id);
+          console.log("going through workflowElement: "+item.step_id)
+          console.log("length "+roles.data.length)
+          for (const role of roles.data) {
+            console.log("load workflowRole: "+role.workflowRoleID)
+            const workflowRole = this.objects.find(obj => obj.workflowRoleID === role.workflowRoleID);
+            console.log("workflowElement:"+ item.step_id +" => "+ workflowRole.roleName)
+            item.objects.push(workflowRole)
+          }
+        }
+
       } catch (error) {
         console.error('Error creating or loading workflow:', error);
       }
-    }
+    },
     //onMounted(() => {
     //  loadWorkflowData();
     //});
 
-    function toggleSideBar() {
-      showSide.value = !showSide.value;
-    }
+     toggleSideBar() {
+       this.showSide = !this.showSide;
+    },
 
-    function toggleDrop() {
-      showDropDown.value = !showDropDown.value;
-    }
+     toggleDrop() {
+       this.showDropDown = !this.showDropDown;
+    },
 
-    function createCategory(workflowIndex) {
-      const newId = workflows.value[workflowIndex].categories.length;
-      workflows.value[workflowIndex].categories.push({
+     createCategory(workflowIndex) {
+      const newId = this.workflows[workflowIndex].categories.length;
+       this.workflows[workflowIndex].categories.push({
         id: newId,
         title: `Category ${newId + 1}`
       });
 
-      workflows.value.forEach(() => { });
-    }
+       this.workflows.forEach(() => { });
+    },
 
-    async function createItem(workflowIndex) {
-      if (workflows.value[workflowIndex].categories.length === 0) {
-        showNotification("Es muss mindestens eine workflow erstellt werden, bevor ein workflow-Element hinzugefügt werden kann.");
+    async  createItem(workflowIndex) {
+      if (this.workflows[workflowIndex].categories.length === 0) {
+        this.showNotification("Es muss mindestens eine workflow erstellt werden, bevor ein workflow-Element hinzugefügt werden kann.");
         return;
       }
-      const newId = workflows.value[workflowIndex].items.length > 0
-        ? Math.max(...workflows.value[workflowIndex].items.map(item => item.id)) + 1
-        : 0;
+      const newId = this.workflows[workflowIndex].items.length > 0
+          ? Math.max(...this.workflows[workflowIndex].items.map(item => item.id)) + 1
+          : 0;
       console.log("newID", newId);
       const stepData = {
-        process_id: workflowID.value,
+        process_id: this.workflowID,
         title: `WorkflowElement ${newId + 1}`,
         document: "null",
         step_number: 1,
       };
       console.log(stepData);
       try {
-        console.log(workflowID.value);
+        console.log(this.workflowID);
         const response = await axios.post('http://localhost:3000/workflow/addStep', stepData);
-        console.log("old = "+workflows.value[workflowIndex].step_id +"   new = " +response.data.id)
+        console.log("old = "+this.workflows[workflowIndex].step_id +"   new = " +response.data.id)
 
-        workflows.value[workflowIndex].items.push({
+        this.workflows[workflowIndex].items.push({
           id: newId,
           title: `WorkflowElement ${newId + 1}`,
           categoryId: 0,
@@ -329,13 +371,13 @@ const workflows = ref([
       } catch (error) {
         console.error('Error adding workflowElement:', error);
       }
-    }
+    },
 
-    async function updateItem(updatedItem, workflowIndex) {
-      const index = workflows.value[workflowIndex].items.findIndex(item => item.id === updatedItem.id);
-      //workflows.value[workflowIndex].items[index] = currentItem.value;
+    async  updateItem(updatedItem, workflowIndex) {
+      const index = this.workflows[workflowIndex].items.findIndex(item => item.id === updatedItem.id);
+      //workflows[workflowIndex].items[index] = currentItem;
       if (index !== -1) {
-        workflows.value[workflowIndex].items[index] = { ...updatedItem };
+        this.workflows[workflowIndex].items[index] = { ...updatedItem };
         const updateStepDto = {
           id: updatedItem.step_id,
           title: updatedItem.title,
@@ -348,58 +390,57 @@ const workflows = ref([
           console.error('Error updating workflowElement:', error);
         }
       }
-    }
+    },
 
-    async function deleteItem(workflowIndex, itemId) {
-      const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.id === itemId);
+    async  deleteItem(workflowIndex, itemId) {
+      const itemIndex = this.workflows[workflowIndex].items.findIndex(item => item.id === itemId);
       if (itemIndex !== -1) {
-        const stepId = workflows.value[workflowIndex].items[itemIndex].step_id;
+        const stepId = this.workflows[workflowIndex].items[itemIndex].step_id;
         const response = await axios.post(`http://localhost:3000/workflow/deleteStep/${stepId}`);
         console.log("stepId", stepId);
-        workflows.value[workflowIndex].items.splice(itemIndex, 1);
+        this.workflows[workflowIndex].items.splice(itemIndex, 1);
       }
-    }
+    },
 
-    function onDragStart(e: DragEvent, item, workflowIndex) {
+    onDragStart(e, item, workflowIndex) {
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('itemId', item.id.toString());
       e.dataTransfer.setData('workflowId', workflowIndex.toString());
-    }
+    },
 
-    function onDragStartObject(e: DragEvent, object) {
+     onDragStartObject(e, object) {
       e.dataTransfer.effectAllowed = 'copy';
       console.log("drag start "+object.roleID)
       e.dataTransfer.setData('objectId', object.roleID.toString());
-    }
+    },
 
-    function countItemsInCategory(workflowIndex, categoryId) {
-      return workflows.value[workflowIndex].items.filter(item => item.categoryId === categoryId).length;
-    }
+     countItemsInCategory(workflowIndex, categoryId) {
+      return this.workflows[workflowIndex].items.filter(item => item.categoryId === categoryId).length;
+    },
 
-    function onDrop(e: DragEvent, categoryId, workflowIndex) {
+     onDrop(e, categoryId, workflowIndex) {
 
       const itemId = parseInt(e.dataTransfer.getData('itemId'));
       const sourceWorkflowIndex = parseInt(e.dataTransfer.getData('workflowId'));
 
       if (isNaN(itemId)) {
         const objectId = parseInt(e.dataTransfer.getData('objectId'));
-        const object = objects.value.find(obj => obj.roleID === objectId);
-        console.log("object id:" +objectId);
+        const object = this.objects.find(obj => obj.roleID === objectId);
         if (object) {
           const newObject = { ...object };
-          const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.categoryId === categoryId);
+          const itemIndex = this.workflows[workflowIndex].items.findIndex(item => item.categoryId === categoryId);
           if (itemIndex !== -1) {
-            const targetElement = e.target as HTMLElement;
+            const targetElement = e.target;
             const stepId = targetElement.closest('.draggable').getAttribute('data-workflowElement-id');
-            console.log(stepId);
-            const workflowElement = workflows.value[workflowIndex].items.find(item => item.id == stepId);
+            const workflowElement = this.workflows[workflowIndex].items.find(item => item.id == stepId);
+            console.log(workflowElement.step_id);
+
             if (workflowElement) {
               if (workflowElement.objects.some(obj => obj.roleID === object.roleID)) {
-                showNotification("Dieses Objekt wurde bereits diesem Workflow-Element hinzugefügt.");
+                this.showNotification("Dieses Objekt wurde bereits diesem Workflow-Element hinzugefügt.");
                 return;
               }
               workflowElement.objects.push(newObject);
-              console.log("new Object "+workflowElement.objects.length)
 
               const response=axios.post('http://localhost:3000/workflow/assignRole',{
                 step_id:workflowElement.step_id,
@@ -409,53 +450,55 @@ const workflows = ref([
 
 
             }
+
           }
+
         }
       } else {
         if (sourceWorkflowIndex !== workflowIndex) {
           return; // Prevent moving items between different workflows
         }
 
-        const itemIndex = workflows.value[workflowIndex].items.findIndex(item => item.id === itemId);
+        const itemIndex = this.workflows[workflowIndex].items.findIndex(item => item.id === itemId);
         if (itemIndex !== -1) {
-          const oldStepNumber = workflows.value[workflowIndex].items[itemIndex].categoryId + 1;
+          const oldStepNumber = this.workflows[workflowIndex].items[itemIndex].categoryId + 1;
           const newStepNumber = categoryId + 1;
           console.log("Verschieben von Kategorie", oldStepNumber, "nach", newStepNumber);
-          const stepId = workflows.value[workflowIndex].items[itemIndex].step_id;
+          const stepId = this.workflows[workflowIndex].items[itemIndex].step_id;
           if (newStepNumber !== oldStepNumber) {
-            changeStepOrder(stepId, newStepNumber);
+            this.changeStepOrder(stepId, newStepNumber);
           }
-          workflows.value[workflowIndex].items[itemIndex].categoryId = categoryId;
+          this.workflows[workflowIndex].items[itemIndex].categoryId = categoryId;
         }
       }
-    }
+    },
 
-    function openEditModal(item, workflowIndex) {
+     openEditModal(item, workflowIndex) {
       console.log("editing");
-      currentItem.value = { ...item };
-      currentWorkflowIndex.value = workflowIndex;
-      isEditModalOpen.value = true;
+       this.currentItem = { ...item };
+       this.currentWorkflowIndex = workflowIndex;
+       this.isEditModalOpen = true;
 
       nextTick(() => {
         const pdf = document.getElementById("pdf-id");
         if (pdf) {
-          pdf.value = '';
+          pdf = '';
         }
       });
-    }
+    },
 
 
 
-    function closeEditModal() {
-      isEditModalOpen.value = false;
-      currentItem.value = null;
-      currentWorkflowIndex.value = null;
-    }
+     closeEditModal() {
+       this.isEditModalOpen = false;
+       this.currentItem = null;
+       this.currentWorkflowIndex = null;
+    },
 
-    function saveItem(event) {
-      if (currentItem.value && currentWorkflowIndex.value !== null) {
+     saveItem(event) {
+      if (this.currentItem && this.currentWorkflowIndex !== null) {
         // readPDF
-        const pdfInput = document.getElementById('pdf-id') as HTMLInputElement;
+        const pdfInput = document.getElementById('pdf-id');
         const file = pdfInput?.files?.[0];
 
         if (file) {
@@ -466,28 +509,28 @@ const workflows = ref([
 
             if (typeof result === 'string') {
               const pdf = result.split(',')[1]; // Verwende 'split' auf dem string
-              currentItem.value.pdf = pdf;
+              this.currentItem.pdf = pdf;
 
 
-              console.log('Base64 String: ', currentItem.value.pdf);
+              console.log('Base64 String: ', this.currentItem.pdf);
             } else {
               console.error('FileReader result is not a string');
             }
             // Update the item and close the modal only after reading the file
-            updateItem(currentItem.value, currentWorkflowIndex.value);
-            closeEditModal();
+            this.updateItem(this.currentItem, this.currentWorkflowIndex);
+            this.closeEditModal();
           };
 
           reader.readAsDataURL(file);
         } else {
           // Update the item and close the modal if no file is selected
-          updateItem(currentItem.value, currentWorkflowIndex.value);
-          closeEditModal();
+          this.updateItem(this.currentItem, this.currentWorkflowIndex);
+          this.closeEditModal();
         }
       }
-    }
+    },
 
-    async function openObjectModal() {
+    async  openObjectModal() {
       console.log("opeeeen");
       const response = await axios.get('http://localhost:3000/role/allRoles/' + 1); // 1=THM
       const data = response.data;
@@ -497,72 +540,73 @@ const workflows = ref([
         console.error("Failed to load roles");
       }
 
-      isObjectModalOpen.value = true;
-    }
+      this.isObjectModalOpen = true;
+    },
 
-    function closeObjectModal() {
-      isObjectModalOpen.value = false;
-    }
+     closeObjectModal() {
+       this.isObjectModalOpen = false;
+    },
 
-   async function addObject() {
+    async  addObject() {
 
       // Check if the custom ID already exists in the objects list
-      if (!newObject.value.roleName || newObject.value.id === null || newObject.value.id === '') {
-        showNotification("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du das Objekt hinzufügst.");
+      if (!this.newObject.roleName || this.newObject.id === null || this.newObject.id === '') {
+        this.showNotification("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du das Objekt hinzufügst.");
         return; // Verhindert das Hinzufügen, wenn nicht alle Felder gesetzt sind
       }
-      if (objects.value.some(obj => obj.roleName.toLowerCase() === newObject.value.roleName.toLowerCase())) {
-        showNotification("dieser Rollenname existiert bereits. Bitte wähle einen anderen Namen.");
+      if (this.objects.some(obj => obj.roleName.toLowerCase() === this.newObject.roleName.toLowerCase())) {
+        this.showNotification("dieser Rollenname existiert bereits. Bitte wähle einen anderen Namen.");
         return;
       }
 
-      if (newObject.value.applicant && newObject.value.selectable) {
-        showNotification("Entweder 'Applicant' oder 'Selectable' kann gesetzt werden, aber nicht beide.");
+      if (this.newObject.applicant && this.newObject.selectable) {
+        this.showNotification("Entweder 'Applicant' oder 'Selectable' kann gesetzt werden, aber nicht beide.");
         return;
       }
-      if (newObject.value.applicant && objects.value.some(obj => obj.applicant)) {
-        showNotification("Es kann nur einen 'Applicant' geben. Bitte wähle einen anderen Status für dieses Objekt.");
+      if (this.newObject.applicant && this.objects.some(obj => obj.applicant)) {
+        this.showNotification("Es kann nur einen 'Applicant' geben. Bitte wähle einen anderen Status für dieses Objekt.");
         return;
       }
 
-      const workflowRole =await saveRoleInDatabase(newObject.value.roleName, newObject.value.id, newObject.value.selectable, newObject.value.applicant);
-      newObject.value.workflowRoleID = workflowRole.data.id;
-      objects.value.push({ ...newObject.value });
+      const workflowRole =await this.saveRoleInDatabase(this.newObject.roleName, this.newObject.id, this.newObject.selectable, this.newObject.applicant);
+      this.newObject.workflowRoleID = workflowRole.data.id;
+      this.objects.push({ ...this.newObject });
 
-      newObject.value = { roleName: '',roleID:newObject.value.roleID+1, id: null, applicant: false, selectable: false,workflowRoleID:0};
-      closeObjectModal();
-    }
+      this.newObject = { roleName: '',roleID:this.newObject.roleID+1, id: null, applicant: false, selectable: false,workflowRoleID:0};
+      this.closeObjectModal();
+    },
 
-    async function saveRoleInDatabase(rolename: string, roleID: number, selectable: boolean, applicant: boolean) {
-      console.log("workflowID: "+workflowID.value+"\nroleID: "+roleID+"\nprocessRoleName: "+rolename+"\nselectable: "+selectable+"\nisApplicant"+applicant)
+
+    async  saveRoleInDatabase(rolename, roleID, selectable, applicant) {
+      console.log("workflowID: "+this.workflowID+"\nroleID: "+roleID+"\nprocessRoleName: "+rolename+"\nselectable: "+selectable+"\nisApplicant"+applicant)
       const response = await axios.post('http://localhost:3000/workflow/addRole', {
-        workflowID: workflowID.value,
+        workflowID: this.workflowID,
         roleID: roleID,
         process_role_name: rolename,
         selectable: selectable,
         isApplicant: applicant
       });
       return response;
-    }
+    },
 
-   function handleFileUpload(event) {
+     handleFileUpload(event) {
       const file = event.target.files[0];
       if (file) {
 
         const reader = new FileReader();
         reader.onload = (e) => {
-          console.log("bevor", currentItem.value.pdf);
-          currentItem.value.pdf = e.target.result;
-          console.log("after", currentItem.value.pdf);
+          console.log("bevor", this.currentItem.pdf);
+          this.currentItem.pdf = e.target.result;
+          console.log("after", this.currentItem.pdf);
         };
         reader.readAsDataURL(file);
       }
-    }
+    },
 
 
 
 
-    async function changeStepOrder(stepId, stepNumber) {
+    async  changeStepOrder(stepId, stepNumber) {
       try {
         const response = await axios.post('http://localhost:3000/workflow/changeOrder', {
           stepID: stepId,
@@ -574,10 +618,10 @@ const workflows = ref([
         console.error('Error changing order:', error);
         return null;
       }
-    }
+    },
 
 
-    async function addStepAPI(process_id, title, document, step_number, role_ids, pdfBytes) {
+    async  addStepAPI(process_id, title, document, step_number, role_ids, pdfBytes) {
       try {
         const response = await axios.post('http://localhost:3000/workflow/addStep', {
           process_id,
@@ -590,20 +634,20 @@ const workflows = ref([
       } catch (error) {
         console.error('Error adding workflowElement:', error);
       }
-    }
-    function showNotification(message) {
-      notificationMessage.value = message;
-      notificationVisible.value = true;
+    },
+     showNotification(message) {
+       this.notificationMessage = message;
+       this.notificationVisible = true;
       setTimeout(() => {
-        notificationVisible.value = false;
-      }, notificationDuration.value);
-    }
+        this.notificationVisible = false;
+      }, this.notificationDuration);
+    },
 
-    function checkWorkflows(workflowIndex) {
+     checkWorkflows(workflowIndex) {
 
       const workflow = this.workflows[workflowIndex];
       if (workflow.categories.length === 0 || workflow.items.length === 0) {
-        showNotification('kein Workflow wurde erstellt, erstlle ein workflow');
+        this.showNotification('kein Workflow wurde erstellt, erstlle ein workflow');
         return;
       }
 
@@ -611,7 +655,7 @@ const workflows = ref([
       let expectedCategoryId = 0;
       for (let i = 0; i < categoryIds.length; i++) {
         if (categoryIds[i] !== expectedCategoryId) {
-          showNotification(`Inkonsistente Kategorie-Reihenfolge: Es wird erwartet, dass die Kategorie mit ID ${expectedCategoryId} existiert, gefunden wurde aber ID ${categoryIds[i]}.`);
+          this.showNotification(`Inkonsistente Kategorie-Reihenfolge: Es wird erwartet, dass die Kategorie mit ID ${expectedCategoryId} existiert, gefunden wurde aber ID ${categoryIds[i]}.`);
           return;
         }
         if (i < categoryIds.length - 1 && categoryIds[i] !== categoryIds[i + 1]) {
@@ -645,24 +689,27 @@ const workflows = ref([
       if (!allValuesSet) {
 
         if (pdfMissing) {
-          showNotification("Alle Workflow-Elemente benötigen einen PDF-Link. Bitte laden sie fehlende PDF's hoch.");
+          this.showNotification("Alle Workflow-Elemente benötigen einen PDF-Link. Bitte laden sie fehlende PDF's hoch.");
         }
         if (objectsMissing) {
-          showNotification("Jedes Workflowelement muss mindestens eine Rolle haben");
+          this.showNotification("Jedes Workflowelement muss mindestens eine Rolle haben");
         } else {
           //showNotification("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du speicherst.");
         }
       } else if (!applicantFound) { // Überprüfung, ob ein Applicant vorhanden ist
-        showNotification("Mindestens ein Objekt muss als 'Applicant' markiert sein.");
+        this.showNotification("Mindestens ein Objekt muss als 'Applicant' markiert sein.");
       } else {
         //=> Formularzuweisung
-        store.commit('setWorkflow',curWorkflow.value)
+        store.commit('setWorkflow',this.curWorkflow)
+        this.$router.push('/pdfWorkflow')
       }
-    }
+    },
 
+  },
 
+/*
 
-    return {
+    return: {
       workflows,
       objects,
       isEditModalOpen,
@@ -698,7 +745,7 @@ const workflows = ref([
       store
 
     };
-  }
+*/
 }
 </script>
 

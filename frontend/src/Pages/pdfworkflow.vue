@@ -60,12 +60,16 @@
             <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-900">
                 <!-- Search bar -->
                 <div class="mb-4">
-                    <input type="text" v-model="searchQuery" @input="searchItems" class="p-2 w-full border rounded-md"
+                    <input type="text" v-model="searchQuery"  class="p-2 w-full border rounded-md"
                         placeholder="Search...">
                 </div>
-                <!-- Draggable Items -->
-                <ul class="space-y-2 font-medium">
-                    <li v-for="(item, index) in items" :key="index" class="draggable" draggable="true"
+              <button @click="addItem" class="mt-4 p-2 bg-blue-500 text-white rounded hover:bg-blue-700">
+                Add Item
+              </button>
+              <!-- Draggable Items -->
+
+              <ul class="space-y-2 font-medium">
+                    <li v-for="(item, index) in items.slice().reverse()" :key="index" class="draggable" draggable="true"
                         @dragstart="onDragStart($event, item)">
                         <div @dblclick="editItem(item)" v-if="!item.isEditing">
                             <a href="#"
@@ -77,9 +81,7 @@
                             @keyup.enter="finishEditing(item)" class="p-2 rounded-lg w-full" />
                     </li>
                 </ul>
-                <button @click="addItem" class="mt-4 p-2 bg-blue-500 text-white rounded hover:bg-blue-700">
-                    Add Item
-                </button>
+
             </div>
         </aside>
         <div class="p-4 sm:ml-64 relative">
@@ -142,13 +144,23 @@ export default {
             curWorkflowElementRole: null,
             buttonValue: '',
             curWorkflowRole: '',
-            workflowId: null
+            workflowId: null,
 
         };
     },
+  watch: {
+    searchQuery: function(newQuery) {
+      if (newQuery === '') {
+        this.showAll();
+      } else {
+        this.searchItems();
+      }
+    },
+  },
     setup() {
         const store = useStore();
         return { store };
+
 
     },
     async mounted() {
@@ -156,7 +168,7 @@ export default {
         await this.loadWorkflowElements();
         await this.loadWorkflowRoles();
         await this.loadPdf(this.curWorkflowElement.data);
-
+        await this.showAll();
         this.checkState();
 
 
@@ -169,17 +181,36 @@ export default {
     methods: {
         async searchItems() {
             try {
-                const response = await axios.get(`http://localhost:3000/search`, {
-                    params: {
-                        query: this.searchQuery
-                    }
-                });
-                this.items = response.data;
+              if(this.searchQuery!==''){
+                const response = await axios.get('http://localhost:3000/filling-data/search/'+this.searchQuery);
+                this.items = []
+                response.data.forEach(data =>{
+                  this.items.push({
+                    title: data.name,
+                    isEditing: false,
+                    content: data.name,
+                    dataID: data.id
+                  })
+                })
+                //this.items = response.data;
+
+              }
             } catch (error) {
                 console.error("Error searching items:", error);
             }
         },
-        async loadPdf(base64String) {
+      async showAll() {
+        const response = await axios.get('http://localhost:3000/filling-data/all/'+1);
+        response.data.forEach(data =>{
+          this.items.push({
+            title: data.name,
+            isEditing: false,
+            content: data.name,
+            dataID: data.id
+          })
+        })
+      },
+      async loadPdf(base64String) {
             try {
                 // Decode base64 string into Uint8Array (optimized for large PDFs)
                 const byteArray = atob(base64String);
@@ -309,7 +340,7 @@ export default {
             console.log("Dropped text:", text); // Debugging statement
             if (field.type !== 'PDFCheckBox' && field) {
                 field.value = text;
-                this.assignFillingData(field, dataID)
+                await this.assignFillingData(field, dataID)
             } else {
                 console.error("Field not found for name:", field.name); // Debugging statement
             }
@@ -405,35 +436,40 @@ toggleDrop() {
                     console.error(`Unhandled field type for field: ${field.name}, Type: ${fieldType}`);
     }
                     } else {
-    console.error("PDF field not found for:", field.name);
-}
-                });
+                console.error("PDF field not found for:", field.name);
+            }
+                            });
 
-// Save the updated PDF
-const newPdfBytes = await pdfDoc.save();
-const blob = new Blob([newPdfBytes], { type: "application/pdf" });
-const link = document.createElement("a");
-link.href = URL.createObjectURL(blob);
-link.download = "updated.pdf";
-link.click();
-URL.revokeObjectURL(link.href);
-            } catch (error) {
-    console.error("Error saving PDF:", error);
-}
+            // Save the updated PDF
+            const newPdfBytes = await pdfDoc.save();
+            const blob = new Blob([newPdfBytes], { type: "application/pdf" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "updated.pdf";
+            link.click();
+            URL.revokeObjectURL(link.href);
+                        } catch (error) {
+                console.error("Error saving PDF:", error);
+            }
         },
-      async assignFillingData(field, dataID){
-    console.log(field.value + "  dropped onto   " + field.name)
-    const response = await axios.put('field', {
-        workflowElementID: this.curWorkflowElement.id,
-        dataID: dataID,
-        type: field.datatype,
 
-    })
+async assignFillingData(field, dataID){
+  console.log(field.value + "  dropped onto   " + field.name + "of type: " + field.type)
+  const data = (await axios.get('http://localhost:3000/filling-data/'+dataID)).data;
+
+  //todo: prüfen ob data.type und response.type kompatibel
+
+  const response = await axios.put('http://localhost:3000/workflow/field', {
+      workflowElementID: this.curWorkflowElement.id,
+      dataID: dataID,
+      type: field.type,
+      processRoleID: this.curWorkflowElementRole.id
+  })
 },
       async loadWorkflowElements() {
 
-    this.workflowId = await store.getters.getWorkflow.id;
-
+    this.workflowId = store.getters.getWorkflow.id;
+    console.log(this.workflowId)
 
     //set workflowElements & curWorkflowElement
     if (this.workflowElements.length === 0) {
@@ -503,33 +539,46 @@ checkState() {
     let lastIndex;
     switch (this.buttonValue) {
         case 'Save':
-            this.savePdf();
+
+            await this.savePdf();
             break;
         case 'Next role':
             lastIndex = this.workflowElementRoles.indexOf(this.curWorkflowElementRole);
-            this.curWorkflowElementRole = this.workflowElementRoles[lastIndex + 1];
-            this.curWorkflowRole = (await axios.get('http://localhost:3000/workflow/role/' + this.curWorkflowElementRole.workflowRoleID)).data;
-            console.log("name " + this.curWorkflowRole.workflowRoleName)
-            //todo: alle felder rot markieren welche schon zugewiesen wurden
-            this.checkState();
+           await this.nextRole(lastIndex)
             break;
-        case 'Next workflow-element':
+      case 'Next workflow-element':
+            //speichern
             lastIndex = this.workflowElements.indexOf(this.curWorkflowElement);
-            this.curWorkflowElement = this.workflowElements[lastIndex + 1];
-            console.log(this.curWorkflowElement.id)
-            await this.loadPdf(this.curWorkflowElement.data);
+            await this.nextWorkflowElement(lastIndex)
 
-            this.workflowElementRoles = [];
-            await this.loadWorkflowRoles()
-
-            this.checkState();
-            break;
+        break;
 
 
 
 
     }
-}
+},
+    async nextWorkflowElement(lastIndex){
+      this.curWorkflowElement = this.workflowElements[lastIndex + 1];
+      console.log(this.curWorkflowElement.id)
+      await this.loadPdf(this.curWorkflowElement.data);
+
+      this.workflowElementRoles = [];
+      await this.loadWorkflowRoles()
+      lastIndex = this.workflowElementRoles.indexOf(this.curWorkflowElementRole);
+      await this.nextRole(lastIndex)
+
+
+      this.checkState();
     },
+      async nextRole(lastIndex){
+        this.curWorkflowElementRole = this.workflowElementRoles[lastIndex + 1];
+        this.curWorkflowRole = (await axios.get('http://localhost:3000/workflow/role/' + this.curWorkflowElementRole.workflowRoleID)).data;
+        console.log("name " + this.curWorkflowRole.workflowRoleName)
+        //todo: alle felder rot markieren welche schon zugewiesen wurden
+        this.checkState();
+      }
+    },
+
 };
 </script>

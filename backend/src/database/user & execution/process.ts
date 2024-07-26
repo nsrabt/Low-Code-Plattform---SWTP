@@ -11,4 +11,6 @@ export class process{
     @Column()
     curStep:number;
 
+    @Column()
+    isAccepted: boolean;
 }

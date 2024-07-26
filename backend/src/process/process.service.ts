@@ -26,6 +26,7 @@ import {join} from "path";
 import {not} from "rxjs/internal/util/not";
 import {FillingDataController} from "../filling_data/filling_data.controller"
 import {FillingDataService} from "../filling_data/filling_data.service";
+import {ContinueProcessDto} from "./dto/ContinueProcessDto";
 
 @Injectable()
 export class ProcessService {
@@ -82,28 +83,8 @@ export class ProcessService {
 
 
     //This method will be called, if someone runs, but not creates a process
-    async continueProcess(startProcessDto: StartProcessDto){
+    async continueProcess(continueProcessDto: ContinueProcessDto){
 
-        this.workflowID = startProcessDto.workflowID;
-        this.userID = startProcessDto.userID;
-
-
-        // Erstellen eines neuen Benutzerprozesses + BenutzerProzessElemente
-
-        const userPro = new user_process();
-            userPro.processID = this.workflowID;
-            userPro.state = 'missing data';
-            userPro.userID = this.userID;
-            await this.userProRepo.save(userPro);
-
-        const workflowElements = await this.workflowElementRepository.find({where:{workflowID:this.workflowID}});
-
-        for(const workflowelem of workflowElements) {
-            const userProElem = new user_process_element();
-            userProElem.workflow_element_id = userPro.id;
-            userProElem.done=false;
-            userProElem.workflow_element_id = workflowelem.id;
-        }
 
     }
 
@@ -119,42 +100,30 @@ export class ProcessService {
         if (!currentWorkflow) {
             throw new Error("Workflow not found");
         }
+            if(!currentWorkflow.isOpen){
+                const newProcess = new process();
+                newProcess.curStep=1;
+                newProcess.workflowID = this.workflowID;
+                newProcess.isAccepted=false
+                this.curProcess = await this.processRepo.save(newProcess);
+                return;
+            }
+            else{
+                //Speichern des Prozesses
+                const newProcess = new process();
+                newProcess.curStep=1;
+                newProcess.workflowID = this.workflowID;
+                newProcess.isAccepted=true;
+                this.curProcess = await this.processRepo.save(newProcess);
+            }
 
 
 
-        //Speichern des Prozesses
-        const newProcess = new process();
-        newProcess.curStep=1;
-        newProcess.workflowID = this.workflowID;
-        this.curProcess = await this.processRepo.save(newProcess);
+        const workflowElements = await this.createWorkflowElements(this.workflowID);
 
-        const workflowElements = await this.workflowElementRepository.find({where:{workflowID:this.workflowID}});
+        const userProcess = await this.createUserProcess(currentWorkflow, this.userID, workflowElements)
 
 
-        //create all processElements
-        for(const workflowelem of workflowElements){
-            const proElem = new process_element();
-            proElem.data = workflowelem.data;
-            proElem.workflowElementID = workflowelem.id;
-            proElem.phase=1;
-            proElem.processID = this.curProcess.id;
-            await this.proElemRepo.save(proElem);
-        }
-
-
-        // Erstellen eines neuen Benutzerprozesses + BenutzerProzessElemente
-        const userPro = new user_process();
-        userPro.processID = this.workflowID;
-        userPro.state = 'missing data';
-        userPro.userID = this.userID;
-        await this.userProRepo.save(userPro);
-
-        for(const workflowelem of workflowElements) {
-            const userProElem = new user_process_element();
-            userProElem.workflow_element_id = userPro.id;
-            userProElem.done=false;
-            userProElem.workflow_element_id = workflowelem.id;
-        }
 
 
         //Save Applicant in his role
@@ -169,8 +138,37 @@ export class ProcessService {
         return await this.workflowRolesRepository.find({where: {processID: this.workflowID, selectable: true}});
     }
 
+async createWorkflowElements(workflowID: number){
+    const workflowElements = await this.workflowElementRepository.find({where:{workflowID:workflowID}});
 
+    //create all processElements
+    for(const workflowelem of workflowElements){
+        const proElem = new process_element();
+        proElem.data = workflowelem.data;
+        proElem.workflowElementID = workflowelem.id;
+        proElem.phase=1;
+        proElem.processID = this.curProcess.id;
+        await this.proElemRepo.save(proElem);
+    }
+    return workflowElements;
+}
 
+async createUserProcess(currentWorkflow: workflow, userID: number, workflowElements: workflowElement[]){
+    // Erstellen eines neuen Benutzerprozesses + BenutzerProzessElemente
+    const userPro = new user_process();
+    userPro.processID = this.workflowID;
+    if(!currentWorkflow.isOpen) userPro.state = 'waiting';
+    else userPro.state= ''
+    userPro.userID = userID;
+    await this.userProRepo.save(userPro);
+
+    for(const workflowelem of workflowElements) {
+        const userProElem = new user_process_element();
+        userProElem.workflow_element_id = userPro.id;
+        userProElem.done=false;
+        userProElem.workflow_element_id = workflowelem.id;
+    }
+}
 
 
 
@@ -206,7 +204,7 @@ export class ProcessService {
             const curFields = await this.stepFieldRepo.find({ where: { workflowElementID: this.workflowElementRepository.getId(step) }});
             console.log("new Step");
             for (const field of curFields) {
-
+                console.log("newField")
                 const userField = await this.userFillingRepo.findOne({ where: { pi_id: field.dataID, userID: this.userID } });
                 console.log(field.dataID)
                 if (!userField) {
@@ -536,5 +534,19 @@ export class ProcessService {
 
     async getAllElements(processID: number) {
         return this.proElemRepo.find({where:{processID:processID}})
+    }
+
+    async acceptProcess(processID: number) {
+
+        const process = await this.processRepo.findOne({where:{id:processID}});
+        process.isAccepted=true;
+        await this.processRepo.update(processID,process);
+        const userPros = await this.userProRepo.find({where:{processID:processID}});
+        for (const userPro of userPros) {
+            userPro.state='todo';
+            await this.userProRepo.update(userPro.id,userPro);
+        }
+
+
     }
 }

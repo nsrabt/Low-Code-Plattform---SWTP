@@ -200,7 +200,7 @@ export class WorkflowService {
 
 
     async addField(addFieldDto: AddFieldDto) {
-        let field: fields;
+        let field = new fields();
         field.type=addFieldDto.type;
         field.workflowElementID = addFieldDto.workflowElementID;
         field.dataID = addFieldDto.dataID;

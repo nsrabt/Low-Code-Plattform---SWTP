@@ -2,8 +2,9 @@ import {Injectable, NotFoundException} from '@nestjs/common';
 import {AddFillingDataDto} from "./dto/addFillingDataDto";
 import {filling_data} from "../database/user & execution/filling_data";
 import {InjectRepository} from "@nestjs/typeorm";
-import {Repository} from "typeorm";
+import {Like, Repository} from "typeorm";
 import {UpdateDataDto} from "./dto/UpdateDataDto";
+import {SearchDto} from "./dto/SearchDto";
 
 @Injectable()
 export class FillingDataService {
@@ -62,9 +63,10 @@ export class FillingDataService {
     //User-Filling-Data Configuration
 
 
-
-
-
-
-
+    async search(query : string) {
+        if(query==='')console.log("leer")
+        const rtn = await this.fillingDataRepo.find({where:{name: Like(`%${query}%`)}})
+        console.log("rtn "+rtn.length)
+        return rtn;
+    }
 }
