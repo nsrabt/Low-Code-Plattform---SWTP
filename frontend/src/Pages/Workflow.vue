@@ -47,7 +47,26 @@
         </div>
       </div>
     </nav>
-
+    <!-- Workflow Creation Modal -->
+    <div v-if="showWorkflowModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-[400px]">
+        <h2 class="text-xl font-semibold mb-4">Create New Workflow</h2>
+        <div class="mb-4">
+          <label class="block text-gray-700">Workflow Name</label>
+          <input v-model="newWorkflow.name" type="text" class="p-2 w-full border rounded-md" />
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700">Is Open</label>
+          <input v-model="newWorkflow.isOpen" type="checkbox" class="p-2 border rounded-md" />
+        </div>
+        <div class="flex justify-end">
+          <button @click="closeWorkflowModal" class="mr-2 p-2 bg-gray-500 text-white rounded hover:bg-gray-700">Cancel
+          </button>
+          <button @click="submitNewWorkflow"
+            class="p-2 bg-blue-500 text-white rounded hover:bg-blue-700">Create</button>
+        </div>
+      </div>
+    </div>
 
     <div>
       <div class="object-container bg-gray-900 p-4 shadow-md">
@@ -70,7 +89,7 @@
             @drop="onDrop($event, category.id, workflowIndex)" class="droppable category" @dragover.prevent
             @dragenter.prevent>
             <div v-for="item in workflow.items.filter((x) => x.categoryId === category.id)" :key="item.id"
-              @dragstart="onDragStart($event, item, workflowIndex)"  class="draggable rounded-xl" draggable="true"
+              @dragstart="onDragStart($event, item, workflowIndex)" class="draggable rounded-xl" draggable="true"
               :data-workflowElement-id="item.id">
               <input v-model="item.title" @blur="updateItem(item, workflowIndex)" class="item-title-input" />
               <div v-for="obj in item.objects" :key="obj.id">{{ obj.roleName }}}</div>
@@ -87,11 +106,11 @@
         </div>
         <div class="save-button-container my-4">
           <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full"
-                  @click="checkWorkflows(0)">Speichern</button>
+            @click="checkWorkflows(0)">Speichern</button>
         </div>
       </div>
 
-      <div v-if="isEditModalOpen" class="modal" >
+      <div v-if="isEditModalOpen" class="modal">
         <div class="modal-content">
           <h3>Schritt bearbeiten</h3>
           <label for="item-title">Name: </label>
@@ -192,7 +211,8 @@ export default {
           this.workflowID = route.params.id;
           await this.loadWorkflowData();
         } else {
-          console.log("new!");
+      console.log("new!");
+      this.showWorkflowModal = true;
           try {
             const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
               title: "test",
@@ -336,7 +356,26 @@ export default {
 
        this.workflows.forEach(() => { });
     },
-
+    closeWorkflowModal() {
+      this.showWorkflowModal = false;
+    },
+    async submitNewWorkflow() {
+      try {
+        const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
+          title: this.newWorkflow.name,
+          description: "description", // You might want to make this dynamic as well
+          isOpen: this.newWorkflow.isOpen,
+          platform_id: 1
+        });
+        console.log("response.data.id", response.data.id);
+        this.workflowID = response.data.id;
+        this.curWorkflow = response.data;
+        this.showWorkflowModal = false; // Close the modal after creation
+        console.log('Workflow created:', this.workflowID);
+      } catch (error) {
+        console.error('Error creating workflow:', error);
+      }
+    },
     async  createItem(workflowIndex) {
       if (this.workflows[workflowIndex].categories.length === 0) {
         this.showNotification("Es muss mindestens eine workflow erstellt werden, bevor ein workflow-Element hinzugefügt werden kann.");
