@@ -43,8 +43,7 @@
                         <form method="POST" action="#" role="none">
                             <button type="submit"
                                 class="text-gray-700 block w-full px-4 py-2 text-left text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                                role="menuitem" tabindex="-1" id="menu-item-3">Sign out
-                            </button>
+                                role="menuitem" tabindex="-1" id="menu-item-3">Sign out</button>
                         </form>
                     </div>
                 </div>
@@ -60,7 +59,7 @@
             <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-900">
                 <!-- Search bar -->
                 <div class="mb-4">
-                    <input type="text" v-model="searchQuery" class="p-2 w-full border rounded-md"
+                    <input type="text" v-model="searchQuery"  class="p-2 w-full border rounded-md"
                         placeholder="Search...">
                 </div>
                 <button @click="openAddItemModal" class="mt-4 p-2 bg-blue-500 text-white rounded hover:bg-blue-700">
@@ -138,7 +137,6 @@
     </div>
 </template>
 
-
 <script>
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/build/pdf";
 import "pdfjs-dist/web/pdf_viewer.css";
@@ -212,36 +210,36 @@ export default {
     methods: {
         async searchItems() {
             try {
-                if (this.searchQuery !== '') {
-                    const response = await axios.get('http://localhost:3000/filling-data/search/' + this.searchQuery);
-                    this.items = []
-                    response.data.forEach(data => {
-                        this.items.push({
-                            title: data.name,
-                            isEditing: false,
-                            content: data.name,
-                            dataID: data.id
-                        })
-                    })
-                    //this.items = response.data;
-
-                }
-            } catch (error) {
-                console.error("Error searching items:", error);
-            }
-        },
-        async showAll() {
-            const response = await axios.get('http://localhost:3000/filling-data/all/' + 1);
-            response.data.forEach(data => {
-                this.items.push({
+              if(this.searchQuery!==''){
+                const response = await axios.get('http://localhost:3000/filling-data/search/'+this.searchQuery);
+                this.items = []
+                response.data.forEach(data =>{
+                  this.items.push({
                     title: data.name,
                     isEditing: false,
                     content: data.name,
                     dataID: data.id
+                  })
                 })
-            })
+                //this.items = response.data;
+
+              }
+            } catch (error) {
+                console.error("Error searching items:", error);
+            }
         },
-        async loadPdf(base64String) {
+      async showAll() {
+        const response = await axios.get('http://localhost:3000/filling-data/all/'+1);
+        response.data.forEach(data =>{
+          this.items.push({
+            title: data.name,
+            isEditing: false,
+            content: data.name,
+            dataID: data.id
+          })
+        })
+      },
+      async loadPdf(base64String) {
             try {
                 // Decode base64 string into Uint8Array (optimized for large PDFs)
                 const byteArray = atob(base64String);
@@ -466,19 +464,19 @@ export default {
             }
         },
         async savePdf() {
-            try {
-                // Load the existing PDF into pdf-lib using the file
-                const arrayBuffer = await this.pdfFile.arrayBuffer();
-                const pdfDoc = await PDFDocument.load(arrayBuffer);
-                const form = pdfDoc.getForm();
+    try {
+        // Load the existing PDF into pdf-lib using the file
+        const arrayBuffer = await this.pdfFile.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(arrayBuffer);
+        const form = pdfDoc.getForm();
 
-                // Debugging: Log all form fields
-                const fields = form.getFields();
-                fields.forEach((field) => {
-                    const type = field.constructor.name;
-                    const name = field.getName();
-                    console.log(`Field name: ${name}, Field type: ${type}`);
-                });
+        // Debugging: Log all form fields
+        const fields = form.getFields();
+        fields.forEach((field) => {
+            const type = field.constructor.name;
+            const name = field.getName();
+            console.log(`Field name: ${name}, Field type: ${type}`);
+        });
 
                 // Update each field in the new PDF
                 this.pdfFields.forEach((field) => {
@@ -500,104 +498,119 @@ export default {
                             console.error(`Unhandled field type for field: ${field.name}, Type: ${fieldType}`);
                         }
                     } else {
-                        console.error("PDF field not found for:", field.name);
-                    }
-                });
+                console.error("PDF field not found for:", field.name);
+            }
+                            });
 
-                // Save the updated PDF
-                const newPdfBytes = await pdfDoc.save();
-                const blob = new Blob([newPdfBytes], { type: "application/pdf" });
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = "updated.pdf";
-                link.click();
-                URL.revokeObjectURL(link.href);
-            } catch (error) {
+            // Save the updated PDF
+            const newPdfBytes = await pdfDoc.save();
+            const blob = new Blob([newPdfBytes], { type: "application/pdf" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "updated.pdf";
+            link.click();
+            URL.revokeObjectURL(link.href);
+                        } catch (error) {
                 console.error("Error saving PDF:", error);
             }
         },
 
-        async assignFillingData(field, dataID) {
-            console.log(field.value + "  dropped onto   " + field.name + "of type: " + field.type)
-            const data = (await axios.get('http://localhost:3000/filling-data/' + dataID)).data;
+async assignFillingData(field, dataID){
+  console.log(field.value + "  dropped onto   " + field.name + "of type: " + field.type)
+  const data = (await axios.get('http://localhost:3000/filling-data/'+dataID)).data;
 
-            //todo: prüfen ob data.type und response.type kompatibel
+  function isSameType(field, data) {
+    if(field.type === 'text' && data.datatype === 'string'){
+      return true;
+    }
+    else if(field.type === 'text' && data.datatype === 'date'){
+      return true;
+    }
+    else if(field.type === 'PDFCheckBox' && data.datatype === 'checkbox'){
+      return true;
+    }
+    return false;
+  }
 
-            const response = await axios.put('http://localhost:3000/workflow/field', {
-                workflowElementID: this.curWorkflowElement.id,
-                dataID: dataID,
-                type: field.type,
-                processRoleID: this.curWorkflowElementRole.id
-            })
-        },
-        async loadWorkflowElements() {
+  if(isSameType(field, data)){
+    //todo: put code here if the strings are compatible
+  }
 
-            this.workflowId = store.getters.getWorkflow.id;
-            console.log(this.workflowId)
+  const response = await axios.put('http://localhost:3000/workflow/field', {
+      workflowElementID: this.curWorkflowElement.id,
+      dataID: dataID,
+      type: field.type,
+      processRoleID: this.curWorkflowElementRole.id
+  })
+},
+      async loadWorkflowElements() {
 
-            //set workflowElements & curWorkflowElement
-            if (this.workflowElements.length === 0) {
-                console.log('allSteps/' + this.workflowId);
-                const res = await axios.get('http://localhost:3000/workflow/allSteps/' + this.workflowId);
-                this.workflowElements = res.data;
+    this.workflowId = store.getters.getWorkflow.id;
+    console.log(this.workflowId)
 
-                console.log(this.workflowElements.length);
+    //set workflowElements & curWorkflowElement
+    if (this.workflowElements.length === 0) {
+        console.log('allSteps/' + this.workflowId);
+        const res = await axios.get('http://localhost:3000/workflow/allSteps/' + this.workflowId);
+        this.workflowElements = res.data;
 
-                if (Array.isArray(this.workflowElements)) {
-                    this.workflowElements.sort((a, b) => a.stepNumber - b.stepNumber);
-                }
-            }
+        console.log(this.workflowElements.length);
 
-            if (this.curWorkflowElement == null) {
-                console.log("is null")
-                this.curWorkflowElement = this.workflowElements[0];
-            }
+        if (Array.isArray(this.workflowElements)) {
+            this.workflowElements.sort((a, b) => a.stepNumber - b.stepNumber);
+        }
+    }
 
-        },
-        async loadWorkflowRoles() {
+    if (this.curWorkflowElement == null) {
+        console.log("is null")
+        this.curWorkflowElement = this.workflowElements[0];
+    }
 
-            //set workflow roles & curRole
-            if (this.workflowElementRoles.length === 0) {
-                console.log("getRoles of " + this.curWorkflowElement.id)
-                const res = await axios.get('http://localhost:3000/workflow/rolesOfWorkflowElement/' + this.curWorkflowElement.id);
-                this.workflowElementRoles = res.data
-                if (Array.isArray(this.workflowElementRoles)) {
-                    this.workflowElementRoles.sort((a, b) => a.position - b.position);
-                }
-                res.data.forEach(elem => { console.log(elem) })
+},
+      async loadWorkflowRoles() {
 
-                console.log("got roles")
-                if (this.curWorkflowElementRole == null) {
-                    this.curWorkflowElementRole = this.workflowElementRoles[0];
+    //set workflow roles & curRole
+    if (this.workflowElementRoles.length === 0) {
+        console.log("getRoles of " + this.curWorkflowElement.id)
+        const res = await axios.get('http://localhost:3000/workflow/rolesOfWorkflowElement/' + this.curWorkflowElement.id);
+        this.workflowElementRoles = res.data
+        if (Array.isArray(this.workflowElementRoles)) {
+            this.workflowElementRoles.sort((a, b) => a.position - b.position);
+        }
+        res.data.forEach(elem => { console.log(elem) })
 
-                    this.curWorkflowRole = (await axios.get('http://localhost:3000/workflow/role/' + this.curWorkflowElementRole.workflowRoleID)).data;
-                }
+        console.log("got roles")
+        if (this.curWorkflowElementRole == null) {
+            this.curWorkflowElementRole = this.workflowElementRoles[0];
 
-            }
-        },
-        checkState() {
+            this.curWorkflowRole = (await axios.get('http://localhost:3000/workflow/role/' + this.curWorkflowElementRole.workflowRoleID)).data;
+        }
 
-            console.log("check")
-            for (const role of this.workflowElementRoles) {
-                console.log("role " + role.id)
-            }
-            const lastIndex = this.workflowElementRoles.length - 1;
-            //If current role is last role
+    }
+},
+checkState() {
 
-            if (this.curWorkflowElementRole === this.workflowElementRoles[lastIndex]) {
-                const lastWorkflowElementIndex = this.workflowElements.length - 1;
-                //Wenn auch letztes workflowElement
-                if (this.curWorkflowElement === this.workflowElements[lastWorkflowElementIndex]) {
-                    this.buttonValue = 'Save';
-                }
-                else {
-                    this.buttonValue = 'Next workflow-element';
-                }
-            }
-            else {
-                this.buttonValue = 'Next role';
-            }
-        },
+    console.log("check")
+    for (const role of this.workflowElementRoles) {
+        console.log("role " + role.id)
+    }
+    const lastIndex = this.workflowElementRoles.length - 1;
+    //If current role is last role
+
+    if (this.curWorkflowElementRole === this.workflowElementRoles[lastIndex]) {
+        const lastWorkflowElementIndex = this.workflowElements.length - 1;
+        //Wenn auch letztes workflowElement
+        if (this.curWorkflowElement === this.workflowElements[lastWorkflowElementIndex]) {
+            this.buttonValue = 'Save';
+        }
+        else {
+            this.buttonValue = 'Next workflow-element';
+        }
+    }
+    else {
+        this.buttonValue = 'Next role';
+    }
+},
 
         async buttonPressed() {
             let lastIndex;

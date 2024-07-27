@@ -16,4 +16,7 @@ export class workflow {
 
     @Column()
     isOpen: boolean;
+
+    @Column({ type: "integer", default: 1 })
+    version: number;
 }

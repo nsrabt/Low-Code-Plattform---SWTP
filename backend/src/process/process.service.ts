@@ -114,6 +114,7 @@ export class ProcessService {
                 newProcess.curStep=1;
                 newProcess.workflowID = this.workflowID;
                 newProcess.isAccepted=true;
+                newProcess.workflowVersion =currentWorkflow.version;
                 this.curProcess = await this.processRepo.save(newProcess);
             }
 

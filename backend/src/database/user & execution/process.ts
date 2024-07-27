@@ -13,4 +13,7 @@ export class process{
 
     @Column()
     isAccepted: boolean;
+
+    @Column()
+    workflowVersion: number;
 }

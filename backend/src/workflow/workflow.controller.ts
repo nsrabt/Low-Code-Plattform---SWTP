@@ -109,6 +109,11 @@ export class WorkflowController {
         return await this.workflowService.addField(addFieldDto);
     }
 
+    @Put('updateVersion/:id')
+    async updateVersion(@Param('id',ParseIntPipe)workflowID){
+        return await this.workflowService.updateVersion(workflowID)
+    }
+
 
 }
 

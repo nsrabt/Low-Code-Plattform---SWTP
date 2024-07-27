@@ -53,12 +53,12 @@
         <h2 class="text-xl font-semibold mb-4">Create New Workflow</h2>
         <div class="mb-4">
           <label class="block text-gray-700">Workflow Name</label>
-          <input v-model="newWorkflow.name" type="text" class="p-2 w-full border rounded-md" />
+          <input v-model="this.newWorkflow.title" type="text" class="p-2 w-full border rounded-md" />
         </div>
         <div class="mb-4">
           <label class="block text-gray-700">Is Open</label>
           <input v-model="newWorkflow.isOpen" type="checkbox" class="p-2 border rounded-md" />
-        </div>
+        </div>this.
         <div class="flex justify-end">
           <button @click="closeWorkflowModal" class="mr-2 p-2 bg-gray-500 text-white rounded hover:bg-gray-700">Cancel
           </button>
@@ -92,7 +92,7 @@
               @dragstart="onDragStart($event, item, workflowIndex)" class="draggable rounded-xl" draggable="true"
               :data-workflowElement-id="item.id">
               <input v-model="item.title" @blur="updateItem(item, workflowIndex)" class="item-title-input" />
-              <div v-for="obj in item.objects" :key="obj.id">{{ obj.roleName }}}</div>
+              <div v-for="obj in item.objects" class="ml-4" :key="obj.id">{{ obj.roleName }}</div>
               <button class="edit-button" @click="openEditModal(item, workflowIndex)">Bearbeiten</button>
               <button class="delete-button" @click="deleteItem(workflowIndex, item.id)">Löschen</button>
             </div>
@@ -198,6 +198,11 @@ export default {
        notificationVisible : ref(false),
        notificationMessage : ref(''),
        notificationDuration : ref(5000),
+      showWorkflowModal: true,
+      newWorkflow: {title: '', isOpen:''}
+
+
+
     };
 
   },
@@ -206,6 +211,7 @@ export default {
     const workflowID = ref(null);
 
     const store = useStore();
+
 
     if (route.name === "EditWorkflow") {
           this.workflowID = route.params.id;
@@ -230,11 +236,11 @@ export default {
         }
     },
 
+
+
+
   methods:{
-
-
-
-
+    
     async loadWorkflowData() {
       try {
 
@@ -315,18 +321,12 @@ export default {
           this.createCategory(0);
         }
 
-
-
-
         // Load workflow-element-roles
         for (const item of this.workflows[0].items) {
           const roles = await axios.get('http://localhost:3000/workflow/rolesOfWorkflowElement/' + item.step_id);
-          console.log("going through workflowElement: "+item.step_id)
-          console.log("length "+roles.data.length)
+
           for (const role of roles.data) {
-            console.log("load workflowRole: "+role.workflowRoleID)
             const workflowRole = this.objects.find(obj => obj.workflowRoleID === role.workflowRoleID);
-            console.log("workflowElement:"+ item.step_id +" => "+ workflowRole.roleName)
             item.objects.push(workflowRole)
           }
         }
@@ -362,7 +362,7 @@ export default {
     async submitNewWorkflow() {
       try {
         const response = await axios.post('http://localhost:3000/workflow/createWorkflow', {
-          title: this.newWorkflow.name,
+          title: this.newWorkflow.title,
           description: "description", // You might want to make this dynamic as well
           isOpen: this.newWorkflow.isOpen,
           platform_id: 1
@@ -502,7 +502,6 @@ export default {
         if (itemIndex !== -1) {
           const oldStepNumber = this.workflows[workflowIndex].items[itemIndex].categoryId + 1;
           const newStepNumber = categoryId + 1;
-          console.log("Verschieben von Kategorie", oldStepNumber, "nach", newStepNumber);
           const stepId = this.workflows[workflowIndex].items[itemIndex].step_id;
           if (newStepNumber !== oldStepNumber) {
             this.changeStepOrder(stepId, newStepNumber);
@@ -550,8 +549,6 @@ export default {
               const pdf = result.split(',')[1]; // Verwende 'split' auf dem string
               this.currentItem.pdf = pdf;
 
-
-              console.log('Base64 String: ', this.currentItem.pdf);
             } else {
               console.error('FileReader result is not a string');
             }
@@ -682,67 +679,81 @@ export default {
       }, this.notificationDuration);
     },
 
-     checkWorkflows(workflowIndex) {
+     async checkWorkflows(workflowIndex) {
 
-      const workflow = this.workflows[workflowIndex];
-      if (workflow.categories.length === 0 || workflow.items.length === 0) {
-        this.showNotification('kein Workflow wurde erstellt, erstlle ein workflow');
-        return;
-      }
+       const workflow = this.workflows[workflowIndex];
+       if (workflow.categories.length === 0 || workflow.items.length === 0) {
+         this.showNotification('kein Workflow wurde erstellt, erstlle ein workflow');
+         return;
+       }
 
-      const categoryIds = workflow.items.map(item => item.categoryId).sort((a, b) => a - b);
-      let expectedCategoryId = 0;
-      for (let i = 0; i < categoryIds.length; i++) {
-        if (categoryIds[i] !== expectedCategoryId) {
-          this.showNotification(`Inkonsistente Kategorie-Reihenfolge: Es wird erwartet, dass die Kategorie mit ID ${expectedCategoryId} existiert, gefunden wurde aber ID ${categoryIds[i]}.`);
-          return;
-        }
-        if (i < categoryIds.length - 1 && categoryIds[i] !== categoryIds[i + 1]) {
-          expectedCategoryId++;
-        }
-      }
-      console.log("workflow: check",workflow);
-      let allValuesSet = true;
-      let pdfMissing = false;
-      let objectsMissing = false;
-      let applicantFound = false;
-      for (const category of workflow.categories) {
-        for (const item of workflow.items.filter(x => x.categoryId === category.id)) {
-          console.log("pdfLink", item.pdf);
-          if (!item.title || !item.pdf) {
-            allValuesSet = false;
-            if (!item.pdf) {
-              pdfMissing = true;
-            }
-          }
-          if (item.objects.length === 0) {
-            objectsMissing = true;
-          }
-          if (item.objects.some(obj => obj.applicant)) {
-            applicantFound = true;
-          }
-        }
-        if (!allValuesSet) break;
-      }
+       const categoryIds = workflow.items.map(item => item.categoryId).sort((a, b) => a - b);
+       let expectedCategoryId = 0;
+       for (let i = 0; i < categoryIds.length; i++) {
+         if (categoryIds[i] !== expectedCategoryId) {
+           this.showNotification(`Inkonsistente Kategorie-Reihenfolge: Es wird erwartet, dass die Kategorie mit ID ${expectedCategoryId} existiert, gefunden wurde aber ID ${categoryIds[i]}.`);
+           return;
+         }
+         if (i < categoryIds.length - 1 && categoryIds[i] !== categoryIds[i + 1]) {
+           expectedCategoryId++;
+         }
+       }
+       console.log("workflow: check", workflow);
+       let allValuesSet = true;
+       let pdfMissing = false;
+       let objectsMissing = false;
+       let applicantFound = false;
+       for (const category of workflow.categories) {
+         for (const item of workflow.items.filter(x => x.categoryId === category.id)) {
+           console.log("pdfLink", item.pdf);
+           if (!item.title || !item.pdf) {
+             allValuesSet = false;
+             if (!item.pdf) {
+               pdfMissing = true;
+             }
+           }
+           if (item.objects.length === 0) {
+             objectsMissing = true;
+           }
+           if (item.objects.some(obj => obj.applicant)) {
+             applicantFound = true;
+           }
+         }
+         if (!allValuesSet) break;
+       }
 
-      if (!allValuesSet) {
+       if (!allValuesSet) {
 
-        if (pdfMissing) {
-          this.showNotification("Alle Workflow-Elemente benötigen einen PDF-Link. Bitte laden sie fehlende PDF's hoch.");
-        }
-        if (objectsMissing) {
-          this.showNotification("Jedes Workflowelement muss mindestens eine Rolle haben");
-        } else {
-          //showNotification("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du speicherst.");
-        }
-      } else if (!applicantFound) { // Überprüfung, ob ein Applicant vorhanden ist
-        this.showNotification("Mindestens ein Objekt muss als 'Applicant' markiert sein.");
-      } else {
-        //=> Formularzuweisung
-        store.commit('setWorkflow',this.curWorkflow)
-        this.$router.push('/pdfWorkflow')
-      }
-    },
+         if (pdfMissing) {
+           this.showNotification("Alle Workflow-Elemente benötigen einen PDF-Link. Bitte laden sie fehlende PDF's hoch.");
+         }
+         if (objectsMissing) {
+           this.showNotification("Jedes Workflowelement muss mindestens eine Rolle haben");
+         } else {
+           //showNotification("Bitte stelle sicher, dass alle Felder ausgefüllt sind, bevor du speicherst.");
+         }
+       } else if (!applicantFound) { // Überprüfung, ob ein Applicant vorhanden ist
+         this.showNotification("Mindestens ein Objekt muss als 'Applicant' markiert sein.");
+       } else {
+         //=> Formularzuweisung
+         this.curWorkflow.version += 1;
+
+         //mal eben was testen
+
+         for(const workflowElement of this.workflows[0].items){
+           console.log(workflowElement.title)
+         }
+
+
+
+
+
+         await axios.put("http://localhost:3000/workflow/updateVersion/" + this.workflowID)
+
+         store.commit('setWorkflow', this.curWorkflow)
+         this.$router.push('/pdfWorkflow')
+       }
+     },
 
   },
 

@@ -217,4 +217,10 @@ export class WorkflowService {
     async getRoleByID(workflowRoleID: number) {
         return await this.processRoleRepo.findOne({where:{id: workflowRoleID}});
     }
+
+    async updateVersion(workflowID) {
+        const workflow = await this.processRepository.findOne({where:{id: workflowID}});
+        workflow.version+=1;
+        return await this.processRepository.update(workflow.id, workflow);
+    }
 }
