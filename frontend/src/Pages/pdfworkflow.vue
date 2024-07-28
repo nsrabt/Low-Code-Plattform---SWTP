@@ -211,7 +211,8 @@ export default {
                             title: data.name,
                             isEditing: false,
                             content: data.name,
-                            dataID: data.id
+                            dataID: data.id,
+                            datatype: data.datatype
                         })
                     })
                 }
@@ -226,7 +227,8 @@ export default {
                     title: data.name,
                     isEditing: false,
                     content: data.name,
-                    dataID: data.id
+                    dataID: data.id,
+                    datatype: data.datatype
                 })
             })
         },
@@ -346,11 +348,11 @@ export default {
             event.preventDefault();
         },
         async onDropField(event, field) {
-            const datatypeFillingData = event.dataTransfer.getData('datatype');
             const text = event.dataTransfer.getData("text");
             const dataID = event.dataTransfer.getData('number');
+            const datatypeFillingData = event.dataTransfer.getData('datatype');
 
-            if (field.type === 'PDFCheckBox') {
+            if (field.type === 'PDFCheckBox' && datatypeFillingData === 'boolean') {
                 const booleanValue = text.toLowerCase() === 'true';
                 field.checked = booleanValue;
                 this.updateFieldContent(field);  // Update field content to reflect changes
@@ -411,7 +413,8 @@ export default {
                 title: name,
                 isEditing: false,
                 content: name,
-                dataID: dataID
+                dataID: dataID,
+                datatype: datatype
             };
             this.items.push(newItem);
         },
