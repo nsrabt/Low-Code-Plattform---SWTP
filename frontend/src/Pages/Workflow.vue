@@ -240,7 +240,7 @@ export default {
 
 
   methods:{
-    
+
     async loadWorkflowData() {
       try {
 
@@ -518,7 +518,7 @@ export default {
        this.isEditModalOpen = true;
 
       nextTick(() => {
-        const pdf = document.getElementById("pdf-id");
+        let pdf = document.getElementById("pdf-id");
         if (pdf) {
           pdf = '';
         }

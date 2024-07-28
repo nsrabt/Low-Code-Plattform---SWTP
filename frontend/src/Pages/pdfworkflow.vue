@@ -437,25 +437,31 @@ export default {
         },
         async submitNewItem() {
             try {
+
+
                 const res = await axios.put('http://localhost:3000/filling-data', {
                     platformID: 1,
                     name: this.newItem.name,
                     datatype: this.newItem.type,
                     isPlatformInfo: true
                 });
-
+              if(res.data){
                 const dataID = res.data.id;
 
                 const newItem = {
-                    title: this.newItem.name,
-                    isEditing: false,
-                    content: this.newItem.name,
-                    dataID: dataID,
-                    datatype: this.newItem.type
+                  title: this.newItem.name,
+                  isEditing: false,
+                  content: this.newItem.name,
+                  dataID: dataID,
+                  datatype: this.newItem.type
                 };
 
                 this.items.push(newItem);
                 this.closeAddItemModal();
+
+              } else{
+                //todo: error anzeige dass name schon existiet
+              }
             } catch (error) {
                 console.error("Error adding item:", error);
             }

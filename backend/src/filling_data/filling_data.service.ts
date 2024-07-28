@@ -17,7 +17,7 @@ export class FillingDataService {
 
     //Filling Data Configuration
     async addFillingData(addFillingDataDto: AddFillingDataDto) {
-
+    if(!await this.fillingDataRepo.exists({where: {name: addFillingDataDto.name}})){
         let fillingData = new filling_data();
         fillingData.name = addFillingDataDto.name;
         fillingData.platformid = addFillingDataDto.platformID;
@@ -25,6 +25,11 @@ export class FillingDataService {
         fillingData.isPlatforminfo = addFillingDataDto.isPlatformInfo;
 
         return await this.fillingDataRepo.save(fillingData);
+    }
+    else{
+        console.error("Name does already exist!")
+        return null;
+    }
     }
 
     async getAllFillingData(platformID:number) {
