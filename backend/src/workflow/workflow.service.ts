@@ -205,6 +205,7 @@ export class WorkflowService {
         field.workflowElementID = addFieldDto.workflowElementID;
         field.dataID = addFieldDto.dataID;
         field.processRoleID = addFieldDto.processRoleID;
+        field.fieldName = addFieldDto.name;
 
         return await this.fieldRepository.save(field);
     }

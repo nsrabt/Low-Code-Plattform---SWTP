@@ -437,13 +437,11 @@ export default {
         },
         async submitNewItem() {
             try {
-
-
                 const res = await axios.put('http://localhost:3000/filling-data', {
                     platformID: 1,
                     name: this.newItem.name,
                     datatype: this.newItem.type,
-                    isPlatformInfo: true
+                    isPlatformInfo: false
                 });
               if(res.data){
                 const dataID = res.data.id;
@@ -543,7 +541,8 @@ export default {
                 workflowElementID: this.curWorkflowElement.id,
                 dataID: dataID,
                 type: field.type,
-                processRoleID: this.curWorkflowElementRole.id
+                processRoleID: this.curWorkflowElementRole.id,
+                name:field.name
             })
         },
         async loadWorkflowElements() {

@@ -42,5 +42,10 @@ export class FillingDataController {
         return await this.fillingDataService.search(query);
     }
 
+    @Get('platformData/:id')
+    async getPlatformData(@Param('id',ParseIntPipe) id:number){
+        return await this.fillingDataService.getPlatformData(id);
+    }
+
 
 }

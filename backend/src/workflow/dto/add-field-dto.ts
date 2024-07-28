@@ -14,4 +14,7 @@ export class AddFieldDto{
     @IsNumber()
     processRoleID: number;
 
+    @IsString()
+    name: string;
+
 }

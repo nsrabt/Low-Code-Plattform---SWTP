@@ -238,6 +238,7 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
 
     async walkThroughSteps( userID: number) {
         try {
+
             const toFill:user_process_element[] = [];
 
 
@@ -270,12 +271,9 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
                 const form = document.getForm();
                 //get fields for the user:
 
-                const userFields = await this.stepFieldRepo.find({where:{processRoleID:this.userRole.workflowRoleID}});
+                const fields = await this.stepFieldRepo.find({where:{processRoleID:this.userRole.workflowRoleID}});
 
-                let fields:fields[];
-                for(const userField of userFields){
-                    fields.push(userField);
-                }
+
 
                 for (const field of fields) {
                     // Retrieve field data and user-filled data
@@ -284,10 +282,10 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
 
                     if (ufData) {
                         if (fData.datatype === 'text') {
-                            const curTextField = form.getTextField(fData.name);
+                            const curTextField = form.getTextField(field.fieldName);
                             curTextField.setText(ufData.value);
                         } else if (fData.datatype === 'check') {
-                            const curCheckbox = form.getCheckBox(fData.name);
+                            const curCheckbox = form.getCheckBox(field.fieldName);
                             if (ufData.value === 'true') curCheckbox.check();
                         }else if(fData.datatype=='picture'){
                             const nums = ufData.value.split(',').map(Number);

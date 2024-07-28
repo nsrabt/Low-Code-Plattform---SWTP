@@ -49,13 +49,14 @@
                 </div>
             </div>
         </nav>
-        <div class="lg:w-/2 p-4">
+      <div v-if="isFirstLogin" class="main-container">
+
+      <div class="lg:w-/2 p-4">
             <h1 class="text-7xl text-blue-900 ostrich-sans text-mid">Willkommen auf unserer
                 Simple-Form Plattform</h1>
             <p class="mt-4 text-2xl bold-text text-gray-700 text-mid">Bevor es losgeht, müssen sie noch ein paar Daten ausfüllen..</p>
 
         </div>
-        <div v-if="isFirstLogin" class="main-container">
             <!-- Form Section -->
             <div class="form-container">
                 <form @submit.prevent="handleSubmit">
@@ -116,14 +117,21 @@ export default {
         },
         async fetchMissingData() {
             try {
-                const response = await axios.put('http://localhost:3000/process/check');
-                this.fields = response.data.map(item => ({
+                const response = await axios.get('http://localhost:3000/filling-data/platformData/'+store.getters.getUser.id);
+                if(response.data.length > 0){
+                  this.isFirstLogin=true;
+                  this.fields = response.data.map(item => ({
                     key: item.id,
                     label: item.name,
                     value: '',
                     datatype: item.datatype,
                     name: item.name,
-                }));
+                  }));
+                }
+                else{
+                  this.$router.push('/home');
+                }
+
             } catch (error) {
                 console.error('Error fetching missing data:', error);
             }
@@ -138,20 +146,17 @@ export default {
                     });
                 }
                 this.isFirstLogin = false;
-                this.$router.push('/pdfcontrol');
+                this.$router.push('/home');
             } catch (error) {
                 console.error('Error submitting data:', error);
             }
         },
         async checkFirstLogin() {
             try {
-                const response = await axios.get('http://localhost:3000/user/first-login', {
-                    params: { userID: store.getters.getUser.id },
-                });
-                this.isFirstLogin = response.data.isFirstLogin;
-                if (this.isFirstLogin) {
+
+
                     await this.fetchMissingData();
-                }
+
             } catch (error) {
                 console.error('Error checking first login:', error);
             }

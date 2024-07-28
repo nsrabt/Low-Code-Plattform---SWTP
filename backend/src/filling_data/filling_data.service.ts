@@ -5,6 +5,7 @@ import {InjectRepository} from "@nestjs/typeorm";
 import {Like, Repository} from "typeorm";
 import {UpdateDataDto} from "./dto/UpdateDataDto";
 import {SearchDto} from "./dto/SearchDto";
+import {user_fillingdata} from "../database/user & execution/user-fillingdata";
 
 @Injectable()
 export class FillingDataService {
@@ -12,6 +13,8 @@ export class FillingDataService {
     constructor(
         @InjectRepository(filling_data)
         private fillingDataRepo: Repository<filling_data>,
+        @InjectRepository(user_fillingdata)
+        private userFillingRepo: Repository<user_fillingdata>
     ){}
 
 
@@ -73,5 +76,19 @@ export class FillingDataService {
         const rtn = await this.fillingDataRepo.find({where:{name: Like(`%${query}%`)}})
         console.log("rtn "+rtn.length)
         return rtn;
+    }
+
+    async getPlatformData(id: number) {
+        let isDefined = true;
+        const undefined :filling_data[] = [];
+        const platformInfo = await this.fillingDataRepo.find({where:{isPlatforminfo:true}});
+        for(const pInfo of platformInfo){
+            const userInfo =await this.userFillingRepo.findOne({where:{pi_id: pInfo.id, userID:id}});
+            if(!userInfo){
+                console.log(pInfo.name +" = undefined")
+                undefined.push(pInfo);
+            }
+        }
+        return undefined;
     }
 }

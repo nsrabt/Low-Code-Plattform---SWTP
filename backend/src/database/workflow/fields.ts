@@ -6,8 +6,8 @@ export class fields {
     id: number;
     @Column()
     workflowElementID:number;
-//    @Column()
-//    data: string;
+    @Column()
+    fieldName: string;
     @Column()
     dataID: number;
     @Column()
