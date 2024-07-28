@@ -1,11 +1,13 @@
-import {Body, Controller, Get, Param, ParseIntPipe, Put} from '@nestjs/common';
+import {Body, Controller, Get, Param, ParseIntPipe, Put, UseGuards} from '@nestjs/common';
 import {AddFillingDataDto} from "./dto/addFillingDataDto";
 import { UpdateDataDto } from "./dto/UpdateDataDto";
 
 import {FillingDataService} from "./filling_data.service";
+import {IsLoggedInGuard} from "../is-logged-in/is-logged-in.guard";
 import {SearchDto} from "./dto/SearchDto";
 
 @Controller('filling-data')
+@UseGuards(IsLoggedInGuard)
 export class FillingDataController {
 
     constructor(private fillingDataService: FillingDataService) {

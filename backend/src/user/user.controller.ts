@@ -1,10 +1,12 @@
-import {Body, Controller, Get, Param, ParseIntPipe, Put} from '@nestjs/common';
+import {Body, Controller, Get, Param, ParseIntPipe, Put, UseGuards} from '@nestjs/common';
 import {UpdateUserDto} from "./dto/update-user-dto";
 import {UserService} from "./user.service";
 import {AddUserDto} from "./dto/add-user-dto";
 import {ChangeRoleDto} from "./dto/change-role-dto";
+import {IsLoggedInGuard} from "../is-logged-in/is-logged-in.guard";
 
 @Controller('user')
+@UseGuards(IsLoggedInGuard)
 export class UserController {
 
 

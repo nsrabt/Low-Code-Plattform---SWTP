@@ -88,7 +88,6 @@ export class AuthService {
             const addUser = await this.ldapSearch(username);
             if (addUser) {
                 console.log(`${addUser.eMail}  ${username}`);
-
                 const newUser = await this.userService.addUser({
                     username: username,
                     eMail: addUser.eMail

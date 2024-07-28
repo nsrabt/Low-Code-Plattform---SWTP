@@ -1,10 +1,12 @@
-import {Body, Controller, Get, Param, ParseIntPipe, Put} from '@nestjs/common';
+import {Body, Controller, Get, Param, ParseIntPipe, Put, UseGuards} from '@nestjs/common';
 import {RoleService} from "./role.service";
 import {AddRoleDto} from "./dto/add-role-dto";
 import {UpdateUserDto} from "../user/dto/update-user-dto";
 import {UpdateRoleDto} from "./dto/update-role-dto";
+import {IsLoggedInGuard} from "../is-logged-in/is-logged-in.guard";
 
 @Controller('role')
+@UseGuards(IsLoggedInGuard)
 export class RoleController {
 
     constructor(private roleService: RoleService) {

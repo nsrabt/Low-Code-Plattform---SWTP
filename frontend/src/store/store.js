@@ -1,17 +1,20 @@
 import { createStore } from 'vuex';
-
+import axios from "axios";
+axios.defaults.withCredentials = true;
 const store = createStore({
     state: {
         user: JSON.parse(localStorage.getItem('user')) || null,
         workflow: JSON.parse(localStorage.getItem('workflow')) || null,
         processID: JSON.parse(localStorage.getItem('processID')) || null,
-        workflowElements: JSON.parse(localStorage.getItem('workflowElements'))||null
+        workflowElements: JSON.parse(localStorage.getItem('workflowElements'))||null,
+        isLoggedIn: false
     },
 
     mutations: {
         setUser(state, user) {
             state.user = user;
             localStorage.setItem('user', JSON.stringify(user));
+            state.isLoggedIn = !!user;
         },
         setWorkflow(state, workflow) {
             state.workflow = workflow;
@@ -27,6 +30,7 @@ const store = createStore({
         },
         clearUser(state) {
             state.user = null;
+            state.isLoggedIn = false;
             localStorage.removeItem('user');
         },
         clearWorkflow(state) {
@@ -36,7 +40,10 @@ const store = createStore({
         clearProcessID(state) {
             state.processID = null;
             localStorage.removeItem('processID');
-        }
+        },
+        setAuthStatus(state, status) {
+            state.isLoggedIn = status;
+        },
     },
     actions: {
         login({ commit }, user) {
@@ -52,8 +59,17 @@ const store = createStore({
         },
         clearProcess({ commit }) {
             commit('clearProcessID');
+        },
+        async checkAuth({ commit }) {
+            try {
+                const response = await axios.get('http://localhost:3000/auth2');
+                console.log("responseStore", response.data.isLoggedIn);
+                commit('setAuthStatus', response.data.isLoggedIn);
+            } catch (error) {
+                commit('setAuthStatus', false);
+            }
         }
-        // Weitere Aktionen können hier hinzugefügt werden
+
     },
     getters: {
         getUser(state) {
@@ -67,6 +83,9 @@ const store = createStore({
         },
         getWorkflowElements(state) {
             return state.workflowElements;
+        },
+        isLoggedIn(state) {
+            return state.isLoggedIn;
         }
     }
 });

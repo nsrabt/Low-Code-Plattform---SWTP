@@ -1,5 +1,7 @@
-import { Body, Controller, Post, Session,
-    UnauthorizedException } from '@nestjs/common';
+import {
+    Body, Controller, Get, Post, Session,
+    UnauthorizedException
+} from '@nestjs/common';
 import { SessionData } from "express-session";
 import {UserService} from "../user/user.service";
 @Controller('auth2')
@@ -12,6 +14,7 @@ export class Auth2Controller {
     async login(
         @Session() session: SessionData,
         @Body() body: { username: string, password: string },
+
     ) {
         if (body.username == 'admin' && body.password === 'sicheresPasswort') {
             session.isLoggedIn = true;
@@ -28,5 +31,11 @@ export class Auth2Controller {
     @Post('logout')
     logout(@Session() session: SessionData): void {
         session.isLoggedIn = undefined;
+    }
+    @Get('')
+    async getAuthSession(@Session() session: SessionData) {
+        session.visits = session.visits ? session.visits + 1 : 1;
+        console.log("session", session.isLoggedIn);
+        return { isLoggedIn: !!session.isLoggedIn };
     }
 }

@@ -1,14 +1,16 @@
-import {Body, Controller, Get, Param, ParseIntPipe, Put} from '@nestjs/common';
-import {ProcessService} from "./process.service";
-import {StartProcessDto} from "./dto/StartProcessDto";
-import {filledDataDto} from "./dto/putFilledDataDto";
-import {SendProcessRoleDto} from "./dto/SendProcessRoleDto";
-import {IsNumber} from "class-validator";
-import {workflow_roles} from "../database/workflow/Workflow_roles";
+    import {Body, Controller, Get, Param, ParseIntPipe, Put, UseGuards} from '@nestjs/common';
+    import {ProcessService} from "./process.service";
+    import {StartProcessDto} from "./dto/StartProcessDto";
+    import {filledDataDto} from "./dto/putFilledDataDto";
+    import {SendProcessRoleDto} from "./dto/SendProcessRoleDto";
+    import {IsNumber} from "class-validator";
+    import {workflow_roles} from "../database/workflow/Workflow_roles";
+    import {IsLoggedInGuard} from "../is-logged-in/is-logged-in.guard";
 
-@Controller('process')
-export class ProcessController {
-    constructor(private processService: ProcessService){}
+    @Controller('process')
+    @UseGuards(IsLoggedInGuard)
+    export class ProcessController {
+        constructor(private processService: ProcessService){}
 
 
 

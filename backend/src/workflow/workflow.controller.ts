@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Param, ParseIntPipe, Post, Put} from '@nestjs/common';
+import {Body, Controller, Get, Param, ParseIntPipe, Post, Put, UseGuards} from '@nestjs/common';
 import {WorkflowService} from "./workflow.service";
 import {CreateWorkflowDto} from "./dto/create-workflow-dto";
 import {StepDto} from "./dto/step-dto";
@@ -9,8 +9,10 @@ import {UpdateProcessRoleDto} from "./dto/update-process-role-dto";
 import {ChangeOrderDto} from "./dto/change-order-dto";
 import {AssignRoleDto} from './dto/assign-role-dto'
 import {AddFieldDto} from "./dto/add-field-dto";
+import {IsLoggedInGuard} from "../is-logged-in/is-logged-in.guard";
 
 @Controller('workflow')
+@UseGuards(IsLoggedInGuard)
 export class WorkflowController {
     constructor(private readonly workflowService: WorkflowService) {}
 

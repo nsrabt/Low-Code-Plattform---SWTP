@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
+import store from '../store/store.js';
+import axios from 'axios';
 
 import dashboard from "../Pages/master/dashboard.vue";
 
@@ -19,79 +21,105 @@ import Fillinglogin from "@/Pages/fillinglogin.vue";
 
 
 const routes = [
-  {
-    name: 'Dashboard',
-    path: '/',
-    component: dashboard
-  },
-  {
-    name: 'Home',
-    path: '/home',
-    component: home
-  },
-  {
-    name: 'processroles',
-    path: '/processroles',
-    component: processroles
-  },
-  {
-    name: 'Pdfcontrol',
-    path: '/pdfcontrol',
-    component: pdfcontrol
-  },
-  {
-    name: 'fillingdata',
-    path: '/fillingdata',
-    component: fillingdata
-  },
-  {
-    name: 'Pdfworkflow',
-    path: '/pdfworkflow',
-    component: pdfworkflow
-  },
-  {
-    name: 'Settings',
-    path: '/settings',
-    component: settings
-  },
-  {
-    name: 'Profile',
-    path: '/profile',
-    component: profile
-  },
-  {
-    name: 'Login',
-    path: '/login',
-    component: login
-  },
-  {
-    name: 'NewWorkflow',
-    path: '/createWorkflow',
-    component: workflow
-  },
+    {
+        name: 'Dashboard',
+        path: '/',
+        component:dashboard,
+        meta: { requiresAuth: true }
+    },
+    {
+        name: 'Home',
+        path: '/home',
+        component:home,
+        meta: { requiresAuth: true }
+    },
+    {
+        name: 'processroles',
+        path: '/processroles',
+        component:processroles,
+        meta: { requiresAuth: true }
+    },
+    {
+        name: 'Pdfcontrol',
+        path: '/pdfcontrol',
+        component:pdfcontrol,
+        meta: { requiresAuth: true }
+    },
+    {
+        name: 'fillingdata',
+        path: '/fillingdata',
+        component:fillingdata,
+        meta: { requiresAuth: true }
+    },
+    {
+        name: 'Pdfworkflow',
+        path: '/pdfworkflow',
+        component:pdfworkflow,
+        meta: { requiresAuth: true }
+    },
+    {
+        name: 'Settings',
+        path: '/settings',
+        component:settings,
+        meta: { requiresAuth: true }
+    },
+    {
+        name: 'Profile',
+        path: '/profile',
+        component:profile,
+        meta: { requiresAuth: true }
+    },
+    {
+        name: 'Login',
+        path: '/login',
+        component:login
+    },
+    {
+        name: 'NewWorkflow',
+        path: '/createWorkflow',
+        component:workflow,
+        meta: { requiresAuth: true }
+    },
+    {
+        name: 'EditWorkflow',
+        path: '/editWorkflow/:id',
+        component:workflow,
+        meta: { requiresAuth: true }
+    },
+    {
+        name: 'fillinglogin',
+        path: '/fillinglogin',
+        component: Fillinglogin,
+        meta: { requiresAuth: true }
+    },
+    {
+        name: 'ProcessOverview',
+        path: '/processOverview',
+        component:process,
+        meta: { requiresAuth: true }
+    }
+];
 
-  {
-    name: 'EditWorkflow',
-    path: '/editWorkflow/:id',
-    component: workflow
-  },
-  {
-    name: 'fillinglogin',
-    path: '/fillinglogin',
-    component: Fillinglogin
-  },
-  {
-    name: 'ProcessOverview',
-    path: '/processOverview',
-    component: process
-  }
-]
-const router = Router();
+const router = createRouter({
+    history: createWebHistory(),
+    routes,
+});
+
+router.beforeEach(async (to, from, next) => {
+    if (to.matched.some(record => record.meta.requiresAuth)) {
+        await store.dispatch('checkAuth');
+        console.log('Auth status checked');
+        if (store.getters.isLoggedIn) {
+            console.log('User is authenticated, proceeding to route');
+            next();
+        } else {
+            console.log('User is not authenticated, redirecting to login');
+            next({ name: 'Login' });
+        }
+    } else {
+        console.log('Route does not require authentication, proceeding to route');
+        next();
+    }
+});
+
 export default router;
-function Router() {
-    const router = new createRouter({
-        history: createWebHistory(),
-        routes,
-    });
-    return router;
-}
