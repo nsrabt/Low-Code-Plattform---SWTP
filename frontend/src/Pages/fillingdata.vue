@@ -114,6 +114,7 @@ export default {
             this.showDropDown = !this.showDropDown;
         },
       async fetchMissingData() {
+
         try {
           const response = await axios.put('http://localhost:3000/process/check');
           for(const res of response.data){
@@ -146,8 +147,8 @@ export default {
           this.$router.push('/pdfcontrol')
         }
     },
-    mounted() {
-        this.fetchMissingData();
+   async mounted() {
+        await this.fetchMissingData();
     }
 };
 </script>

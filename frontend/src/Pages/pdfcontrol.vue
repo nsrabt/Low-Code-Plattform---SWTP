@@ -90,6 +90,7 @@ export default {
     },
   async mounted() {
 
+
     await axios.put('http://localhost:3000/process/startProcess',{
       userID:store.getters.getUser.id,
       workflowID: store.getters.getWorkflow.id
@@ -97,7 +98,7 @@ export default {
 
 
     //show pdf's
-    const response = await axios.get('http://localhost:3000/process/allElements/'+store.getters.getProcessID)
+    const response = await axios.put('http://localhost:3000/process/startFill/'+store.getters.getUser.id)
 
 
 

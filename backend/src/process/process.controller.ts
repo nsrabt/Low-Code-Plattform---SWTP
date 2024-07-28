@@ -26,9 +26,9 @@ export class ProcessController {
 
 
     //Starts the automatic pdf filling
-    @Put('startFill')
-    async startFill(@Body()startProcessDto: StartProcessDto){
-       // return await this.processService.walkThroughSteps();
+    @Put('startFill/:id')
+    async startFill(@Param('id')userID:number){
+       return await this.processService.walkThroughSteps(userID);
     }
 
     //Returns a userProcess by its ID

@@ -128,7 +128,8 @@ export class ProcessService {
 
 
         //Save Applicant in his role
-        const applicantRole =await this.workflowRolesRepository.findOne({where:{isApplicant:true}});
+        console.log("workflowID: "+this.workflowID)
+        const applicantRole =await this.workflowRolesRepository.findOne({where:{processID:this.workflowID,isApplicant:true}});
         this.userRole.workflowRoleID = applicantRole.id;
         this.userRole.userID = this.userID;
         await this.userProcessRolesRepository.save(this.userRole);
@@ -161,14 +162,19 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
     if(!currentWorkflow.isOpen) userPro.state = 'waiting';
     else userPro.state= ''
     userPro.userID = userID;
-    await this.userProRepo.save(userPro);
-
+    const userProcessSaved = await this.userProRepo.save(userPro);
+    this.curStep =1;
     for(const workflowelem of workflowElements) {
         const userProElem = new user_process_element();
         userProElem.workflow_element_id = userPro.id;
         userProElem.done=false;
         userProElem.workflow_element_id = workflowelem.id;
+        userProElem.processID = userProcessSaved.processID;
+        userProElem.userID = userID;
+        await this.userProElemRepo.save(userProElem);
     }
+    return userPro;
+
 }
 
 
@@ -187,13 +193,15 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
         //finde alle felder die zur userRolle gehören
         const steps: workflowElement[] = [];
         const stepIds = new Set<number>(); // Set to track added step IDs
-        console.log(this.curStep + " " + this.workflowElementRoles.length);
+        console.log("sssss" + this.curStep + " " + this.workflowElementRoles.length);
 
         for (const workflowElementRole of this.workflowElementRoles) {
+            console.log("workflowElementID: "+workflowElementRole.workflowElementID)
             const step = await this.workflowElementRepository.findOne({ where: { id: workflowElementRole.workflowElementID, stepNumber: this.curStep } });
             if (step && !stepIds.has(step.id)) {
                 steps.push(step);
                 stepIds.add(step.id);
+
             }
         }
         this.workflowElements=steps;
@@ -203,7 +211,7 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
         // Durchlaufen der Schritte und Felder
         for (const step of steps) {
             const curFields = await this.stepFieldRepo.find({ where: { workflowElementID: this.workflowElementRepository.getId(step) }});
-            console.log("new Step");
+            console.log("getFields of "+this.workflowElementRepository.getId(step))
             for (const field of curFields) {
                 console.log("newField")
                 const userField = await this.userFillingRepo.findOne({ where: { pi_id: field.dataID, userID: this.userID } });
@@ -228,7 +236,7 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
 
 
 
-    async walkThroughSteps(processID: number, userID: number, up_id: number) {
+    async walkThroughSteps( userID: number) {
         try {
             const toFill:user_process_element[] = [];
 
@@ -262,11 +270,11 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
                 const form = document.getForm();
                 //get fields for the user:
 
-                const userFields = await this.fieldRolesRepository.find({where:{process_role_id:this.userRole.workflowRoleID}});
+                const userFields = await this.stepFieldRepo.find({where:{processRoleID:this.userRole.workflowRoleID}});
 
                 let fields:fields[];
                 for(const userField of userFields){
-                    fields.push(await this.stepFieldRepo.findOne({where:{id:userField.fieldID}}));
+                    fields.push(userField);
                 }
 
                 for (const field of fields) {
@@ -364,11 +372,6 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
             }
 
             await this.endFilling();
-
-
-
-
-
 
             //return an array of all user_process_steps(including PDFS). will be used to display the pdf check
             return userProSteps;
