@@ -65,8 +65,12 @@
                 <button @click="openAddItemModal" class="mt-4 p-2 bg-blue-500 text-white rounded hover:bg-blue-700">
                     Add Item
                 </button>
+                <!-- Add Signature Button -->
+                <button @click="startDrawingSignature"
+                    class="mt-4 p-2 bg-green-500 text-white rounded hover:bg-green-700">
+                    Add Signature
+                </button>
                 <!-- Draggable Items -->
-
                 <ul class="space-y-2 font-medium">
                     <li v-for="(item, index) in items.slice().reverse()" :key="index" class="draggable" draggable="true"
                         @dragstart="onDragStart($event, item)">
@@ -80,15 +84,15 @@
                             @keyup.enter="finishEditing(item)" class="p-2 rounded-lg w-full" />
                     </li>
                 </ul>
-
             </div>
         </aside>
-        <div class="p-4 sm:ml-64 relative">
+        <div class="p-4 sm:ml-60 relative">
             <div
                 class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 relative overflow-y-auto h-screen">
-                <div v-for="(page, index) in pdfPages" :key="index" class="relative mb-4">
-                    <canvas :id="'pdf-canvas-' + index" class="w-full h-auto" @dragover.prevent
-                        @drop="onDrop($event, index)"></canvas>
+                <div v-for="(page, index) in pdfPages" :key="index" class="relative mb-4"
+                    @mousedown="startDrawing($event, index)">
+                    <canvas :id="'pdf-canvas-' + index" class="w-full h-auto"></canvas>
+                    <canvas :id="'overlay-canvas-' + index" class="w-full h-auto absolute top-0 left-0"></canvas>
                     <div v-for="field in getFieldsForPage(index)" :key="field.name" class="absolute" :style="{
                         top: field.transformedTop + 'px',
                         left: field.transformedLeft + 'px',
@@ -103,10 +107,15 @@
                     </div>
                 </div>
             </div>
-            <button @click="this.buttonPressed"
+            <button @click="buttonPressed"
                 class="fixed bottom-4 right-4 p-2 bg-green-500 text-white rounded hover:bg-green-700">
                 {{ buttonValue }}
             </button>
+            <div v-if="showSignatureNotification"
+                class="fixed top-20 left-0 w-full p-4 bg-yellow-300 text-black text-lg font-semibold text-center shadow-lg">
+                Wo soll die Unterschrift hinkommen? Halte die rechte Maustaste gedrückt und ziehe ein Rechteck. Lass die
+                Taste los, wenn das Rechteck gezeichnet ist.
+            </div>
         </div>
     </div>
 
@@ -131,10 +140,13 @@
                 <button @click="closeAddItemModal"
                     class="mr-2 p-2 bg-gray-500 text-white rounded hover:bg-gray-700">Cancel</button>
                 <button @click="submitNewItem" class="p-2 bg-blue-500 text-white rounded hover:bg-blue-700">Add</button>
+
             </div>
         </div>
     </div>
 </template>
+
+
 
 <script>
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/build/pdf";
@@ -173,7 +185,15 @@ export default {
             newItem: {
                 name: '',
                 type: 'string'
-            }
+            },
+            isDrawing: false,
+            startX: 0,
+            startY: 0,
+            currentPage: null,
+            overlayCanvas: null,
+            scaleX: 1,
+            scaleY: 1,
+            showSignatureNotification: false
         };
     },
     watch: {
@@ -219,6 +239,58 @@ export default {
             } catch (error) {
                 console.error("Error searching items:", error);
             }
+        },
+        startDrawingSignature() {
+            this.isDrawing = true;
+            this.showSignatureNotification = true;
+        },
+        startDrawing(event, pageIndex) {
+            if (!this.isDrawing) return;
+            this.currentPage = pageIndex;
+            this.overlayCanvas = document.getElementById(`overlay-canvas-${pageIndex}`);
+            const pdfCanvas = document.getElementById(`pdf-canvas-${pageIndex}`);
+            const rect = this.overlayCanvas.getBoundingClientRect();
+            const pdfRect = pdfCanvas.getBoundingClientRect();
+            this.scaleX = pdfCanvas.width / pdfRect.width;
+            this.scaleY = pdfCanvas.height / pdfRect.height;
+            this.startX = (event.clientX - rect.left) * this.scaleX;
+            this.startY = (event.clientY - rect.top) * this.scaleY;
+
+            document.addEventListener('mousemove', this.drawSignatureBox);
+            document.addEventListener('mouseup', this.finishDrawing);
+        },
+        finishDrawing(event) {
+            if (!this.isDrawing || !this.overlayCanvas) return;
+            const rect = this.overlayCanvas.getBoundingClientRect();
+            const endX = (event.clientX - rect.left) * this.scaleX;
+            const endY = (event.clientY - rect.top) * this.scaleY;
+            const width = endX - this.startX;
+            const height = endY - this.startY;
+
+            // Add the signature field to the pdfFields array
+            this.pdfFields.push({
+                name: `signature_${Date.now()}`,
+                page: parseInt(this.currentPage) + 1,
+                top: this.startY / this.scaleY,
+                left: this.startX / this.scaleX,
+                width: width / this.scaleX,
+                height: height / this.scaleY,
+                transformedTop: this.startY / this.scaleY,
+                transformedLeft: this.startX / this.scaleX,
+                transformedWidth: width / this.scaleX,
+                transformedHeight: height / this.scaleY,
+                value: "",
+                checked: false,
+                type: "signature",
+                dataID: 0,
+                isFilled: false
+            });
+
+            this.isDrawing = false;
+            this.showSignatureNotification = false;
+            this.overlayCanvas = null;
+            document.removeEventListener('mousemove', this.drawSignatureBox);
+            document.removeEventListener('mouseup', this.finishDrawing);
         },
         async showAll() {
             const response = await axios.get('http://localhost:3000/filling-data/all/' + 1);
