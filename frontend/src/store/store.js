@@ -48,9 +48,6 @@ const store = createStore({
         setRole(state,role){
             state.role = role;
         }
-        setSessionExpired(state, status) {
-            state.sessionExpired = status;
-        }
     },
     actions: {
         login({ commit }, user) {
@@ -69,7 +66,7 @@ const store = createStore({
         },
         async checkAuth({ commit }) {
             try {
-                const response = await axios.get('http://localhost:3000/auth');
+                const response = await axios.get('http://localhost:3000/auth2');
                 console.log("responseStore", response.data.isLoggedIn);
                 commit('setAuthStatus', response.data.isLoggedIn);
                 return response.data;
@@ -100,7 +97,6 @@ const store = createStore({
             return state.role;
         }
         },
-    }
 });
 /*
 // Eventlistener für das Window unload Event hinzufügen

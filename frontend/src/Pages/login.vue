@@ -191,7 +191,7 @@ export default {
           localStorage.removeItem('password');
         }
 
-        const response = await axios.post(`http://localhost:3000/auth/login`, {
+        const response = await axios.post(`http://localhost:3000/auth2/login`, {
           username: this.email,
           password: this.password,
         });
