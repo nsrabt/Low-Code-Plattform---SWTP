@@ -73,16 +73,13 @@ import "pdfjs-dist/build/pdf.worker.mjs";
 import axios from "axios";
 import * as pdfjsLib from "pdfjs-dist";
 import store from "@/store/store.js";
+import {PDFDocument as PdfDocument} from "pdf-lib";
 
 export default {
     data() {
         return {
             pdfFiles: [
-                {
-                    id: 1,
-                    name: 'Sample PDF 1',
-                    url: 'testblatt.pdf'
-                },
+
 
             ],
             showDropDown: false
@@ -90,15 +87,36 @@ export default {
     },
   async mounted() {
 
-
+/*
     await axios.put('http://localhost:3000/process/startProcess',{
       userID:store.getters.getUser.id,
       workflowID: store.getters.getWorkflow.id
     })
-
+*/
 
     //show pdf's
-    const response = await axios.put('http://localhost:3000/process/startFill/'+store.getters.getUser.id)
+    const response = await axios.put('http://localhost:3000/process/startFill',
+    {
+
+        userID: store.getters.getUser.id,
+
+        workflowID: store.getters.getWorkflow.id,
+
+        isNew: true
+
+      }
+    )
+    let id =1;
+  for(const proElem of response.data){
+    this.pdfFiles.push(
+        {
+          id: id++,
+          name: 'Sample PDF 1',
+          url: "data:application/pdf;base64,"+proElem.data
+        },
+    )
+  }
+
 
 
 

@@ -78,6 +78,7 @@ export class UserService {
                 const newUser = new users();
                 newUser.username = username;
                 newUser.eMail = email;
+                newUser.name = addUserDto.name;
 
                 //no profile-picture selected => default profile-picture
                 const imagePath = path.join(__dirname, '..', '..', 'src', 'media', 'pictures', 'testavatar.jpg');
@@ -146,6 +147,7 @@ export class UserService {
             username: username,
             eMail: email,
             profilePicture: profilePicture,
+            name: updateUserDto.name
         })
         return updatedUser;
     }
@@ -175,7 +177,9 @@ export class UserService {
 
     //getRole
     async getRoleOfUser(id: number){
-        return await this.userPlatformRolesRepository.findOne({where:{userID: id}});
+        const uPlaRole = await this.userPlatformRolesRepository.findOne({where:{userID: id}});
+        const role = await this.rolesRepository.findOne({where:{id: uPlaRole.roleID}})
+        return role;
     }
 
     async getUserOfRole(roleID: number) {

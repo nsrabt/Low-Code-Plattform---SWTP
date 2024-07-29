@@ -1,6 +1,8 @@
 import {Injectable} from '@nestjs/common';
 import {StartProcessDto} from "./dto/StartProcessDto";
 import {InjectRepository} from "@nestjs/typeorm";
+import {  Not } from 'typeorm';
+
 import {workflow} from "../database/workflow/Workflow";
 import {Repository} from "typeorm";
 import {workflowElement} from "../database/workflow/WorkflowElement";
@@ -27,6 +29,7 @@ import {not} from "rxjs/internal/util/not";
 import {FillingDataController} from "../filling_data/filling_data.controller"
 import {FillingDataService} from "../filling_data/filling_data.service";
 import {ContinueProcessDto} from "./dto/ContinueProcessDto";
+import {constraintToString} from "class-validator/types/validation/ValidationUtils";
 
 @Injectable()
 export class ProcessService {
@@ -90,7 +93,7 @@ export class ProcessService {
 
     //This method will be called when the process runs for the first time
     async startProcess(startProcessDto: StartProcessDto) {
-
+        console.log("startProcess")
         this.workflowID = startProcessDto.workflowID;
         this.userID = startProcessDto.userID;
         this.curStep=1;
@@ -127,12 +130,18 @@ export class ProcessService {
 
 
 
+
         //Save Applicant in his role
-        console.log("workflowID: "+this.workflowID)
         const applicantRole =await this.workflowRolesRepository.findOne({where:{processID:this.workflowID,isApplicant:true}});
-        this.userRole.workflowRoleID = applicantRole.id;
-        this.userRole.userID = this.userID;
-        await this.userProcessRolesRepository.save(this.userRole);
+        const userRole = new user_process_roles();
+        userRole.workflowRoleID = applicantRole.id;
+        userRole.userID = startProcessDto.userID;
+        userRole.processID = this.curProcess.id;
+        console.log("saving userProcessRole  " + userRole.processID)
+        await this.userProcessRolesRepository.save(userRole);
+        this.userRole = userRole;
+
+
 
 
 
@@ -236,21 +245,27 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
 
 
 
-    async walkThroughSteps( userID: number) {
-        try {
+    async walkThroughSteps(startProcessDto: StartProcessDto) {
+
+      //  try {
 
             const toFill:user_process_element[] = [];
 
 
             // Welche Rolle hat user in dem prozess
-            const workflowElementRole = await this.workflowElementRolesRepository.find({where:{workflowRoleID: this.userRole.workflowRoleID}});
+            console.log("workflowRoleID "+this.userRole.workflowRoleID)
+            console.log("workflowID: "+this.workflowID)
+            const workflowElementRole = await this.workflowElementRolesRepository.find({where:{workflowRoleID: startProcessDto.workflowID}});
             let isOver:boolean = true;
 
             for(const role of workflowElementRole){
                 const workflowElement = await this.proElemRepo.findOne({where:{workflowElementID:role.workflowElementID}});
 
                 if(role.position == workflowElement.phase){
-                    toFill.push(await this.userProElemRepo.findOne({where:{workflow_element_id: workflowElement.id}}));
+                    const userPro = await this.userProElemRepo.findOne({where:{workflow_element_id: workflowElement.id}});
+                    if(userPro.userID !== startProcessDto.userID){
+                        throw new Error("current user is not ready yet");
+                    }
                 }
 
             }
@@ -261,33 +276,37 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
 
             let workflowElements = this.workflowElements;
             workflowElements = workflowElements.sort((a, b) => a.stepNumber - b.stepNumber);
-            let userProSteps: user_process_element[];
+            let processElements: process_element[] = [];
 
 
 
             for (const workflowElement of workflowElements) {
                 // Load document and form
-                const document = await PDFDocument.load(workflowElement.data);
+                const document = await PDFDocument.load(workflowElement.data,{ ignoreEncryption: true });
                 const form = document.getForm();
                 //get fields for the user:
-
+                console.log("workflowElement "+workflowElement.title)
+                console.log(this.userRole.workflowRoleID)
                 const fields = await this.stepFieldRepo.find({where:{processRoleID:this.userRole.workflowRoleID}});
-
+                console.log("fieldsLength "+fields.length)
 
 
                 for (const field of fields) {
+
                     // Retrieve field data and user-filled data
                     const fData = await this.fillingRepo.findOne({ where: { id: field.dataID } });
-                    const ufData = await this.userFillingRepo.findOne({ where: { pi_id: field.dataID, userID: userID } });
-
+                    const ufData = await this.userFillingRepo.findOne({ where: { pi_id: field.dataID, userID: startProcessDto.userID } });
+                    console.log(fData.datatype)
                     if (ufData) {
-                        if (fData.datatype === 'text') {
+                        if (fData.datatype === 'string') {
+                            console.log("schreibe rein allda")
                             const curTextField = form.getTextField(field.fieldName);
-                            curTextField.setText(ufData.value);
-                        } else if (fData.datatype === 'check') {
+                            form.getTextField(field.fieldName).setText(ufData.value);
+
+                        } else if (fData.datatype === 'boolean') {
                             const curCheckbox = form.getCheckBox(field.fieldName);
                             if (ufData.value === 'true') curCheckbox.check();
-                        }else if(fData.datatype=='picture'){
+                        }else if(fData.datatype=='photo'){
                             const nums = ufData.value.split(',').map(Number);
                             //wir verwenden value als string welches ein array enthält
                             const pic = await document.embedPng(ufData.value);
@@ -318,20 +337,23 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
                 const processElem = await this.proElemRepo.findOne({where:{workflowElementID: workflowElement.id, processID: this.curProcess.id }})
                 processElem.data = await document.saveAsBase64();
                 processElem.phase +=1;
-
                 await this.proElemRepo.save(processElem);
+                processElements.push(processElem);
 
                 //workflow Role of current phase
                 const workflowRole = await this.workflowElementRolesRepository.findOne({where:{workflowElementID:workflowElement.id,position: processElem.phase}});
+                console.log(workflowRole.workflowRoleID +" is on pos "+workflowRole.position)
+                console.log("curProcess: "+this.curProcess.id + "    "+workflowRole.workflowRoleID + "   " + startProcessDto.userID)
                 //user_process_role of current phase
                 const processRole = await this.userProcessRolesRepository.findOne({where:{processID: this.curProcess.id,workflowRoleID:workflowRole.workflowRoleID}});
                 //The user object of the person who's turn is now
+                console.log(processRole.userID)
                 const newPerson = await this.userRepo.findOne({where:{id: processRole.userID}});
                 //user Process of new person: needed to change state to: todo
                 const userProcess = await this.userProRepo.findOne({where:{processID: processRole.processID, userID: newPerson.id}});
 
                 //some data for notification
-                const workflow = await this.workflowRepository.findOne({where:{}})
+                const workflow = await this.workflowRepository.findOne({where:{id:startProcessDto.workflowID}})
                 const applicant = await this.workflowRolesRepository.findOne({where:{isApplicant:true}});
                 const applicantuserpro = await this.userProcessRolesRepository.findOne({where:{workflowRoleID: applicant.id}})
                 const applicantUser = await this.userRepo.findOne({where:{id: applicantuserpro.userID}});
@@ -341,12 +363,13 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
                 if(processRole){
                     isOver=false;
                     //there is another phase
+                    if(userProcess){
+                        this.todoList.push(userProcess);
 
-                    this.todoList.push(userProcess);
+                    }
                     //todo: select correct link
                     await this.pushNotification(newPerson.id, "Sie sind nun an der Reihe, den Prozess "+workflow.title+" von "+applicantUser.username+" zu bearbeiten!", '')
                 }
-
 
 
             }
@@ -364,7 +387,10 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
                 const processID =this.curProcess.id;
                 const users =await this.userProRepo.find({where:{processID:processID}});
                 for(const user of users){
-                    this.doneList.push(user);
+                    if(user){
+                        this.doneList.push(user);
+
+                    }
                 }
 
             }
@@ -372,11 +398,11 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
             await this.endFilling();
 
             //return an array of all user_process_steps(including PDFS). will be used to display the pdf check
-            return userProSteps;
+            return processElements;
 
-        } catch (error) {
-            console.error(`Error processing steps: ${error.message}`);
-        }
+  //      } catch (error) {
+    //        throw new Error(error);
+            //  }
     }
 
 
@@ -385,7 +411,9 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
 
         //walk through todolist
         for(const todo of this.todoList){
-            await this.changeState(todo.id,'todo');
+            console.log("todo id alla " + this.userProRepo.getId(todo))
+            const todoID = this.userProRepo.getId(todo);
+            await this.changeState(todoID,'todo');
         }
 
         for(const done of this.doneList){
@@ -400,6 +428,7 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
     async changeState(userProID: number, state: string){
         const userProcess = await this.userProRepo.findOne({where:{id:userProID}})
         userProcess.state = state;
+        console.log(userProID)
         return await this.userProRepo.update(userProID,userProcess);
     }
 
@@ -428,11 +457,13 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
             throw new Error("Process-role has already a user assigned\n"+err);
         }
 
-
+        console.log("HAlloo ich bin in save alla")
         const processRole = new user_process_roles();
         processRole.userID = sendProcessRoleDto.userID;
         processRole.processID = this.curProcess.id;
         processRole.workflowRoleID = sendProcessRoleDto.workflowRoleID;
+
+
 
 
         const user = await this.userRepo.findOne({where:{id:this.userID}});
@@ -472,16 +503,26 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
         return await this.userProRepo.find({where:{userID:userID,state: 'done'}});
     }
 
-    async getAllPublic(){
+    async getAllPublic(roleID: number){
         console.log("test");
         try {
             const allPublic = await this.workflowRepository.find();
+            const rtnWorkflows: workflow[] = [];
+            for(const workflow of allPublic){
+                const applicant = await this.workflowRolesRepository.findOne({where:{isApplicant:true, processID: workflow.id}})
+                if(applicant){
+                    if(applicant.roleID === roleID){
+                        rtnWorkflows.push(workflow);
+                    }
+                }
+
+            }
             if (allPublic.length > 0) {
                 console.log(allPublic[0].title);
             } else {
                 console.log('Array "allPublic" is empty.');
             }
-            return allPublic;
+            return rtnWorkflows;
         } catch (error) {
             console.error('Error fetching data:', error);
             return []; // oder anderen angemessenen Rückgabewert für Fehlerbehandlung

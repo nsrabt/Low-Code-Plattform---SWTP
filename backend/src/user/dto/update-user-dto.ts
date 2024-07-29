@@ -11,4 +11,7 @@ export class UpdateUserDto {
 
     @IsString()
     profilePicture: string;
+
+    @IsString()
+    name: string;
 }

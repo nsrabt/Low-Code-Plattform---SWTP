@@ -13,4 +13,7 @@ export class users{
 
     @Column()
     eMail: string;
+
+    @Column()
+    name: string;
 }
