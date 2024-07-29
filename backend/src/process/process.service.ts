@@ -167,7 +167,7 @@ async createWorkflowElements(workflowID: number){
 async createUserProcess(currentWorkflow: workflow, userID: number, workflowElements: workflowElement[]){
     // Erstellen eines neuen Benutzerprozesses + BenutzerProzessElemente
     const userPro = new user_process();
-    userPro.processID = this.workflowID;
+    userPro.processID = this.curProcess.id;
     if(!currentWorkflow.isOpen) userPro.state = 'waiting';
     else userPro.state= ''
     userPro.userID = userID;
@@ -323,6 +323,10 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
                                 width: width,
                                 height: height
                             });
+                        }else if(fData.datatype === 'date'){
+                            const curTextField = form.getTextField(field.fieldName);
+                            form.getTextField(field.fieldName).setText(ufData.value.toString());
+
                         }
                         console.log(ufData.value);
                     } else {
@@ -350,15 +354,19 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
                 const newPerson = await this.userRepo.findOne({where:{id: processRole.userID}});
                 //user Process of new person: needed to change state to: todo
 
-
+                console.log("processID: "+ processRole.processID + "    userID:  "+ newPerson.id)
                 const userProcess = await this.userProRepo.findOne({where:{processID: processRole.processID, userID: newPerson.id}});
 
                 //some data for notification
                 const workflow = await this.workflowRepository.findOne({where:{id:startProcessDto.workflowID}})
-                const applicant = await this.workflowRolesRepository.findOne({where:{isApplicant:true}});
-                const applicantuserpro = await this.userProcessRolesRepository.findOne({where:{workflowRoleID: applicant.id}})
-                const applicantUser = await this.userRepo.findOne({where:{id: applicantuserpro.userID}});
+                const applicant = await this.workflowRolesRepository.findOne({where:{isApplicant:true, processID:workflow.id}});
+                console.log("applicant" + applicant.id)
 
+                const applicantuserpro = await this.userProcessRolesRepository.findOne({where:{processID: processElem.processID, workflowRoleID: applicant.id}})
+                console.log("applicantUser" + applicantuserpro.userID)
+
+                const applicantUser = await this.userRepo.findOne({where:{id: applicantuserpro.userID}});
+                console.log("applicantUser" + applicantUser)
 
                 //if there's another role who has to fill out stuff in the current workflow element
                 if(processRole){
@@ -366,7 +374,6 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
                     //there is another phase
                     if(userProcess){
                         this.todoList.push(userProcess);
-
                     }
                     //todo: select correct link
                     await this.pushNotification(newPerson.id, "Sie sind nun an der Reihe, den Prozess "+workflow.title+" von "+applicantUser.username+" zu bearbeiten!", '')
@@ -409,7 +416,7 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
 
 
     async endFilling(){
-
+        console.log("endfilling")
         //walk through todolist
         for(const todo of this.todoList){
             console.log("todo id alla " + this.userProRepo.getId(todo))
@@ -430,7 +437,9 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
         const userProcess = await this.userProRepo.findOne({where:{id:userProID}})
         userProcess.state = state;
         console.log(userProID)
-        return await this.userProRepo.update(userProID,userProcess);
+        const result = await this.userProRepo.update(userProID,userProcess);
+        console.log("saving state went "+result)
+        return result;
     }
 
     async saveMissingData(filledDataDto: filledDataDto) {

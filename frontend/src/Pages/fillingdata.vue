@@ -69,8 +69,8 @@
                   <input :id="field.key" v-model="field.value" type="text"
                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
                 </template>
-                <template v-else-if="field.datatype.trim() === 'picture'">
-                  <input :id="field.key" @change="onFileChange($event, field)" type="file"
+                <template v-else-if="field.datatype.trim() === 'photo'">
+                  <input :id="field.key" @input="onFileChange($event, field)" type="file"
                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
                   <img v-if="field.value" :src="field.value" alt="Uploaded Image" class="mt-2 max-h-64" />
                 </template>

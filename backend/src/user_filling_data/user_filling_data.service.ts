@@ -49,15 +49,9 @@ export class UserFillingDataService {
         return await this.userFillingDataRepo.save(existingEntry);
     }
 
-    async getAllFromUser(userID: number, platformID: number) {
-        const allPlatformData = await this.fillingDataRepo.find({where:{platformid:platformID}});
-
-        let allUserPlatformData: user_fillingdata[];
-
-        for(const data of allPlatformData) {
-            allUserPlatformData.push(await this.userFillingDataRepo.findOne({where:{pi_id : data.id, userID: userID}}));
-        }
-        return allUserPlatformData;
+    async getAllFromUser(userID: number) {
+        console.log("returning all userfilling of user" + userID)
+        return await this.userFillingDataRepo.find({where:{userID:userID}});
     }
 
     async getSpecificData(getSpecificDataDto: GetSpecificDataDto) {

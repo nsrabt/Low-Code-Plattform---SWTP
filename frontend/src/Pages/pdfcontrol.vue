@@ -108,6 +108,7 @@ export default {
     )
     let id =1;
   for(const proElem of response.data){
+    console.log(proElem.data)
     this.pdfFiles.push(
         {
           id: id++,

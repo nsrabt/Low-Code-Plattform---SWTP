@@ -91,4 +91,22 @@ export class FillingDataService {
         }
         return undefined;
     }
+
+    async getUndefinedData(id: number) {
+        const userdata = await this.userFillingRepo.find({where:{userID: id}});
+        const allFillingData = await this.getAllFillingData(1);
+
+        for (const userData of userdata) {
+            for (let i = 0; i < allFillingData.length; i++) {
+                if (allFillingData[i].id === userData.pi_id) {
+                    console.log("found one");
+                    allFillingData.splice(i, 1); // Element entfernen
+                    i--; // Index anpassen, da das Array kürzer wird
+                }
+            }
+        }
+        return allFillingData;
+
+
+    }
 }

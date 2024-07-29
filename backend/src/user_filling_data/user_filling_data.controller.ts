@@ -22,9 +22,9 @@ export class UserFillingDataController {
     async updateData(@Body() updateUserDataDto: UpdateUserDataDto){
         return await this.service.updateData(updateUserDataDto);
     }
-    @Get('getAll')
-    async getAllData(@Body() getAll: GetAllFromUserDto){
-        return await this.service.getAllFromUser(getAll.userID, getAll.platformID);
+    @Get('getAll/:id')
+    async getAllData(@Param('id',ParseIntPipe) id:number){
+        return await this.service.getAllFromUser(id);
     }
 
     @Get('getSpecificData')

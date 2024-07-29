@@ -49,5 +49,8 @@ export class FillingDataController {
         return await this.fillingDataService.getPlatformData(id);
     }
 
-
+    @Get('undefindedData/:id')
+    async getUndefinedData(@Param('id',ParseIntPipe) id:number){
+        return await this.fillingDataService.getUndefinedData(id);
+    }
 }
