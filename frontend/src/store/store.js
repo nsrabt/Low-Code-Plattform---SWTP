@@ -48,7 +48,11 @@ const store = createStore({
         setRole(state,role){
             state.role = role;
         }
-    },
+        },
+        setSessionExpired(state, status) {
+            state.sessionExpired = status;
+        },
+
     actions: {
         login({ commit }, user) {
             commit('setUser', user);
@@ -78,26 +82,39 @@ const store = createStore({
 
     },
     getters: {
-        getUser(state) {
+        getUser(state)
+        {
             return state.user;
-        },
-        getWorkflow(state) {
+        }
+    ,
+        getWorkflow(state)
+        {
             return state.workflow;
-        },
-        getProcessID(state) {
+        }
+    ,
+        getProcessID(state)
+        {
             return state.processID;
-        },
-        getWorkflowElements(state) {
+        }
+    ,
+        getWorkflowElements(state)
+        {
             return state.workflowElements;
-        },
-        isLoggedIn(state) {
+        }
+    ,
+        isLoggedIn(state)
+        {
             return state.isLoggedIn;
-        },
-        getRole(state){
+        }
+    ,
+        getRole(state)
+        {
             return state.role;
         }
-        },
+
+    },
 });
+
 /*
 // Eventlistener für das Window unload Event hinzufügen
 window.addEventListener('beforeunload', () => {
