@@ -200,8 +200,13 @@ export default {
         const user = response.data;
         console.log("user", user);
         userID = user.id;
+
+        const roleResponse = await axios.get('http://localhost:3000/user/roleOfUser/'+userID);
+
+
         if (response.status === 201) {
           this.store.commit('setUser', user);
+          this.store.commit('setRole', roleResponse.data);
           this.$router.push('/home');
         } else {
           console.error('Authentication failed');

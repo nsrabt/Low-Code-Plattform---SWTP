@@ -190,7 +190,7 @@ export default {
               const doneResponse = await axios.get(`http://localhost:3000/process/done/${userID}`);
               this.doneProcesses = doneResponse.data;
 
-              const publicResponse = await axios.get('http://localhost:3000/process/allPublic');
+              const publicResponse = await axios.get('http://localhost:3000/process/allPublic/'+store.getters.getRole.id);
               this.publicProcesses = publicResponse.data;
 
 

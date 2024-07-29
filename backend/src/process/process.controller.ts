@@ -28,9 +28,9 @@
 
 
     //Starts the automatic pdf filling
-    @Put('startFill/:id')
-    async startFill(@Param('id')userID:number){
-       return await this.processService.walkThroughSteps(userID);
+    @Put('startFill')
+    async startFill(@Body()startFillDto: StartProcessDto){
+       return await this.processService.walkThroughSteps(startFillDto);
     }
 
     //Returns a userProcess by its ID
@@ -57,12 +57,13 @@
     //if null => workflow role already has a user assigned to it
     @Put('sendProcessRole')
     async sendProcessRole(@Body()sendProcessRoleDto: SendProcessRoleDto){
+        console.log("sendProcessRole  "+ sendProcessRoleDto.userID)
         return await this.processService.saveProcessRole(sendProcessRoleDto);
     }
 
-    @Get('allPublic')
-    async getAllPublicProcesses(){
-        return await this.processService.getAllPublic();
+    @Get('allPublic/:id')
+    async getAllPublicProcesses(@Param('id',ParseIntPipe) roleID:number){
+        return await this.processService.getAllPublic(roleID);
     }
     //Returns the PROCESS ROLE by it's id
     @Get('role/:id')

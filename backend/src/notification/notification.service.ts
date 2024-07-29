@@ -25,4 +25,7 @@ export class NotificationService {
         return await this.notificationRepo.find({where:{userID:userID}});
     }
 
+    async deleteNotification(notificationID: number) {
+        return await this.notificationRepo.delete(notificationID);
+    }
 }

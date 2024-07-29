@@ -4,7 +4,7 @@ import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 export class user_process_roles {
     @PrimaryGeneratedColumn()
     id:number;
-    @PrimaryGeneratedColumn()
+    @Column()
     processID:number;
     @Column()
     workflowRoleID:number;

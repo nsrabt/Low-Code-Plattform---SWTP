@@ -29,6 +29,7 @@
 import { ref, computed } from 'vue';
 import { useStore } from 'vuex';
 import navbar from '@/components/navbar.vue';
+import axios from "axios";
 
 
 const store = useStore();
@@ -38,15 +39,41 @@ const toggleDrop = () => {
     showDropDown.value = !showDropDown.value;
 };
 
-const boxes = ref([
-    { name: 'Prozess-Übersicht', description: 'Übersicht der Prozesse', link: '/processOverview', photo: '/process.png' },
-    { name: 'Workflow Management', description: 'Koordination und Automatisierung von Arbeitsabläufen zur Steigerung der Effizienz.', link: '/createWorkflow', photo: '/Workflow.png' },
-    { name: 'Plattform Manager', description: 'Verwaltung und Bearbeitung von den Plattformen', link: '/page3', photo: '/Plattform.png' },
-    { name: 'Ausfülldaten Verwaltung', description: 'Verwaltung und Speicherung von den Benutzerdaten.', link: '/settings', photo: '/einstellung.png' },
-]);
+
+
+const boxes = ref([]);
+
+const permissions = store.getters.getRole.permissions;
+for(const permission of permissions){
+  console.log(permission)
+}
+
+if(permissions[0] === true){
+  boxes.value.push
+  (
+      { name: 'Prozess-Übersicht', description: 'Übersicht der Prozesse', link: '/processOverview', photo: '/process.png' },
+      { name: 'Ausfülldaten Verwaltung', description: 'Verwaltung und Speicherung von den Benutzerdaten.', link: '/settings', photo: '/einstellung.png' },
+
+  )
+}
+if(permissions[1] === true){
+  boxes.value.push
+  (
+      { name: 'Plattform Manager', description: 'Verwaltung und Bearbeitung von den Plattformen', link: '/page3', photo: '/Plattform.png' },
+  )
+}
+if(permissions[2]=== true){
+  boxes.value.push
+  (
+  { name: 'Workflow Management', description: 'Koordination und Automatisierung von Arbeitsabläufen zur Steigerung der Effizienz.', link: '/createWorkflow', photo: '/Workflow.png' },
+  )
+}
+
 
 const userProfilePicture = computed(() => store.getters.getUser.profilePicture || '/default-profile.jpg');
 const userName = computed(() => store.getters.getUser.name || 'Admin'); // Assuming there's a name property in the user data
+
+
 </script>
 
 <style lang="scss" scoped>

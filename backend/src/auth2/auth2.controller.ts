@@ -21,7 +21,8 @@ export class Auth2Controller {
             console.log(body.username)
             return await this.userService.addUser({
                 username: body.username,
-                eMail: "fake@mail.com"
+                eMail: "fake@mail.com",
+
             })
         } else {
             throw new UnauthorizedException('Benutzername oder Passwort falsch');

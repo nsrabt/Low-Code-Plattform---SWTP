@@ -17,9 +17,9 @@ export class roles{
 
     /*
         0 => processes
-        1 => use admin dashboard
+        1 => edit platform-info
         2 => edit workflows
-        4 => edit platform-info
+        4 => Admin Dashboard
      */
     @Column("boolean", {array: true})
     permissions: boolean[];

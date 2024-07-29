@@ -608,12 +608,12 @@ export default {
             if (isSameType(field, data)) {
                 //todo: put code here if the strings are compatible
             }
-
+            console.log(this.curWorkflowElementRole.id)
             const response = await axios.put('http://localhost:3000/workflow/field', {
                 workflowElementID: this.curWorkflowElement.id,
                 dataID: dataID,
                 type: field.type,
-                processRoleID: this.curWorkflowElementRole.id,
+                processRoleID: this.curWorkflowElementRole.workflowRoleID,
                 name:field.name
             })
         },
@@ -649,6 +649,7 @@ export default {
                     this.workflowElementRoles.sort((a, b) => a.position - b.position);
                 }
                 res.data.forEach(elem => { console.log(elem) })
+                this.workflowElementRoles.forEach(role => console.log(role.id))
 
                 console.log("got roles")
                 if (this.curWorkflowElementRole == null) {

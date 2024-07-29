@@ -7,6 +7,7 @@ const store = createStore({
         workflow: JSON.parse(localStorage.getItem('workflow')) || null,
         processID: JSON.parse(localStorage.getItem('processID')) || null,
         workflowElements: JSON.parse(localStorage.getItem('workflowElements'))||null,
+        role: JSON.parse(localStorage.getItem('role'))||null,
         isLoggedIn: false
     },
 
@@ -44,6 +45,9 @@ const store = createStore({
         setAuthStatus(state, status) {
             state.isLoggedIn = status;
         },
+        setRole(state,role){
+            state.role = role;
+        }
         setSessionExpired(state, status) {
             state.sessionExpired = status;
         }
@@ -91,6 +95,10 @@ const store = createStore({
         },
         isLoggedIn(state) {
             return state.isLoggedIn;
+        },
+        getRole(state){
+            return state.role;
+        }
         },
     }
 });
