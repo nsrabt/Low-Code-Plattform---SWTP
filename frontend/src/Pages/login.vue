@@ -141,6 +141,9 @@
             <div v-if="showNotification" class="mt-4 notification-box bg-red-500 text-white px-4 py-2 rounded-md">
               Authentication failed. Please try again.
             </div>
+            <div v-if="showTimeoutNotification" class="mt-4 notification-box bg-orange-500 text-white px-4 py-2 rounded-md">
+              Request timed out. Please try again later.
+            </div>
           </form>
         </div>
         <div class="md:h-full max-md:mt-10 bg-[#000842] rounded-xl lg:p-12 p-8">
@@ -165,6 +168,7 @@ export default {
       rememberMe: false,
       showPassword: false,
       showNotification: false,
+      showTimeoutNotification: false,
       authRoute: 'auth' // Standardmäßig wird die 'auth' Route verwendet
     };
   },
@@ -187,7 +191,7 @@ export default {
           localStorage.removeItem('password');
         }
 
-        const response = await axios.post(`http://localhost:3000/auth2/login`, {
+        const response = await axios.post(`http://localhost:3000/auth/login`, {
           username: this.email,
           password: this.password,
         });
@@ -204,7 +208,12 @@ export default {
         }
         return response;
       } catch (error) {
-        if (this.email && this.password) {
+        if(error.response && error.response.status === 500) {
+          this.showTimeoutNotification = true; // Show timeout notification
+          setTimeout(() => {
+            this.showTimeoutNotification = false; // Hide notification after 5 seconds
+          }, 5000);
+        } else if (this.email && this.password) {
           console.error('Error during login:', error.response ? error.response.data : error);
           this.showNotification = true; // Show notification
           setTimeout(() => {

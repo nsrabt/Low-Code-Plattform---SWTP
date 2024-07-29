@@ -68,7 +68,7 @@ export class UserService {
 
             //check if user or email is already defined!
             const definedUser = await this.userRepository.findOne({where:{eMail:email, username: username}});
-            console.log("definedUser", definedUser);
+            //console.log("definedUser", definedUser);
             if(definedUser){
                 return definedUser;
             }

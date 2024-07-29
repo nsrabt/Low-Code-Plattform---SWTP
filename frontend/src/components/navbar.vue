@@ -71,7 +71,7 @@ import router from "@/router/index.js";
 
 const logout = async () => {
   try {
-    await axios.post('http://localhost:3000/auth2/logout');
+    await axios.post('http://localhost:3000/auth/logout');
     await store.dispatch('logout'); // Vuex-Store aktualisieren
     await router.push({name: 'Login'}); // Benutzer zur Login-Seite weiterleiten
   } catch (error) {

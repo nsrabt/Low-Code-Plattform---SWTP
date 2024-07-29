@@ -65,7 +65,7 @@ const store = createStore({
         },
         async checkAuth({ commit }) {
             try {
-                const response = await axios.get('http://localhost:3000/auth2');
+                const response = await axios.get('http://localhost:3000/auth');
                 console.log("responseStore", response.data.isLoggedIn);
                 commit('setAuthStatus', response.data.isLoggedIn);
                 return response.data;
