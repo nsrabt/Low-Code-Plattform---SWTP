@@ -41,9 +41,10 @@
                             class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
                             role="menuitem" tabindex="-1" id="menu-item-1">Support</a>
                         <form method="POST" action="#" role="none">
-                            <button type="submit"
-                                class="text-gray-700 block w-full px-4 py-2 text-left text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                                role="menuitem" tabindex="-1" id="menu-item-4">Logout</button>
+                          <button type="button" @click="logout"
+                                  class="text-gray-700 block w-full px-4 py-2 text-left text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
+                                  role="menuitem"
+                                  tabindex="-1" id="menu-item-4">Logout</button>
                         </form>
                     </div>
                 </div>
@@ -51,21 +52,34 @@
         </div>
     </nav>
 </template>
-        <script setup>
-        import { ref, computed } from 'vue';
-        import { useStore } from 'vuex';
+<script setup>
+import { ref, computed } from 'vue';
+import { useStore } from 'vuex';
+import axios from 'axios';
+import { useRouter } from 'vue-router';
+import router from "@/router/index.js";
 
-        const store = useStore();
+  const store = useStore();
 
-        const showDropDown = ref(false);
-        const toggleDrop = () => {
-            showDropDown.value = !showDropDown.value;
-        };
+  const showDropDown = ref(false);
+  const toggleDrop = () => {
+      showDropDown.value = !showDropDown.value;
+  };
 
-        const userProfilePicture = computed(() => store.getters.getUser.profilePicture || '/default-profile.jpg');
-        const userName = computed(() => store.getters.getUser.name || 'Admin'); // Assuming there's a name property in the user data
-        </script>
-        
-        <style scoped>
-        /* Add any scoped styles for the navbar here */
-    </style>
+  const userProfilePicture = computed(() => store.getters.getUser.profilePicture || '/default-profile.jpg');
+  const userName = computed(() => store.getters.getUser.name || 'Admin'); // Assuming there's a name property in the user data
+
+const logout = async () => {
+  try {
+    await axios.post('http://localhost:3000/auth2/logout');
+    await store.dispatch('logout'); // Vuex-Store aktualisieren
+    await router.push({name: 'Login'}); // Benutzer zur Login-Seite weiterleiten
+  } catch (error) {
+    console.error('Error logging out:', error);
+  }
+};
+</script>
+
+<style scoped>
+/* Add any scoped styles for the navbar here */
+</style>

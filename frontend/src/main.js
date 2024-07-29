@@ -11,8 +11,10 @@ import store from './store/store.js';
 
 // Import Router
 import router from './router';
+import NotificationBox from "@/Pages/NotificationBox.vue";
 
 const app = createApp(App)
+app.component('NotificationBox', NotificationBox);
 app.use(router)
 app.use(store)
 app.mount('#app')

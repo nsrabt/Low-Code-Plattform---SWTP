@@ -72,7 +72,8 @@ const routes = [
     {
         name: 'Login',
         path: '/login',
-        component:login
+        component:login,
+        meta: { guest: true }
     },
     {
         name: 'NewWorkflow',
@@ -106,18 +107,17 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-    if (to.matched.some(record => record.meta.requiresAuth)) {
-        await store.dispatch('checkAuth');
-        console.log('Auth status checked');
-        if (store.getters.isLoggedIn) {
-            console.log('User is authenticated, proceeding to route');
-            next();
-        } else {
-            console.log('User is not authenticated, redirecting to login');
-            next({ name: 'Login' });
-        }
+    await store.dispatch('checkAuth');
+    const isLoggedIn = store.getters.isLoggedIn;
+
+    if (to.matched.some(record => record.meta.requiresAuth) && !isLoggedIn) {
+        console.log('User is not authenticated, redirecting to login');
+        next({ name: 'Login' });
+    } else if (to.matched.some(record => record.meta.guest) && isLoggedIn) {
+        console.log('User is authenticated, redirecting to home');
+        next({ name: 'Home' });
     } else {
-        console.log('Route does not require authentication, proceeding to route');
+        console.log('Route does not require authentication or user is authorized, proceeding to route');
         next();
     }
 });

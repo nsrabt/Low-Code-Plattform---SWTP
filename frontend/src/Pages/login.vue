@@ -131,7 +131,7 @@
               </div>
             </div>
             <div class="mt-12">
-              <button type="submit" @click="login('auth')" class="w-full shadow-xl py-2.5 px-4 text-sm font-semibold rounded-full text-blue-700 bg-white hover:bg-blue-200 hover:text-blue-500 focus:outline-none">
+              <button type="button" @click="login('auth')" class="w-full shadow-xl py-2.5 px-4 text-sm font-semibold rounded-full text-blue-700 bg-white hover:bg-blue-200 hover:text-blue-500 focus:outline-none">
                 LDAP Login
               </button>
               <button type="button" @click="login('auth2')" class="mt-2 w-full shadow-xl py-2.5 px-4 text-sm font-semibold rounded-full text-green-700 bg-white hover:bg-green-200 hover:text-green-500 focus:outline-none">

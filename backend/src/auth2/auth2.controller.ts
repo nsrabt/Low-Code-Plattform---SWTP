@@ -34,7 +34,7 @@ export class Auth2Controller {
     }
     @Get('')
     async getAuthSession(@Session() session: SessionData) {
-        session.visits = session.visits ? session.visits + 1 : 1;
+        //session.visits = session.visits ? session.visits + 1 : 1;
         console.log("session", session.isLoggedIn);
         return { isLoggedIn: !!session.isLoggedIn };
     }

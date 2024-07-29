@@ -44,6 +44,9 @@ const store = createStore({
         setAuthStatus(state, status) {
             state.isLoggedIn = status;
         },
+        setSessionExpired(state, status) {
+            state.sessionExpired = status;
+        }
     },
     actions: {
         login({ commit }, user) {
@@ -65,8 +68,10 @@ const store = createStore({
                 const response = await axios.get('http://localhost:3000/auth2');
                 console.log("responseStore", response.data.isLoggedIn);
                 commit('setAuthStatus', response.data.isLoggedIn);
+                return response.data;
             } catch (error) {
                 commit('setAuthStatus', false);
+                return { isLoggedIn: false }
             }
         }
 
@@ -86,7 +91,7 @@ const store = createStore({
         },
         isLoggedIn(state) {
             return state.isLoggedIn;
-        }
+        },
     }
 });
 /*
