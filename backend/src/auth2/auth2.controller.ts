@@ -22,6 +22,7 @@ export class Auth2Controller {
             return await this.userService.addUser({
                 username: body.username,
                 eMail: "fake@mail.com",
+                name: "fakeKennung"
 
             })
         } else {

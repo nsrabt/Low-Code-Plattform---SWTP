@@ -64,6 +64,7 @@ export class AuthService {
             if (key && value) {
                 if (key === 'mail') user.eMail = value;
                 if(key === 'displayName') user.username = value;
+                if(key === 'uid') user.name = value;
                 // first name, last name should be added to fielddata
             }
         }
@@ -116,8 +117,10 @@ export class AuthService {
                 console.log(`${addUser.eMail}  ${addUser.username}`);
                 const newUser = await this.userService.addUser({
                     username: addUser.username,
-                    eMail: addUser.eMail
+                    eMail: addUser.eMail,
+                    name: addUser.name
                 });
+                console.log("new",newUser);
                 return newUser;
             }
         } else {
