@@ -190,6 +190,7 @@ export class UserService {
         for(const ur of userRoles){
             console.log(ur.userID);
             const user = await this.getUserById(ur.userID)
+
             users.push(user)
         }
 

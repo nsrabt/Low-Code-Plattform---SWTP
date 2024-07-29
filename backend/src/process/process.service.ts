@@ -347,9 +347,10 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
                 //user_process_role of current phase
                 const processRole = await this.userProcessRolesRepository.findOne({where:{processID: this.curProcess.id,workflowRoleID:workflowRole.workflowRoleID}});
                 //The user object of the person who's turn is now
-                console.log(processRole.userID)
                 const newPerson = await this.userRepo.findOne({where:{id: processRole.userID}});
                 //user Process of new person: needed to change state to: todo
+
+
                 const userProcess = await this.userProRepo.findOne({where:{processID: processRole.processID, userID: newPerson.id}});
 
                 //some data for notification
