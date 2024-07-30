@@ -53,7 +53,7 @@
                 <div class="flex items-center justify-start space-x-4 cursor-pointer" @click="toggleDrop">
                     <img :src="userProfilePicture" alt="Profile Picture" class="w-10 h-10 rounded-full object-cover" />
                     <div class="font-semibold text-white text-left">
-                        <div>{{ userName }}</div>
+                        <div>{{ name }}</div>
                         <div class="text-xs text-white dark:text-white">{{ userName }}</div>
                     </div>
                 </div>
@@ -136,7 +136,12 @@ const userProfilePicture = computed(() => {
 
 const userName = computed(() => {
     const user = store.getters.getUser;
-    return user && user.name ? user.name : 'Admin';
+    return ("@"+( user && user.name ? user.name : 'Admin'));
+});
+
+const name = computed(() => {
+  const user = store.getters.getUser;
+  return user && user.username ? user.username : 'Admin';
 });
 
 const logout = async () => {

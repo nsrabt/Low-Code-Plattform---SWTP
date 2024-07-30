@@ -375,18 +375,26 @@ export default {
             const dataID = event.dataTransfer.getData('number');
             const datatypeFillingData = event.dataTransfer.getData('datatype');
 
+
             if (field.type === 'PDFCheckBox' && datatypeFillingData === 'boolean') {
                 const booleanValue = text.toLowerCase() === 'true';
-                field.checked = booleanValue;
-                this.updateFieldContent(field);  // Update field content to reflect changes
-                await this.assignFillingData(field, dataID);
+                const resp = await this.assignFillingData(field, dataID);
+                if(resp){
+                  field.checked = booleanValue;
+
+                  this.updateFieldContent(field);  // Update field content to reflect changes
+
+                }
                 return;
             }
 
             console.log("Dropped text:", text); // Debugging statement
             if (field.type !== 'PDFCheckBox' && field) {
+              const resp = await this.assignFillingData(field, dataID);
+              if(resp){
                 field.value = text;
-                await this.assignFillingData(field, dataID)
+
+              }
             } else {
                 console.error("Field not found for name:", field.name); // Debugging statement
             }
@@ -554,21 +562,29 @@ export default {
 ,
         async assignFillingData(field, dataID) {
 
-            console.log(field.value + "  dropped onto   " + field.name + "of type: " + field.type)
+            console.log(field.value + "  dropped onto   " + field.name + "of type: " + field.type);
             const data = (await axios.get('http://localhost:3000/filling-data/' + dataID)).data;
 
 
             if (this.isSameType(field, data)) {
                 //todo: put code here if the strings are compatible
-            }
-            console.log(this.curWorkflowElementRole.id)
-            const response = await axios.put('http://localhost:3000/workflow/field', {
+              console.log(this.curWorkflowElementRole.id)
+              const response = await axios.put('http://localhost:3000/workflow/field', {
                 workflowElementID: this.curWorkflowElement.id,
                 dataID: dataID,
                 type: field.type,
                 processRoleID: this.curWorkflowElementRole.workflowRoleID,
                 name:field.name
-            })
+              })
+              return true;
+            }else {
+                this.notificationMessage = "Incompatible types";
+                this.incompatibleTypesNotification = true;
+                setTimeout(() => {
+                  this.incompatibleTypesNotification = false;
+                }, this.notificationDuration);
+              return false;
+            }
         },
         async loadWorkflowElements() {
             this.workflowId = store.getters.getWorkflow.id;
