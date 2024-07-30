@@ -247,7 +247,6 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
 
     async walkThroughSteps(startProcessDto: StartProcessDto) {
 
-      //  try {
 
             const toFill:user_process_element[] = [];
 

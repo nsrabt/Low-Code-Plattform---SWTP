@@ -387,9 +387,10 @@ export default {
 
 
             if (field.type === 'PDFCheckBox' && datatypeFillingData === 'boolean') {
-                const booleanValue = text.toLowerCase() === 'true';
                 const resp = await this.assignFillingData(field, dataID);
                 if(resp){
+                  const booleanValue = text.toLowerCase() === 'true';
+
                   field.checked = booleanValue;
 
                   this.updateFieldContent(field);  // Update field content to reflect changes
@@ -579,9 +580,10 @@ export default {
           else if (field.type === 'text' && data.datatype === 'date') {
             return true;
           }
-          else if (field.type === 'PDFCheckBox' && data.datatype === 'checkbox') {
+          else if (field.type === 'PDFCheckBox' && data.datatype === 'boolean') {
             return true;
           }
+          console.log(field.type +"   "+data.datatype);
           return false;
         }
 ,
