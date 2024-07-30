@@ -587,25 +587,27 @@ export default {
                 console.error("Error saving PDF:", error);
             }
         },
-
+      //todo: Notification Box
+        isSameType(field, data) {
+          if (field.type === 'text' && data.datatype === 'string') {
+            return true;
+          }
+          else if (field.type === 'text' && data.datatype === 'date') {
+            return true;
+          }
+          else if (field.type === 'PDFCheckBox' && data.datatype === 'checkbox') {
+            return true;
+          }
+          return false;
+        }
+,
         async assignFillingData(field, dataID) {
+
             console.log(field.value + "  dropped onto   " + field.name + "of type: " + field.type)
             const data = (await axios.get('http://localhost:3000/filling-data/' + dataID)).data;
 
-            function isSameType(field, data) {
-                if (field.type === 'text' && data.datatype === 'string') {
-                    return true;
-                }
-                else if (field.type === 'text' && data.datatype === 'date') {
-                    return true;
-                }
-                else if (field.type === 'PDFCheckBox' && data.datatype === 'checkbox') {
-                    return true;
-                }
-                return false;
-            }
 
-            if (isSameType(field, data)) {
+            if (this.isSameType(field, data)) {
                 //todo: put code here if the strings are compatible
             }
             console.log(this.curWorkflowElementRole.id)
@@ -717,6 +719,15 @@ export default {
             this.curWorkflowRole = (await axios.get('http://localhost:3000/workflow/role/' + this.curWorkflowElementRole.workflowRoleID)).data;
             console.log("name " + this.curWorkflowRole.workflowRoleName)
             //todo: alle felder rot markieren welche schon zugewiesen wurden
+
+          for(const field of this.pdfFields){
+            if(field.isFilled){
+              //todo: rot markieren
+            }
+          }
+
+
+
             this.checkState();
         }
     }
