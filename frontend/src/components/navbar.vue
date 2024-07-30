@@ -18,15 +18,43 @@
                 <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Simple-Form</span>
             </a>
 
+            <!-- Notifications -->
+            <div class="relative">
+                <div @click="toggleNotificationDropdown" class="cursor-pointer relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11c0-3.519-2.613-6.432-6-6.92V4a2 2 0 10-4 0v.08C5.613 4.568 3 7.481 3 11v3.159c0 .538-.214 1.055-.595 1.436L1 17h5m4 0v1a3 3 0 106 0v-1m-4 0h4">
+                        </path>
+                    </svg>
+                    <span v-if="unreadCount > 0"
+                        class="absolute top-0 right-0 inline-block w-2 h-2 bg-red-600 rounded-full"></span>
+                </div>
+                <div v-show="showNotificationDropdown"
+                    class="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg overflow-hidden z-20">
+                    <div class="py-2">
+                        <p class="px-4 py-2 text-gray-700 text-sm">Notifications</p>
+                        <div v-for="notification in notifications" :key="notification.id"
+                            class="px-4 py-2 text-sm text-gray-600 border-b">
+                            <div
+                                class="flex justify-between items-center">
+                                <span>{{ notification.message }}</span>
+                                <button @click="deleteNotification(notification.id)"
+                                    class="text-red-500 hover:text-red-700">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- User login -->
             <div
                 class="relative w-[200px] rounded-md hover:bg-gray-700 hover:text-gray-800 transition duration-400 ease-in-out z-50">
                 <div class="flex items-center justify-start space-x-4 cursor-pointer" @click="toggleDrop">
-                    <img :src="'data:image/png;base64,' + store.getters.getUser.profilePicture" alt="Profile Picture"
-                        class="w-10 h-10 rounded-full object-cover" />
+                    <img :src="userProfilePicture" alt="Profile Picture" class="w-10 h-10 rounded-full object-cover" />
                     <div class="font-semibold text-white text-left">
-                        <div>{{ store.getters.getUser.username }}</div>
-                        <div class="text-xs text-white dark:text-white">{{ store.getters.getUser.username }}</div>
+                        <div>{{ userName }}</div>
+                        <div class="text-xs text-white dark:text-white">{{ userName }}</div>
                     </div>
                 </div>
                 <!-- Drop down -->
@@ -41,10 +69,9 @@
                             class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
                             role="menuitem" tabindex="-1" id="menu-item-1">Support</a>
                         <form method="POST" action="#" role="none">
-                          <button type="button" @click="logout"
-                                  class="text-gray-700 block w-full px-4 py-2 text-left text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                                  role="menuitem"
-                                  tabindex="-1" id="menu-item-4">Logout</button>
+                            <button type="button" @click="logout"
+                                class="text-gray-700 block w-full px-4 py-2 text-left text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
+                                role="menuitem" tabindex="-1" id="menu-item-4">Logout</button>
                         </form>
                     </div>
                 </div>
@@ -52,31 +79,74 @@
         </div>
     </nav>
 </template>
+
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useStore } from 'vuex';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
-import router from "@/router/index.js";
 
-  const store = useStore();
+const store = useStore();
+const router = useRouter();
 
-  const showDropDown = ref(false);
-  const toggleDrop = () => {
-      showDropDown.value = !showDropDown.value;
-  };
+const showDropDown = ref(false);
+const toggleDrop = () => {
+    showDropDown.value = !showDropDown.value;
+};
 
-  const userProfilePicture = computed(() => store.getters.getUser.profilePicture || '/default-profile.jpg');
-  const userName = computed(() => store.getters.getUser.name || 'Admin'); // Assuming there's a name property in the user data
+const showNotificationDropdown = ref(false);
+const toggleNotificationDropdown = () => {
+    showNotificationDropdown.value = !showNotificationDropdown.value;
+};
+
+const notifications = ref([]);
+const unreadCount = computed(() => notifications.value.length);
+
+const fetchNotifications = async () => {
+    try {
+        const user = store.getters.getUser;
+        if (user && user.id) {
+            const response = await axios.get(`http://localhost:3000/notification/` + 2);
+            console.log('Notifications fetched:', response.data); // Debugging line
+            notifications.value = response.data;
+        } else {
+            console.warn('User ID not available');
+        }
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+    }
+};
+
+const deleteNotification = async (notificationId) => {
+    try {
+        await axios.put(`http://localhost:3000/notification/delete/${notificationId}`);
+        notifications.value = notifications.value.filter(n => n.id !== notificationId);
+    } catch (error) {
+        console.error('Error deleting notification:', error);
+    }
+};
+
+onMounted(fetchNotifications);
+watch(() => store.getters.getUser, fetchNotifications, { immediate: true });
+
+const userProfilePicture = computed(() => {
+    const user = store.getters.getUser;
+    return user && user.profilePicture ? `data:image/png;base64,${user.profilePicture}` : '/default-profile.jpg';
+});
+
+const userName = computed(() => {
+    const user = store.getters.getUser;
+    return user && user.name ? user.name : 'Admin';
+});
 
 const logout = async () => {
-  try {
-    await axios.post('http://localhost:3000/auth2/logout');
-    await store.dispatch('logout'); // Vuex-Store aktualisieren
-    await router.push({name: 'Login'}); // Benutzer zur Login-Seite weiterleiten
-  } catch (error) {
-    console.error('Error logging out:', error);
-  }
+    try {
+        await axios.post('http://localhost:3000/auth2/logout');
+        await store.dispatch('logout'); // Update Vuex store
+        await router.push({ name: 'Login' }); // Redirect to login page
+    } catch (error) {
+        console.error('Error logging out:', error);
+    }
 };
 </script>
 

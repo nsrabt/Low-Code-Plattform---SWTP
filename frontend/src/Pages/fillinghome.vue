@@ -72,19 +72,19 @@ export default {
         },
         async fetchMissingData() {
             try {
-                const response = await axios.get('http://localhost:3000/filling-data/platformData/'+store.getters.getUser.id);
-                if(response.data.length > 0){
-                  this.isFirstLogin=true;
-                  this.fields = response.data.map(item => ({
-                    key: item.id,
-                    label: item.name,
-                    value: '',
-                    datatype: item.datatype,
-                    name: item.name,
-                  }));
+                const response = await axios.get('http://localhost:3000/filling-data/platformData/' + store.getters.getUser.id);
+                if (response.data.length > 0) {
+                    this.isFirstLogin = true;
+                    this.fields = response.data.map(item => ({
+                        key: item.id,
+                        label: item.name,
+                        value: '',
+                        datatype: item.datatype,
+                        name: item.name,
+                    }));
                 }
-                else{
-                  this.$router.push('/home');
+                else {
+                    this.$router.push('/home');
                 }
 
             } catch (error) {
@@ -110,7 +110,7 @@ export default {
             try {
 
 
-                    await this.fetchMissingData();
+                await this.fetchMissingData();
 
             } catch (error) {
                 console.error('Error checking first login:', error);
