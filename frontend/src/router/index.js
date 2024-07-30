@@ -16,7 +16,7 @@ import pdfcontrol from '../Pages/pdfcontrol.vue'
 import processroles from '../Pages/processroles.vue'
 import Fillinglogin from '@/Pages/fillinglogin.vue'
 import fillinghome from '@/Pages/fillinghome.vue'
-
+import platformmanager from '@/Pages/platformmanager.vue'
 const routes = [
   {
     name: 'Dashboard',
@@ -28,6 +28,12 @@ const routes = [
     name: 'Home',
     path: '/home',
     component: home,
+    meta: { requiresAuth: true }
+  },
+  {
+    name: 'platformmanager',
+    path: '/platformmanager',
+    component: platformmanager,
     meta: { requiresAuth: true }
   },
   {
