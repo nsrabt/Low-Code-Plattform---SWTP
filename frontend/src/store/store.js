@@ -48,10 +48,7 @@ const store = createStore({
         setRole(state,role){
             state.role = role;
         }
-        },
-        setSessionExpired(state, status) {
-            state.sessionExpired = status;
-        },
+    },
 
     actions: {
         login({ commit }, user) {

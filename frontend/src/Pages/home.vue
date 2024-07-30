@@ -45,7 +45,7 @@ const boxes = ref([]);
 
 const permissions = store.getters.getRole.permissions;
 for(const permission of permissions){
-  console.log(permission)
+  console.log(permission);
 }
 
 if(permissions[0] === true){

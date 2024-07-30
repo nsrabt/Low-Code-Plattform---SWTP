@@ -23,7 +23,6 @@ export class Auth2Controller {
                 username: body.username,
                 eMail: "prof@mail.com",
                 name: "prof"
-
             })
         }
         else if (body.username == 'student' && body.password === '2') {

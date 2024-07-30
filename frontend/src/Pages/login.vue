@@ -195,6 +195,7 @@ export default {
         if (response.status === 201) {
           this.store.commit('setUser', user);
           this.store.commit('setRole', roleResponse.data);
+          console.log("roleResponse.data.id = ",roleResponse.data.id);
           this.$router.push('/home');
         } else {
           console.error('Authentication failed');

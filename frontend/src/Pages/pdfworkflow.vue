@@ -69,8 +69,10 @@
             </div>
         </div>
     </div>
+  <NotificationBox v-if="showNotification" :message="notificationMessage" :duration="notificationDuration" />
+  <NotificationBox v-if="incompatibleTypesNotification" message="Incompatible types" :duration="notificationDuration" />
 
-    <!-- Add Item Modal -->
+  <!-- Add Item Modal -->
     <div v-if="showAddItemModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-[400px]">
             <h2 class="text-xl font-semibold mb-4">Add New Item</h2>
@@ -109,12 +111,16 @@ import axios from "axios";
 import store from "@/store/store.js";
 import { useStore } from "vuex";
 import * as pdfjsLib from "pdfjs-dist";
+import NotificationBox from "@/Pages/NotificationBox.vue";
 
 // Specify the workerSrc path to the local copy
 GlobalWorkerOptions.workerSrc = "/pdf.worker.js";
 
 export default {
     name: "Home",
+  components: {
+    NotificationBox // Register the NotificationBox component
+  },
     data() {
         return {
             items: reactive([]),
@@ -144,7 +150,11 @@ export default {
             overlayCanvas: null,
             scaleX: 1,
             scaleY: 1,
-            showSignatureNotification: false
+            showSignatureNotification: false,
+            notificationMessage: '',
+            notificationDuration: 5000,
+            showNotification: false,
+            incompatibleTypesNotification: false
         };
     },
     watch: {
@@ -396,6 +406,11 @@ export default {
 
               }
             } else {
+              this.notificationMessage = "Incompatible types";
+              this.incompatibleTypesNotification = true;
+              setTimeout(() => {
+                this.incompatibleTypesNotification = false;
+              }, this.notificationDuration);
                 console.error("Field not found for name:", field.name); // Debugging statement
             }
         },
@@ -487,12 +502,22 @@ export default {
 
                 this.items.push(newItem);
                 this.closeAddItemModal();
-
+                this.notificationMessage = '';
+                this.showNotification = false;
               } else{
-                //todo: error anzeige dass name schon existiet
+                this.notificationMessage = 'Das Item existiert bereits';
+                this.showNotification = true;
+                setTimeout(() => {
+                  this.showNotification = false;
+                }, this.notificationDuration);
               }
             } catch (error) {
                 console.error("Error adding item:", error);
+              this.notificationMessage = 'Fehler beim Hinzufügen des Items';
+              this.showNotification = true;
+              setTimeout(() => {
+                this.showNotification = false;
+              }, this.notificationDuration);
             }
         },
         async savePdf() {
