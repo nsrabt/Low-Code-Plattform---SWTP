@@ -29,7 +29,7 @@
                             <tr v-for="(item, index) in currentData" :key="index"
                                 class="bg-gray-100 border border-grey-500 md:border-none block md:table-row">
                                 <td class="p-2 block md:table-cell text-left">{{ selectedTab === 'Roles' ? item.roleName
-                                    : item.name }}</td>
+                                    : (item.name + ", " +"("+ item.datatype + ")") }}</td>
                                 <td class="p-2 block md:table-cell">
                                     <template v-if="selectedTab === 'Roles'">
                                         <button class="bg-blue-600 text-white p-1 rounded mr-2"
@@ -38,7 +38,10 @@
                                             @click="deleteRole(item.id)">Delete</button>
                                     </template>
                                     <template v-if="selectedTab === 'Ausfülldaten'">
-                                        {{ item.datatype }}
+                                        <button class="bg-blue-600 text-white p-1 rounded mr-2"
+                                            @click="editFillingData(item)">Edit</button>
+                                        <button class="bg-red-700 text-white p-1 rounded"
+                                            @click="deleteFillingData(item.id)">Delete</button>
                                     </template>
                                 </td>
                             </tr>
@@ -77,26 +80,33 @@
         <!-- Edit/Add Filling Data Modal -->
         <div v-if="showEditFillingDataModal"
             class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div class="bg-white p-6 rounded-lg shadow-lg w-1/3">
-                <h2 class="text-2xl mb-4">{{ isEdit ? 'Edit Filling Data' : 'Add Filling Data' }}</h2>
+            <div class="bg-white p-6 rounded-lg shadow-lg w-[400px]">
+                <h2 class="text-xl font-semibold mb-4">{{ isEdit ? 'Edit Filling Data' : 'Add Filling Data' }}</h2>
                 <div class="mb-4">
                     <label class="block text-gray-700">Name</label>
-                    <input v-model="editFillingData.name" class="w-full p-2 border border-gray-300 rounded mt-1" />
+                    <input v-model="currentFillingData.name" type="text" class="p-2 w-full border rounded-md" />
                 </div>
                 <div class="mb-4">
-                    <label class="block text-gray-700">Data Type</label>
-                    <input v-model="editFillingData.dataType" class="w-full p-2 border border-gray-300 rounded mt-1" />
+                    <label class="block text-gray-700">Type</label>
+                    <select v-model="currentFillingData.datatype" class="p-2 w-full border rounded-md">
+                        
+                        <option value="string">String</option>
+                        <option value="date">Date</option>
+                        <option value="boolean">Boolean</option>
+                        <option value="photo">Photo</option>
+                    </select>
                 </div>
                 <div class="flex justify-end">
-                    <button @click="isEdit ? updateFillingData(editFillingData.id) : saveNewFillingData()"
-                        class="bg-blue-500 text-white px-4 py-2 rounded mr-2">Save</button>
                     <button @click="showEditFillingDataModal = false"
-                        class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
+                        class="mr-2 p-2 bg-gray-500 text-white rounded hover:bg-gray-700">Cancel</button>
+                    <button @click="isEdit ? updateFillingData(currentFillingData.id) : saveNewFillingData()"
+                        class="p-2 bg-blue-500 text-white rounded hover:bg-blue-700">Save</button>
                 </div>
             </div>
         </div>
     </div>
 </template>
+
 
 <script>
 import axios from 'axios';
@@ -124,10 +134,10 @@ export default {
                 platformID: 1, // Set a default platformID or fetch dynamically
                 isDefault: true,
             },
-            editFillingData: {
+            currentFillingData: {
                 id: null,
                 name: '',
-                dataType: ''
+                datatype: 'string' // Default dataType
             }
         };
     },
@@ -210,14 +220,15 @@ export default {
                 console.error('Error adding role:', error);
             }
         },
-        editFillingData(data) {
+        editFillingData(item) {
+            console.log('Editing filling data:', item); // Debugging log
             this.isEdit = true;
-            this.editFillingData = { ...data };
+            this.currentFillingData = { ...item };
             this.showEditFillingDataModal = true;
         },
         async updateFillingData(dataId) {
             try {
-                await axios.put(`http://localhost:3000/filling-data/update/` + dataId, this.editFillingData);
+                await axios.put(`http://localhost:3000/filling-data/update/` + dataId, this.currentFillingData);
                 this.showEditFillingDataModal = false;
                 this.fetchFillingData(); // Refresh the list after update
             } catch (error) {
@@ -226,7 +237,7 @@ export default {
         },
         async saveNewFillingData() {
             try {
-                await axios.put('http://localhost:3000/filling-data', this.editFillingData);
+                await axios.put('http://localhost:3000/filling-data', this.currentFillingData);
                 this.showEditFillingDataModal = false;
                 this.fetchFillingData(); // Refresh the list after adding
             } catch (error) {

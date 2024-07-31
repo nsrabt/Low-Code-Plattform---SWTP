@@ -51,8 +51,9 @@
                         height: field.transformedHeight + 'px',
                     }" @dragover.prevent @drop="onDropField($event, field)">
                         <input type="text" v-if="field.type !== 'PDFCheckBox'" v-model="field.value"
-                            @input="updateFieldContent(field)"
-                            class="w-full h-full p-1 border border-gray-500 rounded" />
+                            @input="updateFieldContent(field)" :disabled="field.isDisabled"
+                            :class="{ 'disabled-field': field.isDisabled }" 
+                        class="w-full h-full p-1 border border-gray-500 rounded" />
                         <input type="checkbox" v-else v-model="field.checked" @change="updateFieldContent(field)"
                             class="w-full h-full p-1 border border-gray-500 rounded" />
                     </div>
@@ -65,14 +66,16 @@
             <div v-if="showSignatureNotification"
                 class="fixed top-20 left-0 w-full p-4 bg-yellow-300 text-black text-lg font-semibold text-center shadow-lg">
                 Wo soll die Unterschrift hinkommen? Halte die rechte Maustaste gedrückt und ziehe ein Rechteck. Lass die
-                Taste los, wenn das Rechteck gezeichnet ist.
+                Taste los,
+                wenn das Rechteck gezeichnet ist.
             </div>
         </div>
     </div>
-  <NotificationBox v-if="showNotification" :message="notificationMessage" :duration="notificationDuration" />
-  <NotificationBox v-if="incompatibleTypesNotification" message="Incompatible types" :duration="notificationDuration" />
+    <NotificationBox v-if="showNotification" :message="notificationMessage" :duration="notificationDuration" />
+    <NotificationBox v-if="incompatibleTypesNotification" message="Incompatible types"
+        :duration="notificationDuration" />
 
-  <!-- Add Item Modal -->
+    <!-- Add Item Modal -->
     <div v-if="showAddItemModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-[400px]">
             <h2 class="text-xl font-semibold mb-4">Add New Item</h2>
@@ -99,8 +102,6 @@
     </div>
 </template>
 
-
-
 <script>
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/build/pdf";
 import "pdfjs-dist/web/pdf_viewer.css";
@@ -118,9 +119,9 @@ GlobalWorkerOptions.workerSrc = "/pdf.worker.js";
 
 export default {
     name: "Home",
-  components: {
-    NotificationBox // Register the NotificationBox component
-  },
+    components: {
+        NotificationBox // Register the NotificationBox component
+    },
     data() {
         return {
             items: reactive([]),
@@ -244,7 +245,8 @@ export default {
                 checked: false,
                 type: "signature",
                 dataID: 0,
-                isFilled: false
+                isFilled: false,
+                isDisabled: false // Add this property to manage the disabled state
             });
 
             this.isDrawing = false;
@@ -347,7 +349,8 @@ export default {
                                 checked: false,
                                 type: fieldType,
                                 dataID: 0,
-                                isFilled: false
+                                isFilled: false,
+                                isDisabled: false // Add this property to manage the disabled state
                             });
 
                             this.pdfFields.push(field);
@@ -381,19 +384,20 @@ export default {
             event.preventDefault();
         },
         async onDropField(event, field) {
+            if (field.isDisabled) return; // Prevent further actions if the field is disabled
+
             const text = event.dataTransfer.getData("text");
             const dataID = event.dataTransfer.getData('number');
             const datatypeFillingData = event.dataTransfer.getData('datatype');
 
-
             if (field.type === 'PDFCheckBox' && datatypeFillingData === 'boolean') {
                 const resp = await this.assignFillingData(field, dataID);
-                if(resp){
-                  const booleanValue = text.toLowerCase() === 'true';
+                if (resp) {
+                    const booleanValue = text.toLowerCase() === 'true';
 
-                  field.checked = booleanValue;
+                    field.checked = booleanValue;
 
-                  this.updateFieldContent(field);  // Update field content to reflect changes
+                    this.updateFieldContent(field);  // Update field content to reflect changes
 
                 }
                 return;
@@ -401,17 +405,18 @@ export default {
 
             console.log("Dropped text:", text); // Debugging statement
             if (field.type !== 'PDFCheckBox' && field) {
-              const resp = await this.assignFillingData(field, dataID);
-              if(resp){
-                field.value = text;
+                const resp = await this.assignFillingData(field, dataID);
+                if (resp) {
+                    field.value = text;
+                    field.isDisabled = true; // Disable the field once content is dropped
 
-              }
+                }
             } else {
-              this.notificationMessage = "Incompatible types";
-              this.incompatibleTypesNotification = true;
-              setTimeout(() => {
-                this.incompatibleTypesNotification = false;
-              }, this.notificationDuration);
+                this.notificationMessage = "Incompatible types";
+                this.incompatibleTypesNotification = true;
+                setTimeout(() => {
+                    this.incompatibleTypesNotification = false;
+                }, this.notificationDuration);
                 console.error("Field not found for name:", field.name); // Debugging statement
             }
         },
@@ -490,35 +495,35 @@ export default {
                     datatype: this.newItem.type,
                     isPlatformInfo: false
                 });
-              if(res.data){
-                const dataID = res.data.id;
+                if (res.data) {
+                    const dataID = res.data.id;
 
-                const newItem = {
-                  title: this.newItem.name,
-                  isEditing: false,
-                  content: this.newItem.name,
-                  dataID: dataID,
-                  datatype: this.newItem.type
-                };
+                    const newItem = {
+                        title: this.newItem.name,
+                        isEditing: false,
+                        content: this.newItem.name,
+                        dataID: dataID,
+                        datatype: this.newItem.type
+                    };
 
-                this.items.push(newItem);
-                this.closeAddItemModal();
-                this.notificationMessage = '';
-                this.showNotification = false;
-              } else{
-                this.notificationMessage = 'Das Item existiert bereits';
-                this.showNotification = true;
-                setTimeout(() => {
-                  this.showNotification = false;
-                }, this.notificationDuration);
-              }
+                    this.items.push(newItem);
+                    this.closeAddItemModal();
+                    this.notificationMessage = '';
+                    this.showNotification = false;
+                } else {
+                    this.notificationMessage = 'Das Item existiert bereits';
+                    this.showNotification = true;
+                    setTimeout(() => {
+                        this.showNotification = false;
+                    }, this.notificationDuration);
+                }
             } catch (error) {
                 console.error("Error adding item:", error);
-              this.notificationMessage = 'Fehler beim Hinzufügen des Items';
-              this.showNotification = true;
-              setTimeout(() => {
-                this.showNotification = false;
-              }, this.notificationDuration);
+                this.notificationMessage = 'Fehler beim Hinzufügen des Items';
+                this.showNotification = true;
+                setTimeout(() => {
+                    this.showNotification = false;
+                }, this.notificationDuration);
             }
         },
         async savePdf() {
@@ -572,21 +577,21 @@ export default {
                 console.error("Error saving PDF:", error);
             }
         },
-      //todo: Notification Box
+        //todo: Notification Box
         isSameType(field, data) {
-          if (field.type === 'text' && data.datatype === 'string') {
-            return true;
-          }
-          else if (field.type === 'text' && data.datatype === 'date') {
-            return true;
-          }
-          else if (field.type === 'PDFCheckBox' && data.datatype === 'boolean') {
-            return true;
-          }
-          console.log(field.type +"   "+data.datatype);
-          return false;
+            if (field.type === 'text' && data.datatype === 'string') {
+                return true;
+            }
+            else if (field.type === 'text' && data.datatype === 'date') {
+                return true;
+            }
+            else if (field.type === 'PDFCheckBox' && data.datatype === 'boolean') {
+                return true;
+            }
+            console.log(field.type + "   " + data.datatype);
+            return false;
         }
-,
+        ,
         async assignFillingData(field, dataID) {
 
             console.log(field.value + "  dropped onto   " + field.name + "of type: " + field.type);
@@ -595,22 +600,22 @@ export default {
 
             if (this.isSameType(field, data)) {
                 //todo: put code here if the strings are compatible
-              console.log(this.curWorkflowElementRole.id)
-              const response = await axios.put('http://localhost:3000/workflow/field', {
-                workflowElementID: this.curWorkflowElement.id,
-                dataID: dataID,
-                type: field.type,
-                processRoleID: this.curWorkflowElementRole.workflowRoleID,
-                name:field.name
-              })
-              return true;
-            }else {
+                console.log(this.curWorkflowElementRole.id)
+                const response = await axios.put('http://localhost:3000/workflow/field', {
+                    workflowElementID: this.curWorkflowElement.id,
+                    dataID: dataID,
+                    type: field.type,
+                    processRoleID: this.curWorkflowElementRole.workflowRoleID,
+                    name: field.name
+                })
+                return true;
+            } else {
                 this.notificationMessage = "Incompatible types";
                 this.incompatibleTypesNotification = true;
                 setTimeout(() => {
-                  this.incompatibleTypesNotification = false;
+                    this.incompatibleTypesNotification = false;
                 }, this.notificationDuration);
-              return false;
+                return false;
             }
         },
         async loadWorkflowElements() {
@@ -714,11 +719,11 @@ export default {
             console.log("name " + this.curWorkflowRole.workflowRoleName)
             //todo: alle felder rot markieren welche schon zugewiesen wurden
 
-          for(const field of this.pdfFields){
-            if(field.isFilled){
-              //todo: rot markieren
+            for (const field of this.pdfFields) {
+                if (field.isFilled) {
+                    //todo: rot markieren
+                }
             }
-          }
 
 
 
@@ -727,3 +732,10 @@ export default {
     }
 };
 </script>
+
+<style>
+.disabled-field {
+    background-color: #c28f8f;
+    cursor: not-allowed;
+}
+</style>
