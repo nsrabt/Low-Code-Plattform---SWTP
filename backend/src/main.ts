@@ -7,6 +7,12 @@ declare module "express-session" {
     interface SessionData {
         isLoggedIn?: boolean;
         visits?: number;
+        user?: {
+            id: number;
+            username: string;
+            eMail: string;
+            name: string;
+        };
     }
 }
 async function bootstrap() {

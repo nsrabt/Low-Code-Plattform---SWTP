@@ -26,11 +26,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import {ref, computed, onMounted} from 'vue';
 import { useStore } from 'vuex';
 import navbar from '@/components/navbar.vue';
 import axios from "axios";
-
+axios.defaults.withCredentials = true;
 
 const store = useStore();
 
@@ -42,36 +42,42 @@ const toggleDrop = () => {
 
 
 const boxes = ref([]);
-
-const permissions = store.getters.getRole.permissions;
-for(const permission of permissions){
-  console.log(permission);
-}
-
-if(permissions[0] === true){
-  boxes.value.push
-  (
-      { name: 'Prozess-Übersicht', description: 'Übersicht der Prozesse', link: '/processOverview', photo: '/process.png' },
-      { name: 'Ausfülldaten Verwaltung', description: 'Verwaltung und Speicherung von den Benutzerdaten.', link: '/settings', photo: '/einstellung.png' },
-
-  )
-}
-if(permissions[1] === true){
-  boxes.value.push
-  (
-      { name: 'Plattform Manager', description: 'Verwaltung und Bearbeitung von den Plattformen', link: '/page3', photo: '/Plattform.png' },
-  )
-}
-if(permissions[2]=== true){
-  boxes.value.push
-  (
-  { name: 'Workflow Management', description: 'Koordination und Automatisierung von Arbeitsabläufen zur Steigerung der Effizienz.', link: '/createWorkflow', photo: '/Workflow.png' },
-  )
-}
-
-
 const userProfilePicture = computed(() => store.getters.getUser.profilePicture || '/default-profile.jpg');
-const userName = computed(() => store.getters.getUser.name || 'Admin'); // Assuming there's a name property in the user data
+const userName = computed(() => store.getters.getUser.name || 'Admin');
+
+
+const fetchUserData = async () => {
+  try {
+    const response = await axios.get('http://localhost:3000/user/getUserBySession');
+    const userId = response.data.id;
+    const roleResponse = await axios.get(`http://localhost:3000/user/role/${userId}`);
+
+    //store.commit('setUser', response.data);
+    const permissions = roleResponse.data.permissions;
+
+    if (permissions[0] === true) {
+      boxes.value.push(
+          { name: 'Prozess-Übersicht', description: 'Übersicht der Prozesse', link: '/processOverview', photo: '/process.png' },
+          { name: 'Ausfülldaten Verwaltung', description: 'Verwaltung und Speicherung von den Benutzerdaten.', link: '/settings', photo: '/einstellung.png' },
+      );
+    }
+    if (permissions[1] === true) {
+      boxes.value.push(
+          { name: 'Plattform Manager', description: 'Verwaltung und Bearbeitung von den Plattformen', link: '/page3', photo: '/Plattform.png' },
+      );
+    }
+    if (permissions[2] === true) {
+      boxes.value.push(
+          { name: 'Workflow Management', description: 'Koordination und Automatisierung von Arbeitsabläufen zur Steigerung der Effizienz.', link: '/createWorkflow', photo: '/Workflow.png' },
+      );
+    }
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+  }
+};
+
+onMounted(fetchUserData);
+
 
 
 </script>

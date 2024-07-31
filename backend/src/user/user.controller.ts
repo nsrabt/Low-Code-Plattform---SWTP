@@ -1,16 +1,38 @@
-import {Body, Controller, Get, Param, ParseIntPipe, Put, UseGuards} from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get, Logger,
+    Param,
+    ParseIntPipe,
+    Put,
+    Session,
+    UnauthorizedException,
+    UseGuards
+} from '@nestjs/common';
 import {UpdateUserDto} from "./dto/update-user-dto";
 import {UserService} from "./user.service";
 import {AddUserDto} from "./dto/add-user-dto";
 import {ChangeRoleDto} from "./dto/change-role-dto";
 import {IsLoggedInGuard} from "../is-logged-in/is-logged-in.guard";
+import {SessionData} from "express-session";
 
 @Controller('user')
 @UseGuards(IsLoggedInGuard)
 export class UserController {
+    private readonly logger = new Logger(UserController.name);
 
 
     constructor(private userService: UserService) {
+    }
+    @Get('getUserBySession')
+    async getUserBySession(@Session() session: SessionData) {
+        console.log('Session data:', session);
+        if (!session.isLoggedIn || !session.user) {
+            console.log('User is not logged in or user data is missing');
+            throw new UnauthorizedException('User is not logged in');
+        }
+        console.log('Returning user:', session.user);
+        return session.user;
     }
     /*
         The following function returns you the user Object by it's ID
@@ -71,4 +93,6 @@ export class UserController {
     async getRoleOfUser(@Param('id',ParseIntPipe) userID:number){
         return await this.userService.getRoleOfUser(userID);
     }
+
+
 }
