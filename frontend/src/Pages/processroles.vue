@@ -25,6 +25,7 @@
         @click="save">Save</button>
 
     </div>
+    <NotificationBox v-if="showNotification" :message="notificationMessage" :duration="notificationDuration" />
   </div>
 </template>
 
@@ -33,9 +34,12 @@ import axios from "axios";
 import store from "@/store/store.js";
 import {useStore} from "vuex";
 import router from "@/router/index.js";
+import NotificationBox from "@/Pages/NotificationBox.vue";
 
 export default {
-
+  components: {
+    NotificationBox
+  },
   setup(){
     const store = useStore();
     return { store };
@@ -46,7 +50,10 @@ export default {
         return {
             fields: [], // Array to hold field objects { type: String, curSearch: String, suggestions: Array }
             showDropDown: false,
-            processID: null
+            processID: null,
+          notificationMessage: '',
+          notificationDuration: 5000,
+          showNotification: false
         };
     },
     async created() {
@@ -111,6 +118,27 @@ export default {
 
         },
       async save() {
+        for (const field of this.fields) {
+          if (!field.userID) {
+            this.notificationMessage = 'Bitte wähle einen ' + field.type + ' aus';
+            this.showNotification = true;
+            setTimeout(() => {
+              this.showNotification = false;
+            }, this.notificationDuration);
+            return;
+          }
+        }
+        // Check for duplicate user selections
+        const userIds = this.fields.map(field => field.userID);
+        const duplicateUserIds = userIds.filter((id, index) => userIds.indexOf(id) !== index);
+        if (duplicateUserIds.length > 0) {
+          this.notificationMessage = 'Ein Professor darf nicht zweimal ausgewählt werden';
+          this.showNotification = true;
+          setTimeout(() => {
+            this.showNotification = false;
+          }, this.notificationDuration);
+          return;
+        }
         for (const field of this.fields) {
         const response = await axios.put('http://localhost:3000/process/sendProcessRole', {
           workflowRoleID: field.workflowRoleID,

@@ -45,13 +45,18 @@
 
       </form>
     </div>
+    <NotificationBox v-if="showNotification" :message="notificationMessage" :duration="notificationDuration" />
   </div>
 </template>
 
 <script>
 import axios from "axios";
 import store from "@/store/store.js";
+import NotificationBox from "@/Pages/NotificationBox.vue";
 export default {
+  components: {
+    NotificationBox
+  },
     data() {
         return {
             showDropDown: false,
@@ -61,7 +66,10 @@ export default {
             // Beispielparameter für den Startprozess
             processId: 1,
             userId: 10
-          }
+          },
+          notificationMessage: '',
+          notificationDuration: 5000,
+          showNotification: false
         };
     },
     methods: {
@@ -90,16 +98,48 @@ export default {
         }
       },
         async handleSubmit() {
+          const unfilledFields = this.fields.filter(field => {
+            if (field.datatype === 'boolean') {
+              return false;
+            }
+            return !field.value;
+          });
+
+          if (unfilledFields.length > 0) {
+            this.notificationMessage = 'Bitte füllen Sie alle Felder aus, bevor Sie fortfahren.';
+            this.showNotification = true;
+            setTimeout(() => {
+              this.showNotification = false;
+            }, this.notificationDuration);
+            return;
+          }
+
+          const filledCheckboxes = this.fields.filter(field => field.datatype === 'boolean' && field.value);
+          const unfilledCheckboxes = this.fields.filter(field => field.datatype === 'boolean');
+          console.log("filledCheckboxes", filledCheckboxes);
+          console.log("fields ---",this.fields);
+          if (unfilledCheckboxes.length > 1 && filledCheckboxes.length !== 1) {
+            this.notificationMessage = 'Bitte wählen Sie genau eine Checkbox aus, bevor Sie fortfahren.';
+            this.showNotification = true;
+            setTimeout(() => {
+              this.showNotification = false;
+            }, this.notificationDuration);
+            return;
+          }
             console.log("fields ",this.fields);
             // Handle form submission logic here
-          for(const field of this.fields){
-            const response = await axios.put('http://localhost:3000/user-filling-data',{
-              dataID:field.key,
-              userID: store.getters.getUser.id,
-              value: field.value
-            })
+          try {
+            for(const field of this.fields){
+              const response = await axios.put('http://localhost:3000/user-filling-data',{
+                dataID:field.key,
+                userID: store.getters.getUser.id,
+                value: field.value
+              })
+            }
+            this.$router.push('/pdfcontrol')
+          } catch (error) {
+            console.error('Error saving data:', error);
           }
-          this.$router.push('/pdfcontrol')
         }
     },
    async mounted() {

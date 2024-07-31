@@ -79,6 +79,7 @@
         </form>
 
   </div>
+    <NotificationBox v-if="showNotification" :message="notificationMessage" :duration="notificationDuration" />
   </div>
 
 
@@ -91,6 +92,7 @@ import axios from "axios";
 import store from "@/store/store.js";
 import navbar from "@/components/navbar.vue";
 import Navbar from "@/components/navbar.vue";
+import NotificationBox from "@/Pages/NotificationBox.vue";
 
 document.addEventListener('DOMContentLoaded', function () {
  /*
@@ -112,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
   */
 });
 export default {
-  components: {Navbar},
+  components: {Navbar, NotificationBox},
 
   data() {
     return {
@@ -124,7 +126,10 @@ export default {
         // Beispielparameter für den Startprozess
         processId: 1,
         userId: 10
-      }
+      },
+      notificationMessage: '',
+      notificationDuration: 5000,
+      showNotification: false
     };
   },
   methods: {
@@ -196,6 +201,36 @@ export default {
 
     },
     async handleSubmit() {
+
+      const unfilledFields = this.fields.filter(field => {
+        if (field.datatype === 'boolean') {
+          return false;
+        }
+        return !field.value;
+      });
+
+      if (unfilledFields.length > 0) {
+        this.notificationMessage = 'Bitte füllen Sie alle Felder aus, bevor Sie fortfahren.';
+        this.showNotification = true;
+        setTimeout(() => {
+          this.showNotification = false;
+        }, this.notificationDuration);
+        return;
+      }
+
+      const filledCheckboxes = this.fields.filter(field => field.datatype === 'boolean' && field.value);
+      const unfilledCheckboxes = this.fields.filter(field => field.datatype === 'boolean');
+      console.log("filledCheckboxes", filledCheckboxes);
+      console.log("fields ---",this.fields);
+      if (unfilledCheckboxes.length > 1 && filledCheckboxes.length !== 1) {
+        this.notificationMessage = 'Bitte wählen Sie genau eine Checkbox aus, bevor Sie fortfahren.';
+        this.showNotification = true;
+        setTimeout(() => {
+          this.showNotification = false;
+        }, this.notificationDuration);
+        return;
+      }
+
       console.log("fields ",this.fields);
       // Handle form submission logic here
       for(const field of this.fields){

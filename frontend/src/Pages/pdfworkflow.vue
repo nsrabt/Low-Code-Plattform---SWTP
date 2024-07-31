@@ -52,7 +52,7 @@
                     }" @dragover.prevent @drop="onDropField($event, field)">
                         <input type="text" v-if="field.type !== 'PDFCheckBox'" v-model="field.value"
                             @input="updateFieldContent(field)" :disabled="field.isDisabled"
-                            :class="{ 'disabled-field': field.isDisabled }" 
+                            :class="{ 'disabled-field': field.isDisabled }"
                         class="w-full h-full p-1 border border-gray-500 rounded" />
                         <input type="checkbox" v-else v-model="field.checked" @change="updateFieldContent(field)"
                             class="w-full h-full p-1 border border-gray-500 rounded" />
@@ -71,9 +71,9 @@
             </div>
         </div>
     </div>
-    <NotificationBox v-if="showNotification" :message="notificationMessage" :duration="notificationDuration" />
-    <NotificationBox v-if="incompatibleTypesNotification" message="Incompatible types"
-        :duration="notificationDuration" />
+  <NotificationBox v-if="showNotification" :message="notificationMessage" :duration="notificationDuration" />
+  <NotificationBox v-if="incompatibleTypesNotification" message="Incompatible types" :duration="notificationDuration" />
+  <NotificationBox v-if="fieldAlreadyExistsNotification" message="Field already exists in PDF" :duration="notificationDuration" />
 
     <!-- Add Item Modal -->
     <div v-if="showAddItemModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -119,9 +119,9 @@ GlobalWorkerOptions.workerSrc = "/pdf.worker.js";
 
 export default {
     name: "Home",
-    components: {
-        NotificationBox // Register the NotificationBox component
-    },
+  components: {
+    NotificationBox // Register the NotificationBox component
+  },
     data() {
         return {
             items: reactive([]),
@@ -155,7 +155,8 @@ export default {
             notificationMessage: '',
             notificationDuration: 5000,
             showNotification: false,
-            incompatibleTypesNotification: false
+            incompatibleTypesNotification: false,
+          fieldAlreadyExistsNotification: false
         };
     },
     watch: {
@@ -405,18 +406,25 @@ export default {
 
             console.log("Dropped text:", text); // Debugging statement
             if (field.type !== 'PDFCheckBox' && field) {
-                const resp = await this.assignFillingData(field, dataID);
-                if (resp) {
-                    field.value = text;
-                    field.isDisabled = true; // Disable the field once content is dropped
-
-                }
-            } else {
-                this.notificationMessage = "Incompatible types";
-                this.incompatibleTypesNotification = true;
+              if (this.pdfFields.some(f => f.value === text && f.name !== field.name)) {
+                this.notificationMessage = "Field already exists in another field";
+                this.fieldAlreadyExistsNotification = true;
                 setTimeout(() => {
-                    this.incompatibleTypesNotification = false;
+                  this.fieldAlreadyExistsNotification = false;
                 }, this.notificationDuration);
+                return;
+              }
+              const resp = await this.assignFillingData(field, dataID);
+              if(resp){
+                field.value = text;
+                field.isDisabled = true;
+              }
+            } else {
+              this.notificationMessage = "Incompatible types";
+              this.incompatibleTypesNotification = true;
+              setTimeout(() => {
+                this.incompatibleTypesNotification = false;
+              }, this.notificationDuration);
                 console.error("Field not found for name:", field.name); // Debugging statement
             }
         },
@@ -489,41 +497,50 @@ export default {
         },
         async submitNewItem() {
             try {
+              // Check if the item name or type is empty
+              if (!this.newItem.name || !this.newItem.type) {
+                this.notificationMessage = 'Name of the item must not be empty';
+                this.showNotification = true;
+                setTimeout(() => {
+                  this.showNotification = false;
+                }, this.notificationDuration);
+                return;
+              }
                 const res = await axios.put('http://localhost:3000/filling-data', {
                     platformID: 1,
                     name: this.newItem.name,
                     datatype: this.newItem.type,
                     isPlatformInfo: false
                 });
-                if (res.data) {
-                    const dataID = res.data.id;
+              if(res.data){
+                const dataID = res.data.id;
 
-                    const newItem = {
-                        title: this.newItem.name,
-                        isEditing: false,
-                        content: this.newItem.name,
-                        dataID: dataID,
-                        datatype: this.newItem.type
-                    };
+                const newItem = {
+                  title: this.newItem.name,
+                  isEditing: false,
+                  content: this.newItem.name,
+                  dataID: dataID,
+                  datatype: this.newItem.type
+                };
 
-                    this.items.push(newItem);
-                    this.closeAddItemModal();
-                    this.notificationMessage = '';
-                    this.showNotification = false;
-                } else {
-                    this.notificationMessage = 'Das Item existiert bereits';
-                    this.showNotification = true;
-                    setTimeout(() => {
-                        this.showNotification = false;
-                    }, this.notificationDuration);
-                }
-            } catch (error) {
-                console.error("Error adding item:", error);
-                this.notificationMessage = 'Fehler beim Hinzufügen des Items';
+                this.items.push(newItem);
+                this.closeAddItemModal();
+                this.notificationMessage = '';
+                this.showNotification = false;
+              } else{
+                this.notificationMessage = 'Das Item existiert bereits';
                 this.showNotification = true;
                 setTimeout(() => {
-                    this.showNotification = false;
+                  this.showNotification = false;
                 }, this.notificationDuration);
+              }
+            } catch (error) {
+                console.error("Error adding item:", error);
+              this.notificationMessage = 'Fehler beim Hinzufügen des Items';
+              this.showNotification = true;
+              setTimeout(() => {
+                this.showNotification = false;
+              }, this.notificationDuration);
             }
         },
         async savePdf() {
@@ -532,7 +549,6 @@ export default {
                 const arrayBuffer = await this.pdfFile.arrayBuffer();
                 const pdfDoc = await PDFDocument.load(arrayBuffer);
                 const form = pdfDoc.getForm();
-
                 // Debugging: Log all form fields
                 const fields = form.getFields();
                 fields.forEach((field) => {
@@ -577,21 +593,21 @@ export default {
                 console.error("Error saving PDF:", error);
             }
         },
-        //todo: Notification Box
+      //todo: Notification Box
         isSameType(field, data) {
-            if (field.type === 'text' && data.datatype === 'string') {
-                return true;
-            }
-            else if (field.type === 'text' && data.datatype === 'date') {
-                return true;
-            }
-            else if (field.type === 'PDFCheckBox' && data.datatype === 'boolean') {
-                return true;
-            }
-            console.log(field.type + "   " + data.datatype);
-            return false;
+          if (field.type === 'text' && data.datatype === 'string') {
+            return true;
+          }
+          else if (field.type === 'text' && data.datatype === 'date') {
+            return true;
+          }
+          else if (field.type === 'PDFCheckBox' && data.datatype === 'boolean') {
+            return true;
+          }
+          console.log(field.type +"   "+data.datatype);
+          return false;
         }
-        ,
+,
         async assignFillingData(field, dataID) {
 
             console.log(field.value + "  dropped onto   " + field.name + "of type: " + field.type);
@@ -600,22 +616,22 @@ export default {
 
             if (this.isSameType(field, data)) {
                 //todo: put code here if the strings are compatible
-                console.log(this.curWorkflowElementRole.id)
-                const response = await axios.put('http://localhost:3000/workflow/field', {
-                    workflowElementID: this.curWorkflowElement.id,
-                    dataID: dataID,
-                    type: field.type,
-                    processRoleID: this.curWorkflowElementRole.workflowRoleID,
-                    name: field.name
-                })
-                return true;
-            } else {
+              console.log(this.curWorkflowElementRole.id)
+              const response = await axios.put('http://localhost:3000/workflow/field', {
+                workflowElementID: this.curWorkflowElement.id,
+                dataID: dataID,
+                type: field.type,
+                processRoleID: this.curWorkflowElementRole.workflowRoleID,
+                name:field.name
+              })
+              return true;
+            }else {
                 this.notificationMessage = "Incompatible types";
                 this.incompatibleTypesNotification = true;
                 setTimeout(() => {
-                    this.incompatibleTypesNotification = false;
+                  this.incompatibleTypesNotification = false;
                 }, this.notificationDuration);
-                return false;
+              return false;
             }
         },
         async loadWorkflowElements() {
