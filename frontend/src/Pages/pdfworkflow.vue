@@ -158,7 +158,9 @@ export default {
             notificationDuration: 5000,
             showNotification: false,
             incompatibleTypesNotification: false,
-            fieldAlreadyExistsNotification: false
+            fieldAlreadyExistsNotification: false,
+            pdfx: 0,
+            pdfy:0,
         };
     },
     watch: {
@@ -223,6 +225,8 @@ export default {
             // Um den Ursprung in der unteren linken Ecke zu setzen, invertiere die Y-Koordinaten
             this.startX = (event.clientX - rect.left) * this.scaleX;
             this.startY = (event.clientY - rect.top) * this.scaleY;
+            this.pdfx = this.startX;
+            this.pdfy = this.startY;
 
             document.addEventListener('mousemove', this.drawSignatureBox);
             document.addEventListener('mouseup', this.finishDrawing);
