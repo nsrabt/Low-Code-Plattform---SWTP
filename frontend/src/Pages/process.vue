@@ -132,7 +132,7 @@ export default {
 
             break;
           case 'apply':
-            //todo apply functionality
+              //todo apply functionality
             await router.push('/processroles')
             break;
           case 'open':
@@ -161,10 +161,11 @@ export default {
       },
         async fetchProcesses() {
             try {
-              const userID = store.getters.getUser.id;
+              const response = await axios.get('http://localhost:3000/user/getUserBySession');
+              const userID = response.data.id;
+              console.log("userID",userID);
               const todoResponse = await axios.get(`http://localhost:3000/process/todo/${userID}`);
-
-              this.todoProcesses.push(todoResponse.data)
+              this.todoProcesses.push(todoResponse.data);
 
               const waitingResponse = await axios.get(`http://localhost:3000/process/waiting/${userID}`);
               this.waitingProcesses = waitingResponse.data;

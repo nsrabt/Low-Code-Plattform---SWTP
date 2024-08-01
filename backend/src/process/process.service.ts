@@ -668,7 +668,7 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
         for(const userPro of userPros){
             const process = await this.processRepo.findOne({where:{id: userPro.processID}});
             const workflow = await this.workflowRepository.findOne({where:{id: process.workflowID}});
-            console.log(process.id +"   "+workflow.title)
+            console.log(process.id +"   "+workflow.title);
             if(process && workflow) workflowList.push([workflow, process.id]);
         }
         return workflowList;
