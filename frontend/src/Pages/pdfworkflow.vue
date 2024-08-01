@@ -419,18 +419,10 @@ export default {
 
             console.log("Dropped text:", text); // Debugging statement
             if (field.type !== 'PDFCheckBox' && field) {
-              if (this.pdfFields.some(f => f.value === text && f.name !== field.name)) {
-                this.notificationMessage = "Field already exists in another field";
-                this.fieldAlreadyExistsNotification = true;
-                setTimeout(() => {
-                  this.fieldAlreadyExistsNotification = false;
-                }, this.notificationDuration);
-                return;
-              }
               const resp = await this.assignFillingData(field, dataID);
               if(resp){
                 field.value = text;
-                field.isDisabled = true;
+                //field.isDisabled = true;
               }
             } else {
               this.notificationMessage = "Incompatible types";
@@ -625,7 +617,6 @@ export default {
         }
 ,
         async assignFillingData(field, dataID) {
-
             console.log(field.value + "  dropped onto   " + field.name + "of type: " + field.type);
             const data = (await axios.get('http://localhost:3000/filling-data/' + dataID)).data;
 

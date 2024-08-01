@@ -8,7 +8,8 @@
 
     <!-- Form Section -->
     <div class="form-container">
-      <h1 class="text-center text-3xl font-bold my-6">Bevor es los geht, müssen sie ein paar Daten ausfüllen
+      <h1 class="text-center text-3xl font-bold my-6">
+        {{ formTitle }}
       </h1>
       <form @submit.prevent="handleSubmit">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -41,7 +42,7 @@
 
           </div>
         </div>
-        <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded">Save</button>
+        <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded">{{ buttonText }}</button>
 
       </form>
     </div>
@@ -61,6 +62,8 @@ export default {
         return {
             showDropDown: false,
             fields: [],
+            formTitle: "Bevor es los geht, müssen sie ein paar Daten ausfüllen",
+            buttonText: "Save",
             processResponse: null,
             startProcessDto: {
             // Beispielparameter für den Startprozess
@@ -83,19 +86,22 @@ export default {
             processID: store.getters.getProcessID,
             userID: store.getters.getUser.id
           });
-          for(const res of response.data){
-            console.log(res.datatype);
+          if(response.data.length === 0) {
+            this.formTitle = "Es sind keine Daten mehr auszufüllen";
+            this.buttonText = "Continue";
+          } else {
+            for(const res of response.data){
+              console.log(res.datatype);
+            }
+
+            this.fields = response.data.map(item => ({
+              key: item.id,
+              label: item.name,
+              value: '',
+              datatype: item.datatype,
+              name: item.name,
+            }));
           }
-
-          this.fields = response.data.map(item => ({
-            key: item.id,
-            label: item.name,
-            value: '',
-            datatype: item.datatype,
-            name: item.name,
-          }));
-
-
         } catch (error) {
           console.error('Error fetching missing data:', error);
         }
