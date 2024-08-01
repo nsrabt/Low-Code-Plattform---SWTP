@@ -23,10 +23,10 @@
                             </tr>
                         </thead>
                         <tbody class="block md:table-row-group">
-                          <tr v-for="(workflow, index) in currentProcesses" :key="index"
+                          <tr v-for="(workflow, index) in currentProcesses[0]" :key="index"
                               class="bg-gray-100 border border-grey-500 md:border-none block md:table-row">
                             <td v-if="selectedTab === 'Public'" class="p-2 block md:table-cell text-left">{{ workflow[0]?.title }}</td>
-                            <td v-if="selectedTab !== 'Public'" class="p-2 block md:table-cell text-left">{{ workflow[index][0].title }}</td>
+                            <td v-if="selectedTab !== 'Public'" class="p-2 block md:table-cell text-left">{{ workflow[0].title }}</td>
 
                             <td class="p-2 block md:table-cell">
                               <template v-if="selectedTab === 'To do'">
@@ -163,6 +163,7 @@ export default {
             try {
               const response = await axios.get('http://localhost:3000/user/getUserBySession');
               const userID = response.data.id;
+              const roleResponse = await axios.get(`http://localhost:3000/user/role/${userID}`);
               console.log("userID",userID);
               const todoResponse = await axios.get(`http://localhost:3000/process/todo/${userID}`);
               this.todoProcesses.push(todoResponse.data);
@@ -173,7 +174,7 @@ export default {
               const doneResponse = await axios.get(`http://localhost:3000/process/done/${userID}`);
               this.doneProcesses = doneResponse.data;
 
-              const publicResponse = await axios.get('http://localhost:3000/process/allPublic/'+store.getters.getRole.id);
+              const publicResponse = await axios.get('http://localhost:3000/process/allPublic/'+roleResponse.data.id);
               this.publicProcesses = publicResponse.data;
 
 
