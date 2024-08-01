@@ -23,34 +23,35 @@
                             </tr>
                         </thead>
                         <tbody class="block md:table-row-group">
-                            <tr v-for="(workflow, index) in currentProcesses" :key="index"
-                                class="bg-gray-100 border border-grey-500 md:border-none block md:table-row">
-                                <td class="p-2 block md:table-cell text-left">{{ workflow.title }}</td>
-                                <td class="p-2 block md:table-cell">
-                                    <template v-if="selectedTab === 'To do'">
-                                        <button class="bg-blue-600 text-white p-1 rounded mr-2"
-                                            @click="openProcess('todo', workflow)">Open</button>
-                                        <button class="bg-red-700 text-white p-1 rounded"
-                                            @click="openProcess('delete', workflow)">Delete</button>
-                                    </template>
-                                    <template v-if="selectedTab === 'Waiting'">
-                                        <div class="bg-yellow-500 text-white p-1 rounded">In Progress</div>
-                                    </template>
-                                    <template v-if="selectedTab === 'Public'">
-                                        <button v-if="workflow.isOpen" class="bg-green-600 text-white p-1 rounded"
-                                            @click="openProcess('start', workflow)">Start</button>
-                                        <button v-if="!workflow.isOpen" class="bg-red-600 text-white p-1 rounded"
-                                            @click="openProcess('apply', workflow)">Apply</button>
+                          <tr v-for="(workflow, index) in currentProcesses" :key="index"
+                              class="bg-gray-100 border border-grey-500 md:border-none block md:table-row">
+                            <td v-if="selectedTab === 'Public'" class="p-2 block md:table-cell text-left">{{ workflow[0]?.title }}</td>
+                            <td v-if="selectedTab !== 'Public'" class="p-2 block md:table-cell text-left">{{ workflow[index][0].title }}</td>
 
-                                    </template>
-                                    <template v-if="selectedTab === 'Done'">
-                                        <button class="bg-blue-600 text-white p-1 rounded mr-2"
-                                            @click="openProcess('open', workflow)">Open</button>
-                                        <button class="bg-purple-600 text-white p-1 rounded"
-                                            @click="openProcess('download', workflow)">Download</button>
-                                    </template>
-                                </td>
-                            </tr>
+                            <td class="p-2 block md:table-cell">
+                              <template v-if="selectedTab === 'To do'">
+                                <button class="bg-blue-600 text-white p-1 rounded mr-2"
+                                        @click="openProcess('open', workflow[index])">Open</button>
+                                <button class="bg-red-700 text-white p-1 rounded"
+                                        @click="openProcess('delete', workflow[index])">Delete</button>
+                              </template>
+                              <template v-if="selectedTab === 'Waiting'">
+                                <div class="bg-yellow-500 text-white p-1 rounded">In Progress</div>
+                              </template>
+                              <template v-if="selectedTab === 'Public'">
+                                <button v-if="workflow[0]?.isOpen" class="bg-green-600 text-white p-1 rounded"
+                                        @click="openProcess('start', workflow[0])">Start</button>
+                                <button v-if="!workflow[0]?.isOpen" class="bg-red-600 text-white p-1 rounded"
+                                        @click="openProcess('apply', workflow[0])">Apply</button>
+                              </template>
+                              <template v-if="selectedTab === 'Done'">
+                                <button class="bg-blue-600 text-white p-1 rounded mr-2"
+                                        @click="openProcess('open', workflow)">Open</button>
+                                <button class="bg-purple-600 text-white p-1 rounded"
+                                        @click="openProcess('download', workflow)">Download</button>
+                              </template>
+                            </td>
+                          </tr>
                         </tbody>
                     </table>
                 </div>
@@ -60,12 +61,17 @@
 </template>
 
 <script>
+
+
+
 import axios from 'axios';
 import {useStore} from "vuex";
 import store from "@/store/store.js";
 import router from "@/router/index.js";
 
+
 export default {
+
     data() {
         return {
             tabs: ['To do', 'Waiting', 'Public', 'Done'],
@@ -75,10 +81,13 @@ export default {
             publicProcesses: [],
             doneProcesses: [],
             showDropDown: false,
+            userProcessList:[],
+
         };
     },
 
   setup(){
+
     const store = useStore();
     return { store };
 
@@ -98,11 +107,16 @@ export default {
                     return [];
             }
         },
+
     },
     mounted() {
         this.fetchProcesses();
     },
     methods: {
+      getTitle(id) {
+
+ return id[0]
+      },
 
       async openProcess(command, workflow){
         switch (command) {
@@ -110,8 +124,12 @@ export default {
             console.log("todo pressed");
             break;
           case 'delete':
-            await axios.put('http://localhost:3000/process/deleteProcess/',workflow);
-            console.log("delete pressed");
+            console.log(workflow)
+            // Sende die DELETE-Anfrage an den Server
+            await axios.put('http://localhost:3000/process/deleteUserProcess/' + workflow[1]);
+
+
+
             break;
           case 'apply':
             //todo apply functionality
@@ -119,7 +137,11 @@ export default {
             break;
           case 'open':
             //todo open done process
-            console.log("open pressed");
+            console.log("open pressed " + workflow[1]);
+
+            this.store.commit('setProcessID', workflow[1]);
+
+            await router.push('/fillingdata')
             break;
           case 'download':
             //todo download function
@@ -141,7 +163,8 @@ export default {
             try {
               const userID = store.getters.getUser.id;
               const todoResponse = await axios.get(`http://localhost:3000/process/todo/${userID}`);
-              this.todoProcesses = todoResponse.data;
+
+              this.todoProcesses.push(todoResponse.data)
 
               const waitingResponse = await axios.get(`http://localhost:3000/process/waiting/${userID}`);
               this.waitingProcesses = waitingResponse.data;

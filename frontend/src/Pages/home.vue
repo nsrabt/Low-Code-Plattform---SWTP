@@ -63,7 +63,7 @@ const fetchUserData = async () => {
     }
     if (permissions[1] === true) {
       boxes.value.push(
-          { name: 'Plattform Manager', description: 'Verwaltung und Bearbeitung von den Plattformen', link: '/page3', photo: '/Plattform.png' },
+          { name: 'Plattform Manager', description: 'Verwaltung und Bearbeitung von den Plattformen', link: '/platformmanager', photo: '/Plattform.png' },
       );
     }
     if (permissions[2] === true) {

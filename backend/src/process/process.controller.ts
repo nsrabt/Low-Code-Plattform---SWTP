@@ -6,6 +6,7 @@
     import {IsNumber} from "class-validator";
     import {workflow_roles} from "../database/workflow/Workflow_roles";
     import {IsLoggedInGuard} from "../is-logged-in/is-logged-in.guard";
+    import {GetMissingDataDto} from "./dto/GetMissingDataDto";
 
     @Controller('process')
     @UseGuards(IsLoggedInGuard)
@@ -22,8 +23,8 @@
     This allows displaying the form for the missing input data.
 */
     @Put('check')
-    async getMissingData(){
-        return await this.processService.getMissingData();
+    async getMissingData(@Body()getMissingDataDto: GetMissingDataDto){
+        return await this.processService.getMissingData(getMissingDataDto.processID,getMissingDataDto.userID);
     }
 
 
@@ -106,6 +107,17 @@
     @Get('processRole/:id')
     async getProcessRole(@Param('id',ParseIntPipe) roleID:number) {
 
+    }
+
+    @Put('deleteUserProcess/:id')
+    async deleteUserProcess(@Param('id',ParseIntPipe) userProID:number){
+       return await this.processService.deleteUserProcess(userProID);
+    }
+
+
+    @Get('getWorkflowByUserPro')
+    async getWorkflowByUserPro(@Param('id',ParseIntPipe) processID:number){
+        return await this.processService.getWorkflowByUserPro(processID);
     }
         //Accept application
 

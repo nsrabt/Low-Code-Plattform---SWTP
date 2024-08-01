@@ -5,7 +5,7 @@ const store = createStore({
     state: {
         user: JSON.parse(localStorage.getItem('user')) || null,
         workflow: JSON.parse(localStorage.getItem('workflow')) || null,
-        processID: JSON.parse(localStorage.getItem('processID')) || null,
+        //processID: JSON.parse(localStorage.getItem('processID')) || null,
         workflowElements: JSON.parse(localStorage.getItem('workflowElements'))||null,
         role: JSON.parse(localStorage.getItem('role'))||null,
         isLoggedIn: false

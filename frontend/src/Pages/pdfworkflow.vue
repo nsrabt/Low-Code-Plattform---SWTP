@@ -207,56 +207,66 @@ export default {
             this.isDrawing = true;
             this.showSignatureNotification = true;
         },
-        startDrawing(event, pageIndex) {
-            if (!this.isDrawing) return;
-            this.currentPage = pageIndex;
-            this.overlayCanvas = document.getElementById(`overlay-canvas-${pageIndex}`);
-            const pdfCanvas = document.getElementById(`pdf-canvas-${pageIndex}`);
-            const rect = this.overlayCanvas.getBoundingClientRect();
-            const pdfRect = pdfCanvas.getBoundingClientRect();
-            this.scaleX = pdfCanvas.width / pdfRect.width;
-            this.scaleY = pdfCanvas.height / pdfRect.height;
-            this.startX = (event.clientX - rect.left) * this.scaleX;
-            this.startY = (event.clientY - rect.top) * this.scaleY;
+      startDrawing(event, pageIndex) {
+        if (!this.isDrawing) return;
+        this.currentPage = pageIndex;
+        this.overlayCanvas = document.getElementById(`overlay-canvas-${pageIndex}`);
+        const pdfCanvas = document.getElementById(`pdf-canvas-${pageIndex}`);
+        const rect = this.overlayCanvas.getBoundingClientRect();
+        const pdfRect = pdfCanvas.getBoundingClientRect();
+        this.scaleX = pdfCanvas.width / pdfRect.width;
+        this.scaleY = pdfCanvas.height / pdfRect.height;
 
-            document.addEventListener('mousemove', this.drawSignatureBox);
-            document.addEventListener('mouseup', this.finishDrawing);
-        },
-        finishDrawing(event) {
-            if (!this.isDrawing || !this.overlayCanvas) return;
-            const rect = this.overlayCanvas.getBoundingClientRect();
-            const endX = (event.clientX - rect.left) * this.scaleX;
-            const endY = (event.clientY - rect.top) * this.scaleY;
-            const width = endX - this.startX;
-            const height = endY - this.startY;
+        // Berechnung der Startkoordinaten
+        // Um den Ursprung in der unteren linken Ecke zu setzen, invertiere die Y-Koordinaten
+        this.startX = (event.clientX - rect.left) * this.scaleX;
+        this.startY = (rect.bottom - event.clientY) * this.scaleY;
 
-            // Add the signature field to the pdfFields array
-            this.pdfFields.push({
-                name: `signature_${Date.now()}`,
-                page: parseInt(this.currentPage) + 1,
-                top: this.startY / this.scaleY,
-                left: this.startX / this.scaleX,
-                width: width / this.scaleX,
-                height: height / this.scaleY,
-                transformedTop: this.startY / this.scaleY,
-                transformedLeft: this.startX / this.scaleX,
-                transformedWidth: width / this.scaleX,
-                transformedHeight: height / this.scaleY,
-                value: "",
-                checked: false,
-                type: "signature",
-                dataID: 0,
-                isFilled: false,
-                isDisabled: false // Add this property to manage the disabled state
-            });
+        document.addEventListener('mousemove', this.drawSignatureBox);
+        document.addEventListener('mouseup', this.finishDrawing);
+      },
 
-            this.isDrawing = false;
-            this.showSignatureNotification = false;
-            this.overlayCanvas = null;
-            document.removeEventListener('mousemove', this.drawSignatureBox);
-            document.removeEventListener('mouseup', this.finishDrawing);
-        },
-        async showAll() {
+
+
+      finishDrawing(event) {
+        if (!this.isDrawing || !this.overlayCanvas) return;
+        const rect = this.overlayCanvas.getBoundingClientRect();
+        const endX = (event.clientX - rect.left) * this.scaleX;
+        const endY = (event.clientY - rect.top) * this.scaleY;
+        const width = endX - this.startX;
+        const height = endY - this.startY;
+
+        // Add the signature field to the pdfFields array
+        this.pdfFields.push({
+          name: 'signature_${Date.now()}',
+          page: parseInt(this.currentPage) + 1,
+          top: this.startY / this.scaleY,
+          left: this.startX / this.scaleX,
+          width: width / this.scaleX,
+          height: height / this.scaleY,
+          transformedTop: this.startY / this.scaleY,
+          transformedLeft: this.startX / this.scaleX,
+          transformedWidth: width / this.scaleX,
+          transformedHeight: height / this.scaleY,
+          value: '',
+          checked: false,
+          type: "photo",
+          dataID: 0,
+          isFilled: false,
+          isDisabled: false, // Add this property to manage the disabled state
+          picInfo: [width,height,this.startX,this.startY, parseInt(this.currentPage)-1],
+          id: null
+        });
+
+        this.isDrawing = false;
+        this.showSignatureNotification = false;
+        this.overlayCanvas = null;
+        document.removeEventListener('mousemove', this.drawSignatureBox);
+        document.removeEventListener('mouseup', this.finishDrawing);
+      },
+
+
+      async showAll() {
             const response = await axios.get('http://localhost:3000/filling-data/all/' + 1);
             response.data.forEach(data => {
                 this.items.push({
@@ -351,7 +361,10 @@ export default {
                                 type: fieldType,
                                 dataID: 0,
                                 isFilled: false,
-                                isDisabled: false // Add this property to manage the disabled state
+                                isDisabled: false, // Add this property to manage the disabled state
+                                picInfo:[],
+                                id: null
+
                             });
 
                             this.pdfFields.push(field);
@@ -385,7 +398,7 @@ export default {
             event.preventDefault();
         },
         async onDropField(event, field) {
-            if (field.isDisabled) return; // Prevent further actions if the field is disabled
+            //if (field.isDisabled) return; // Prevent further actions if the field is disabled
 
             const text = event.dataTransfer.getData("text");
             const dataID = event.dataTransfer.getData('number');
@@ -604,6 +617,9 @@ export default {
           else if (field.type === 'PDFCheckBox' && data.datatype === 'boolean') {
             return true;
           }
+          else if(field.type === 'photo' && data.datatype === 'photo'){
+            return true;
+          }
           console.log(field.type +"   "+data.datatype);
           return false;
         }
@@ -613,25 +629,56 @@ export default {
             console.log(field.value + "  dropped onto   " + field.name + "of type: " + field.type);
             const data = (await axios.get('http://localhost:3000/filling-data/' + dataID)).data;
 
-
-            if (this.isSameType(field, data)) {
+            if(field.value === ''){
+              console.log("is empty");
+              if (this.isSameType(field, data)) {
                 //todo: put code here if the strings are compatible
-              console.log(this.curWorkflowElementRole.id)
-              const response = await axios.put('http://localhost:3000/workflow/field', {
-                workflowElementID: this.curWorkflowElement.id,
-                dataID: dataID,
-                type: field.type,
-                processRoleID: this.curWorkflowElementRole.workflowRoleID,
-                name:field.name
-              })
-              return true;
-            }else {
+                console.log(this.curWorkflowElementRole.id)
+                const response = await axios.put('http://localhost:3000/workflow/field', {
+                  workflowElementID: this.curWorkflowElement.id,
+                  dataID: dataID,
+                  type: field.type,
+                  processRoleID: this.curWorkflowElementRole.workflowRoleID,
+                  name:field.name,
+                  fieldInfo:field.picInfo,
+                })
+                field.id=response.data.id;
+
+                return true;
+              }else {
                 this.notificationMessage = "Incompatible types";
                 this.incompatibleTypesNotification = true;
                 setTimeout(() => {
                   this.incompatibleTypesNotification = false;
                 }, this.notificationDuration);
-              return false;
+                return false;
+              }
+
+            }
+            else {
+              console.log("update ")
+              if (this.isSameType(field, data)) {
+                //todo: put code here if the strings are compatible
+                console.log(this.curWorkflowElementRole.id)
+                const response = await axios.put('http://localhost:3000/workflow/updateField', {
+                    id: field.id,
+                    dataID: dataID,
+                    type: field.type,
+                    processRoleID: this.curWorkflowElementRole.workflowRoleID,
+                    fieldInfo:field.picInfo,
+                })
+                field.id=response.data.id;
+
+                return true;
+              }else {
+                this.notificationMessage = "Incompatible types";
+                this.incompatibleTypesNotification = true;
+                setTimeout(() => {
+                  this.incompatibleTypesNotification = false;
+                }, this.notificationDuration);
+                return false;
+              }
+
             }
         },
         async loadWorkflowElements() {

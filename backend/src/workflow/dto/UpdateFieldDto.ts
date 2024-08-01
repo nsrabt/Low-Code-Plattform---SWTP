@@ -1,9 +1,9 @@
 import {IsArray, IsNumber, IsString} from "class-validator";
 import {Column} from "typeorm";
 
-export class AddFieldDto{
+export class UpdateFieldDto{
     @IsNumber()
-    workflowElementID: number;
+    id:number;
 
     @IsString()
     dataID: number;
@@ -11,13 +11,10 @@ export class AddFieldDto{
     @IsString()
     type: string;
 
-    @IsNumber()
-    processRoleID: number;
-
-    @IsString()
-    name: string;
-
     @IsArray()
     fieldInfo:number[]
+
+    @IsNumber()
+    processRoleID: number;
 
 }

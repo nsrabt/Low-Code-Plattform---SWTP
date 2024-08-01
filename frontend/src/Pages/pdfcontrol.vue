@@ -49,12 +49,15 @@ export default {
 */
 
     //show pdf's
+
+    //const workflowRespone = await axios.get('http://localhost:3000/process/'+store.getters.getProcessID)
+    const workflowID = store.getters.getWorkflow.id;
     const response = await axios.put('http://localhost:3000/process/startFill',
     {
 
         userID: store.getters.getUser.id,
 
-        workflowID: store.getters.getWorkflow.id,
+        workflowID: workflowID,
 
         isNew: true
 

@@ -15,6 +15,7 @@ import {ChangeOrderDto} from "./dto/change-order-dto";
 import {AssignRoleDto} from './dto/assign-role-dto'
 import {AddFieldDto} from "./dto/add-field-dto";
 import {fields} from "../database/workflow/fields";
+import {UpdateFieldDto} from "./dto/UpdateFieldDto";
 
 
 @Injectable()
@@ -206,7 +207,7 @@ export class WorkflowService {
         field.dataID = addFieldDto.dataID;
         field.processRoleID = addFieldDto.processRoleID;
         field.fieldName = addFieldDto.name;
-
+        field.picInfo = addFieldDto.fieldInfo; // Konvertiere jedes Element zu Number
         return await this.fieldRepository.save(field);
     }
 
@@ -223,5 +224,14 @@ export class WorkflowService {
         const workflow = await this.processRepository.findOne({where:{id: workflowID}});
         workflow.version+=1;
         return await this.processRepository.update(workflow.id, workflow);
+    }
+
+    async updateField(updateField: UpdateFieldDto) {
+        const field = await this.fieldRepository.findOne({where:{id:updateField.id}});
+        field.picInfo = updateField.fieldInfo;
+        field.dataID = updateField.dataID;
+        field.type = updateField.type;
+        field.processRoleID = updateField.processRoleID;
+        return await this.fieldRepository.update(updateField.id, field);
     }
 }

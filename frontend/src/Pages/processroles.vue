@@ -68,6 +68,14 @@ export default {
       const response = await axios.put('http://localhost:3000/process/startProcess',startProcessDto);
 
       await this.getFieldTypes(response);
+      if(this.fields.length===0){
+        const processID = response.data.processID;
+        if (response) {
+          this.store.commit('setProcessID', processID);
+          await router.push('/fillingdata')
+        }
+
+      }
     },
     methods: {
         async getFieldTypes(response) {

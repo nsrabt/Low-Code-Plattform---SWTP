@@ -13,5 +13,7 @@ export class fields {
     @Column()
     type: string;
     @Column()
-    processRoleID: number
+    processRoleID: number;
+    @Column("double precision",{array:true})
+    picInfo: number[];
 }

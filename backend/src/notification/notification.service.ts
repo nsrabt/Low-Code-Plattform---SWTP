@@ -16,7 +16,7 @@ export class NotificationService {
         const newNotification = new user_notifications();
         newNotification.link=link;
         newNotification.message=message;
-        newNotification.userID;
+        newNotification.userID = userID;
         return await this.notificationRepo.save(newNotification);
     }
 

@@ -79,7 +79,10 @@ export default {
       async fetchMissingData() {
 
         try {
-          const response = await axios.put('http://localhost:3000/process/check');
+          const response = await axios.put('http://localhost:3000/process/check',{
+            processID: store.getters.getProcessID,
+            userID: store.getters.getUser.id
+          });
           for(const res of response.data){
             console.log(res.datatype);
           }
@@ -95,6 +98,17 @@ export default {
 
         } catch (error) {
           console.error('Error fetching missing data:', error);
+        }
+      },
+      onFileChange(event, field) {
+        const file = event.target.files[0];
+        if (file) {
+          // Handle file change logic here
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            field.value = e.target.result;
+          };
+          reader.readAsDataURL(file);
         }
       },
         async handleSubmit() {

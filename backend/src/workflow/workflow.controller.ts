@@ -10,6 +10,7 @@ import {ChangeOrderDto} from "./dto/change-order-dto";
 import {AssignRoleDto} from './dto/assign-role-dto'
 import {AddFieldDto} from "./dto/add-field-dto";
 import {IsLoggedInGuard} from "../is-logged-in/is-logged-in.guard";
+import {UpdateFieldDto} from "./dto/UpdateFieldDto";
 
 @Controller('workflow')
 @UseGuards(IsLoggedInGuard)
@@ -111,6 +112,10 @@ export class WorkflowController {
         return await this.workflowService.addField(addFieldDto);
     }
 
+    @Put('updateField')
+    async updateField(@Body()updateField:UpdateFieldDto){
+        return await this.workflowService.updateField(updateField);
+    }
     @Put('updateVersion/:id')
     async updateVersion(@Param('id',ParseIntPipe)workflowID){
         return await this.workflowService.updateVersion(workflowID)
