@@ -59,10 +59,18 @@
           </div>
         </div>
       </div>
-      <button @click="buttonPressed"
-              class="fixed bottom-4 right-4 p-2 bg-green-500 text-white rounded hover:bg-green-700">
-        {{ buttonValue }}
-      </button>
+      <div class="fixed bottom-4 right-4 flex items-center space-x-4">
+        <button v-if="buttonValuePrev" @click="buttonPressedPrev"
+                class="p-2 bg-blue-500 text-white rounded hover:bg-blue-700">
+          {{ buttonValuePrev }} <!-- Hier kannst du einen anderen Text oder Wert verwenden -->
+        </button>
+        <button @click="buttonPressed"
+                class="p-2 bg-green-500 text-white rounded hover:bg-green-700">
+          {{ buttonValue }}
+        </button>
+        <!-- Der zweite Button mit ähnlichen Styles, aber zusätzlichen Anpassungen falls nötig -->
+
+      </div>
       <div v-if="showSignatureNotification"
            class="fixed top-20 left-0 w-full p-4 bg-yellow-300 text-black text-lg font-semibold text-center shadow-lg">
         Wo soll die Unterschrift hinkommen? Halte die rechte Maustaste gedrückt und ziehe ein Rechteck. Lass die
@@ -139,6 +147,7 @@ export default {
       workflowElementRoles: [],
       curWorkflowElementRole: null,
       buttonValue: '',
+      buttonValuePrev: '',
       curWorkflowRole: '',
       workflowId: null,
       showAddItemModal: false,
@@ -755,7 +764,26 @@ export default {
       }
       const lastIndex = this.workflowElementRoles.length - 1;
       //If current role is last role
-
+      console.log("currWorkflowElementRole", this.curWorkflowElementRole);
+      console.log("lastIndex", lastIndex);
+      // nicht im ersten PDF
+      if(this.curWorkflowElement !== this.workflowElements[0]) {
+        //im ersten Role
+        if(this.curWorkflowElementRole === this.workflowElementRoles[0]) {
+          this.buttonValuePrev = 'Previous workflow-element';
+        } else if(this.curWorkflowElementRole !== this.workflowElementRoles[0]) {
+          this.buttonValuePrev = 'Previous role';
+        }
+        else {
+          this.buttonValue = '';
+        }
+      }
+      // nicht im ersten Role, aber im ersten PDF
+      else if(this.curWorkflowElementRole !== this.workflowElementRoles[0]) {
+        this.buttonValuePrev = 'Previous role';
+      } else {
+        this.buttonValuePrev = '';
+      }
       if (this.curWorkflowElementRole === this.workflowElementRoles[lastIndex]) {
         const lastWorkflowElementIndex = this.workflowElements.length - 1;
         //Wenn auch letztes workflowElement
@@ -789,6 +817,20 @@ export default {
           break;
       }
     },
+    async buttonPressedPrev() {
+      let lastIndex;
+      switch (this.buttonValuePrev) {
+        case 'Previous role':
+          lastIndex = this.workflowElementRoles.indexOf(this.curWorkflowElementRole);
+          await this.previousRole(lastIndex)
+          break;
+        case 'Previous workflow-element':
+          //speichern
+          lastIndex = this.workflowElements.indexOf(this.curWorkflowElement);
+          await this.previousWorkflowElement(lastIndex);
+          break;
+      }
+    },
     async nextWorkflowElement(lastIndex) {
       this.curWorkflowElement = this.workflowElements[lastIndex + 1];
       console.log(this.curWorkflowElement.id)
@@ -798,6 +840,18 @@ export default {
       await this.loadWorkflowRoles()
       lastIndex = this.workflowElementRoles.indexOf(this.curWorkflowElementRole);
       await this.nextRole(lastIndex)
+
+      this.checkState();
+    },
+    async previousWorkflowElement(lastIndex) {
+      this.curWorkflowElement = this.workflowElements[lastIndex - 1];
+      console.log(this.curWorkflowElement.id)
+      await this.loadPdf(this.curWorkflowElement.data);
+
+      this.workflowElementRoles = [];
+      await this.loadWorkflowRoles()
+      lastIndex = this.workflowElementRoles.indexOf(this.curWorkflowElementRole);
+      await this.nextRole(lastIndex);
 
       this.checkState();
     },
@@ -812,9 +866,12 @@ export default {
           //todo: rot markieren
         }
       }
-
-
-
+      this.checkState();
+    },
+    async previousRole(lastIndex) {
+      this.curWorkflowElementRole = this.workflowElementRoles[lastIndex - 1];
+      this.curWorkflowRole = (await axios.get('http://localhost:3000/workflow/role/' + this.curWorkflowElementRole.workflowRoleID)).data;
+      console.log("name " + this.curWorkflowRole.workflowRoleName)
       this.checkState();
     }
   }

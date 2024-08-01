@@ -134,19 +134,7 @@ export default {
             return;
           }
 
-          const filledCheckboxes = this.fields.filter(field => field.datatype === 'boolean' && field.value);
-          const unfilledCheckboxes = this.fields.filter(field => field.datatype === 'boolean');
-          console.log("filledCheckboxes", filledCheckboxes);
-          console.log("fields ---",this.fields);
-          if (unfilledCheckboxes.length > 1 && filledCheckboxes.length !== 1) {
-            this.notificationMessage = 'Bitte wählen Sie genau eine Checkbox aus, bevor Sie fortfahren.';
-            this.showNotification = true;
-            setTimeout(() => {
-              this.showNotification = false;
-            }, this.notificationDuration);
-            return;
-          }
-            console.log("fields ",this.fields);
+          console.log("fields ",this.fields);
             // Handle form submission logic here
           try {
             for(const field of this.fields){
