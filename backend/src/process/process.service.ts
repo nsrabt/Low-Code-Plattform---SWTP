@@ -636,7 +636,7 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
     }
 
 
-    async getAllWaiting(userID: number) {
+    async getAllWaiting(userID: number):Promise<[workflow,number][]> {
         const userPros = await this.userProRepo.find({where:{state: 'waiting'}});
         const workflowList:[workflow, number][]=[];
         for(const userPro of userPros){
@@ -661,7 +661,8 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
 
 
 
-    async getAllTodo(userID: number) {
+    async getAllTodo(userID: number):Promise<[workflow,number][]> {
+
         const userPros = await this.userProRepo.find({where:{state: 'todo', userID:userID}});
 
         const workflowList: [workflow, number][]=[];
@@ -671,6 +672,7 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
             console.log(process.id +"   "+workflow.title);
             if(process && workflow) workflowList.push([workflow, process.id]);
         }
+        console.log("todo: "+workflowList)
         return workflowList;
     }
 

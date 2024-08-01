@@ -74,7 +74,6 @@ export default {
           this.store.commit('setProcessID', processID);
           await router.push('/fillingdata')
         }
-
       }
     },
     methods: {
