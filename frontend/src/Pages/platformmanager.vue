@@ -123,7 +123,7 @@ export default {
             headerActions: 'Actions',
             roles: [],
             fillingData: [], // Data for Ausfülldaten
-            permissions: ['apply for processes', 'check workflow overview', 'use monitoring dashboard', 'edit workflows', 'create workflows', 'edit platform-info'],
+            permissions: ['Prozess durchführung', 'Plattform Manager', 'Workflow Management'],
             showEditModal: false,
             showEditFillingDataModal: false,
             isEdit: false,

@@ -53,7 +53,7 @@
                         <input type="text" v-if="field.type !== 'PDFCheckBox'" v-model="field.value"
                             @input="updateFieldContent(field)" :disabled="field.isDisabled"
                             :class="{ 'disabled-field': field.isDisabled }"
-                        class="w-full h-full p-1 border border-gray-500 rounded" />
+                            class="w-full h-full p-1 border border-gray-500 rounded" />
                         <input type="checkbox" v-else v-model="field.checked" @change="updateFieldContent(field)"
                             class="w-full h-full p-1 border border-gray-500 rounded" />
                     </div>
@@ -71,9 +71,11 @@
             </div>
         </div>
     </div>
-  <NotificationBox v-if="showNotification" :message="notificationMessage" :duration="notificationDuration" />
-  <NotificationBox v-if="incompatibleTypesNotification" message="Incompatible types" :duration="notificationDuration" />
-  <NotificationBox v-if="fieldAlreadyExistsNotification" message="Field already exists in PDF" :duration="notificationDuration" />
+    <NotificationBox v-if="showNotification" :message="notificationMessage" :duration="notificationDuration" />
+    <NotificationBox v-if="incompatibleTypesNotification" message="Incompatible types"
+        :duration="notificationDuration" />
+    <NotificationBox v-if="fieldAlreadyExistsNotification" message="Field already exists in PDF"
+        :duration="notificationDuration" />
 
     <!-- Add Item Modal -->
     <div v-if="showAddItemModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -119,9 +121,9 @@ GlobalWorkerOptions.workerSrc = "/pdf.worker.js";
 
 export default {
     name: "Home",
-  components: {
-    NotificationBox // Register the NotificationBox component
-  },
+    components: {
+        NotificationBox // Register the NotificationBox component
+    },
     data() {
         return {
             items: reactive([]),
@@ -156,7 +158,9 @@ export default {
             notificationDuration: 5000,
             showNotification: false,
             incompatibleTypesNotification: false,
-          fieldAlreadyExistsNotification: false
+            fieldAlreadyExistsNotification: false,
+            pdfx: 0,
+            pdfy:0,
         };
     },
     watch: {
@@ -207,66 +211,68 @@ export default {
             this.isDrawing = true;
             this.showSignatureNotification = true;
         },
-      startDrawing(event, pageIndex) {
-        if (!this.isDrawing) return;
-        this.currentPage = pageIndex;
-        this.overlayCanvas = document.getElementById(`overlay-canvas-${pageIndex}`);
-        const pdfCanvas = document.getElementById(`pdf-canvas-${pageIndex}`);
-        const rect = this.overlayCanvas.getBoundingClientRect();
-        const pdfRect = pdfCanvas.getBoundingClientRect();
-        this.scaleX = pdfCanvas.width / pdfRect.width;
-        this.scaleY = pdfCanvas.height / pdfRect.height;
+        startDrawing(event, pageIndex) {
+            if (!this.isDrawing) return;
+            this.currentPage = pageIndex;
+            this.overlayCanvas = document.getElementById(`overlay-canvas-${pageIndex}`);
+            const pdfCanvas = document.getElementById(`pdf-canvas-${pageIndex}`);
+            const rect = this.overlayCanvas.getBoundingClientRect();
+            const pdfRect = pdfCanvas.getBoundingClientRect();
+            this.scaleX = pdfCanvas.width / pdfRect.width;
+            this.scaleY = pdfCanvas.height / pdfRect.height;
 
-        // Berechnung der Startkoordinaten
-        // Um den Ursprung in der unteren linken Ecke zu setzen, invertiere die Y-Koordinaten
-        this.startX = (event.clientX - rect.left) * this.scaleX;
-        this.startY = (rect.bottom - event.clientY) * this.scaleY;
+            // Berechnung der Startkoordinaten
+            // Um den Ursprung in der unteren linken Ecke zu setzen, invertiere die Y-Koordinaten
+            this.startX = (event.clientX - rect.left) * this.scaleX;
+            this.startY = (event.clientY - rect.top) * this.scaleY;
+            this.pdfx = this.startX;
+            this.pdfy = this.startY;
 
-        document.addEventListener('mousemove', this.drawSignatureBox);
-        document.addEventListener('mouseup', this.finishDrawing);
-      },
-
-
-
-      finishDrawing(event) {
-        if (!this.isDrawing || !this.overlayCanvas) return;
-        const rect = this.overlayCanvas.getBoundingClientRect();
-        const endX = (event.clientX - rect.left) * this.scaleX;
-        const endY = (event.clientY - rect.top) * this.scaleY;
-        const width = endX - this.startX;
-        const height = endY - this.startY;
-
-        // Add the signature field to the pdfFields array
-        this.pdfFields.push({
-          name: 'signature_${Date.now()}',
-          page: parseInt(this.currentPage) + 1,
-          top: this.startY / this.scaleY,
-          left: this.startX / this.scaleX,
-          width: width / this.scaleX,
-          height: height / this.scaleY,
-          transformedTop: this.startY / this.scaleY,
-          transformedLeft: this.startX / this.scaleX,
-          transformedWidth: width / this.scaleX,
-          transformedHeight: height / this.scaleY,
-          value: '',
-          checked: false,
-          type: "photo",
-          dataID: 0,
-          isFilled: false,
-          isDisabled: false, // Add this property to manage the disabled state
-          picInfo: [width,height,this.startX,this.startY, parseInt(this.currentPage)-1],
-          id: null
-        });
-
-        this.isDrawing = false;
-        this.showSignatureNotification = false;
-        this.overlayCanvas = null;
-        document.removeEventListener('mousemove', this.drawSignatureBox);
-        document.removeEventListener('mouseup', this.finishDrawing);
-      },
+            document.addEventListener('mousemove', this.drawSignatureBox);
+            document.addEventListener('mouseup', this.finishDrawing);
+        },
 
 
-      async showAll() {
+
+        finishDrawing(event) {
+            if (!this.isDrawing || !this.overlayCanvas) return;
+            const rect = this.overlayCanvas.getBoundingClientRect();
+            const endX = (event.clientX - rect.left) * this.scaleX;
+            const endY = (event.clientY - rect.top) * this.scaleY;
+            const width = endX - this.startX;
+            const height = endY - this.startY;
+
+            // Add the signature field to the pdfFields array
+            this.pdfFields.push({
+                name: 'signature_${Date.now()}',
+                page: parseInt(this.currentPage) + 1,
+                top: this.startY / this.scaleY,
+                left: this.startX / this.scaleX,
+                width: width / this.scaleX,
+                height: height / this.scaleY,
+                transformedTop: this.startY / this.scaleY,
+                transformedLeft: this.startX / this.scaleX,
+                transformedWidth: width / this.scaleX,
+                transformedHeight: height / this.scaleY,
+                value: '',
+                checked: false,
+                type: "photo",
+                dataID: 0,
+                isFilled: false,
+                isDisabled: false, // Add this property to manage the disabled state
+                picInfo: [width, height, this.startX, this.startY, parseInt(this.currentPage) - 1],
+                id: null
+            });
+
+            this.isDrawing = false;
+            this.showSignatureNotification = false;
+            this.overlayCanvas = null;
+            document.removeEventListener('mousemove', this.drawSignatureBox);
+            document.removeEventListener('mouseup', this.finishDrawing);
+        },
+
+
+        async showAll() {
             const response = await axios.get('http://localhost:3000/filling-data/all/' + 1);
             response.data.forEach(data => {
                 this.items.push({
@@ -362,7 +368,7 @@ export default {
                                 dataID: 0,
                                 isFilled: false,
                                 isDisabled: false, // Add this property to manage the disabled state
-                                picInfo:[],
+                                picInfo: [],
                                 id: null
 
                             });
@@ -419,17 +425,17 @@ export default {
 
             console.log("Dropped text:", text); // Debugging statement
             if (field.type !== 'PDFCheckBox' && field) {
-              const resp = await this.assignFillingData(field, dataID);
-              if(resp){
-                field.value = text;
-                //field.isDisabled = true;
-              }
+                const resp = await this.assignFillingData(field, dataID);
+                if (resp) {
+                    field.value = text;
+                    //field.isDisabled = true;
+                }
             } else {
-              this.notificationMessage = "Incompatible types";
-              this.incompatibleTypesNotification = true;
-              setTimeout(() => {
-                this.incompatibleTypesNotification = false;
-              }, this.notificationDuration);
+                this.notificationMessage = "Incompatible types";
+                this.incompatibleTypesNotification = true;
+                setTimeout(() => {
+                    this.incompatibleTypesNotification = false;
+                }, this.notificationDuration);
                 console.error("Field not found for name:", field.name); // Debugging statement
             }
         },
@@ -502,50 +508,50 @@ export default {
         },
         async submitNewItem() {
             try {
-              // Check if the item name or type is empty
-              if (!this.newItem.name || !this.newItem.type) {
-                this.notificationMessage = 'Name of the item must not be empty';
-                this.showNotification = true;
-                setTimeout(() => {
-                  this.showNotification = false;
-                }, this.notificationDuration);
-                return;
-              }
+                // Check if the item name or type is empty
+                if (!this.newItem.name || !this.newItem.type) {
+                    this.notificationMessage = 'Name of the item must not be empty';
+                    this.showNotification = true;
+                    setTimeout(() => {
+                        this.showNotification = false;
+                    }, this.notificationDuration);
+                    return;
+                }
                 const res = await axios.put('http://localhost:3000/filling-data', {
                     platformID: 1,
                     name: this.newItem.name,
                     datatype: this.newItem.type,
                     isPlatformInfo: false
                 });
-              if(res.data){
-                const dataID = res.data.id;
+                if (res.data) {
+                    const dataID = res.data.id;
 
-                const newItem = {
-                  title: this.newItem.name,
-                  isEditing: false,
-                  content: this.newItem.name,
-                  dataID: dataID,
-                  datatype: this.newItem.type
-                };
+                    const newItem = {
+                        title: this.newItem.name,
+                        isEditing: false,
+                        content: this.newItem.name,
+                        dataID: dataID,
+                        datatype: this.newItem.type
+                    };
 
-                this.items.push(newItem);
-                this.closeAddItemModal();
-                this.notificationMessage = '';
-                this.showNotification = false;
-              } else{
-                this.notificationMessage = 'Das Item existiert bereits';
-                this.showNotification = true;
-                setTimeout(() => {
-                  this.showNotification = false;
-                }, this.notificationDuration);
-              }
+                    this.items.push(newItem);
+                    this.closeAddItemModal();
+                    this.notificationMessage = '';
+                    this.showNotification = false;
+                } else {
+                    this.notificationMessage = 'Das Item existiert bereits';
+                    this.showNotification = true;
+                    setTimeout(() => {
+                        this.showNotification = false;
+                    }, this.notificationDuration);
+                }
             } catch (error) {
                 console.error("Error adding item:", error);
-              this.notificationMessage = 'Fehler beim Hinzufügen des Items';
-              this.showNotification = true;
-              setTimeout(() => {
-                this.showNotification = false;
-              }, this.notificationDuration);
+                this.notificationMessage = 'Fehler beim Hinzufügen des Items';
+                this.showNotification = true;
+                setTimeout(() => {
+                    this.showNotification = false;
+                }, this.notificationDuration);
             }
         },
         async savePdf() {
@@ -598,77 +604,77 @@ export default {
                 console.error("Error saving PDF:", error);
             }
         },
-      //todo: Notification Box
+        //todo: Notification Box
         isSameType(field, data) {
-          if (field.type === 'text' && data.datatype === 'string') {
-            return true;
-          }
-          else if (field.type === 'text' && data.datatype === 'date') {
-            return true;
-          }
-          else if (field.type === 'PDFCheckBox' && data.datatype === 'boolean') {
-            return true;
-          }
-          else if(field.type === 'photo' && data.datatype === 'photo'){
-            return true;
-          }
-          console.log(field.type +"   "+data.datatype);
-          return false;
+            if (field.type === 'text' && data.datatype === 'string') {
+                return true;
+            }
+            else if (field.type === 'text' && data.datatype === 'date') {
+                return true;
+            }
+            else if (field.type === 'PDFCheckBox' && data.datatype === 'boolean') {
+                return true;
+            }
+            else if (field.type === 'photo' && data.datatype === 'photo') {
+                return true;
+            }
+            console.log(field.type + "   " + data.datatype);
+            return false;
         }
-,
+        ,
         async assignFillingData(field, dataID) {
             console.log(field.value + "  dropped onto   " + field.name + "of type: " + field.type);
             const data = (await axios.get('http://localhost:3000/filling-data/' + dataID)).data;
 
-            if(field.value === ''){
-              console.log("is empty");
-              if (this.isSameType(field, data)) {
-                //todo: put code here if the strings are compatible
-                console.log(this.curWorkflowElementRole.id)
-                const response = await axios.put('http://localhost:3000/workflow/field', {
-                  workflowElementID: this.curWorkflowElement.id,
-                  dataID: dataID,
-                  type: field.type,
-                  processRoleID: this.curWorkflowElementRole.workflowRoleID,
-                  name:field.name,
-                  fieldInfo:field.picInfo,
-                })
-                field.id=response.data.id;
+            if (field.value === '') {
+                console.log("is empty");
+                if (this.isSameType(field, data)) {
+                    //todo: put code here if the strings are compatible
+                    console.log(this.curWorkflowElementRole.id)
+                    const response = await axios.put('http://localhost:3000/workflow/field', {
+                        workflowElementID: this.curWorkflowElement.id,
+                        dataID: dataID,
+                        type: field.type,
+                        processRoleID: this.curWorkflowElementRole.workflowRoleID,
+                        name: field.name,
+                        fieldInfo: field.picInfo,
+                    })
+                    field.id = response.data.id;
 
-                return true;
-              }else {
-                this.notificationMessage = "Incompatible types";
-                this.incompatibleTypesNotification = true;
-                setTimeout(() => {
-                  this.incompatibleTypesNotification = false;
-                }, this.notificationDuration);
-                return false;
-              }
+                    return true;
+                } else {
+                    this.notificationMessage = "Incompatible types";
+                    this.incompatibleTypesNotification = true;
+                    setTimeout(() => {
+                        this.incompatibleTypesNotification = false;
+                    }, this.notificationDuration);
+                    return false;
+                }
 
             }
             else {
-              console.log("update ")
-              if (this.isSameType(field, data)) {
-                //todo: put code here if the strings are compatible
-                console.log(this.curWorkflowElementRole.id)
-                const response = await axios.put('http://localhost:3000/workflow/updateField', {
-                    id: field.id,
-                    dataID: dataID,
-                    type: field.type,
-                    processRoleID: this.curWorkflowElementRole.workflowRoleID,
-                    fieldInfo:field.picInfo,
-                })
-                field.id=response.data.id;
+                console.log("update ")
+                if (this.isSameType(field, data)) {
+                    //todo: put code here if the strings are compatible
+                    console.log(this.curWorkflowElementRole.id)
+                    const response = await axios.put('http://localhost:3000/workflow/updateField', {
+                        id: field.id,
+                        dataID: dataID,
+                        type: field.type,
+                        processRoleID: this.curWorkflowElementRole.workflowRoleID,
+                        fieldInfo: field.picInfo,
+                    })
+                    field.id = response.data.id;
 
-                return true;
-              }else {
-                this.notificationMessage = "Incompatible types";
-                this.incompatibleTypesNotification = true;
-                setTimeout(() => {
-                  this.incompatibleTypesNotification = false;
-                }, this.notificationDuration);
-                return false;
-              }
+                    return true;
+                } else {
+                    this.notificationMessage = "Incompatible types";
+                    this.incompatibleTypesNotification = true;
+                    setTimeout(() => {
+                        this.incompatibleTypesNotification = false;
+                    }, this.notificationDuration);
+                    return false;
+                }
 
             }
         },
