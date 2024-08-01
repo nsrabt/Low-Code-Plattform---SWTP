@@ -349,10 +349,10 @@ async createUserProcess(currentWorkflow: workflow, userID: number, workflowEleme
 
                             const jpgDims = jpgImage.scale(1000); // Skalieren nach Bedarf anpassen
 
-                            const width = Math.round(nums[0])
-                            const height = Math.round(nums[1]);
-                            const xPos = Math.round(nums[2]);
-                            const yPos = Math.round(nums[3]);
+                            const width = nums[0]
+                            const height = nums[1];
+                            const xPos = nums[2];
+                            const yPos = nums[3];
                             const pageNumber = 0;
 
                             console.log("xPos: " + xPos + "\nyPos: " + yPos + "\nwidth: " + width + "\nheight: " + height + "\npageNumber: " + (pageNumber + 1));

@@ -65,9 +65,7 @@
                         <a href="#"
                             class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
                             role="menuitem" tabindex="-1" id="menu-item-0">Update Profile Picture</a>
-                        <a href="#"
-                            class="text-gray-700 block px-4 py-2 text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"
-                            role="menuitem" tabindex="-1" id="menu-item-1">Support</a>
+                        
                         <form method="POST" action="#" role="none">
                             <button type="button" @click="logout"
                                 class="text-gray-700 block w-full px-4 py-2 text-left text-sm rounded-md rounded-b-lg hover:bg-gray-300 hover:text-gray-800 transition duration-400 ease-in-out"

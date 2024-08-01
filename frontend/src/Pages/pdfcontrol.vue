@@ -8,7 +8,7 @@
             <div class="grid grid-cols-4 gap-4">
                 <div v-for="pdf in pdfFiles" :key="pdf.id"
                     class="relative group bg-gray-200 rounded-lg overflow-hidden cursor-pointer transform transition-transform duration-300 hover:scale-105">
-                    <a :href="pdf.url" target="_blank">
+                    <a href="#" @click.prevent="openPdfInIframe(pdf.data)">
                         <canvas :id="`pdf-canvas-${pdf.id}`" class="pdf-canvas w-full"></canvas>
                         <div class="p-4 bg-gray-200 text-center">
                             <p class="text-lg font-semibold">{{ pdf.name }}</p>
@@ -27,66 +27,40 @@ import "pdfjs-dist/build/pdf.worker.mjs";
 import axios from "axios";
 import * as pdfjsLib from "pdfjs-dist";
 import store from "@/store/store.js";
-import {PDFDocument as PdfDocument} from "pdf-lib";
+import { PDFDocument as PdfDocument } from "pdf-lib";
 
 export default {
     data() {
         return {
-            pdfFiles: [
-
-
-            ],
+            pdfFiles: [],
             showDropDown: false
         };
     },
-  async mounted() {
+    async mounted() {
+        // Retrieve PDFs
+        const workflowID = store.getters.getWorkflow.id;
+        const response = await axios.put('http://localhost:3000/process/startFill', {
+            userID: store.getters.getUser.id,
+            workflowID: workflowID,
+            isNew: true
+        });
 
-/*
-    await axios.put('http://localhost:3000/process/startProcess',{
-      userID:store.getters.getUser.id,
-      workflowID: store.getters.getWorkflow.id
-    })
-*/
-
-    //show pdf's
-
-    //const workflowRespone = await axios.get('http://localhost:3000/process/'+store.getters.getProcessID)
-    const workflowID = store.getters.getWorkflow.id;
-    const response = await axios.put('http://localhost:3000/process/startFill',
-    {
-
-        userID: store.getters.getUser.id,
-
-        workflowID: workflowID,
-
-        isNew: true
-
-      }
-    )
-    let id =1;
-  for(const proElem of response.data){
-    console.log(proElem.data)
-    this.pdfFiles.push(
-        {
-          id: id++,
-          name: 'Sample PDF 1',
-          url: "data:application/pdf;base64,"+proElem.data
-        },
-    )
-  }
-
-
-
-
-    for (const elem of response.data) {
-      console.log(elem.title)
-      //this.renderPDFThumbnail(pdf.url, `pdf-canvas-${pdf.id}`);
-    }
-  },
-
+        let id = 1;
+        for (const proElem of response.data) {
+            this.pdfFiles.push({
+                id: id++,
+                name: `Sample PDF ${id}`,
+                data: proElem.data, // Store the Base64 data
+            });
+        }
+    },
     methods: {
-        toggleDrop() {
-            this.showDropDown = !this.showDropDown;
+        openPdfInIframe(pdfBase64) {
+            // Store the Base64 data in sessionStorage
+            sessionStorage.setItem('pdfBase64', pdfBase64);
+
+            // Navigate to the PDF viewer route
+            this.$router.push('/pdfview');
         },
         renderPDFThumbnail(pdfBits, canvasId) {
             const loadingTask = pdfjsLib.getDocument(pdfBits);
@@ -108,44 +82,6 @@ export default {
                 console.error('Error: ' + error);
             });
         },
-
     },
-
-
-
 };
 </script>
-
-<style scoped>
-.group:hover .scale-105 {
-    transform: scale(1.05);
-}
-
-.pdf-canvas {
-    border: 5px solid #939292;
-    /* Adds a light grey border around the canvas */
-}
-
-.main-container {
-    min-height: 100vh;
-    background: url('/bg.jpg') no-repeat center center fixed;
-    background-size: cover;
-    position: relative;
-}
-
-nav {
-    background-color: #1a202c;
-    border-bottom: 1px solid #2d3748;
-    position: relative;
-    z-index: 50;
-}
-
-a {
-    color: #63b3ed;
-    text-decoration: none;
-}
-
-a:hover {
-    color: #3182ce;
-}
-</style>
