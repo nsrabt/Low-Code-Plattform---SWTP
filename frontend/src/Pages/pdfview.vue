@@ -1,7 +1,7 @@
 <template>
     <navbar />
     <div class="pdf-viewer-container">
-        <iframe v-if="pdfDataUrl" :src="pdfDataUrl" frameborder="0" width="100%" height="900px"
+        <iframe v-if="pdfDataUrl" :src="pdfDataUrl" frameborder="0" width="100%" height="850px"
             title="PDF Document"></iframe>
     </div>
 </template>
